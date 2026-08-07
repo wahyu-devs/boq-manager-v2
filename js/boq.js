@@ -138,7 +138,7 @@
       <td class="calculated-cell" data-item-output="totalCogs">${
       formatCurrency(calc.totalCogs, currentCurrency())
     }</td>
-      <td><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" step="0.1" value="${item.margin}" aria-label="Margin percentage, row ${
+      <td><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}" aria-label="Gross margin percentage, row ${
       index + 1
     }"></td>
       <td class="calculated-cell" data-item-output="unitSelling">${
@@ -192,7 +192,7 @@
     }</select></label>
         <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}"></label>
         <label class="field"><span class="field-label">Unit COGS</span><input class="input input-sm align-right" data-item-input data-field="unitCogs" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.unitCogs}"></label>
-        <label class="field"><span class="field-label">Margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" step="0.1" value="${item.margin}"></label>
+        <label class="field"><span class="field-label">Gross margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}"></label>
         <div class="field"><span class="field-label">Unit selling</span><strong class="calculated-cell" data-item-output="unitSelling">${
       formatCurrency(calc.unitSelling, currentCurrency())
     }</strong></div>
@@ -396,7 +396,7 @@
       "Unit",
       "Unit COGS",
       "Total COGS",
-      "Margin %",
+      "Gross Margin %",
       "Unit Selling",
       "Total Selling",
     ];
@@ -643,8 +643,11 @@
     );
     if (!item) return;
     const numericFields = ["qty", "unitCogs", "margin"];
+    const numericValue = Math.max(0, Number(input.value) || 0);
     item[input.dataset.field] = numericFields.includes(input.dataset.field)
-      ? Math.max(0, Number(input.value) || 0)
+      ? input.dataset.field === "margin"
+        ? Math.min(numericValue, 99.99)
+        : numericValue
       : input.value;
     syncItem(item);
     markDirty();
@@ -657,7 +660,14 @@
       entry.id === Number(input.dataset.itemId)
     );
     if (item) {
-      item[input.dataset.field] = input.value;
+      const numericFields = ["qty", "unitCogs", "margin"];
+      const numericValue = Math.max(0, Number(input.value) || 0);
+      item[input.dataset.field] = numericFields.includes(input.dataset.field)
+        ? input.dataset.field === "margin"
+          ? Math.min(numericValue, 99.99)
+          : numericValue
+        : input.value;
+      input.value = item[input.dataset.field];
       syncItem(item);
       markDirty();
     }

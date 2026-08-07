@@ -1,7 +1,10 @@
 (function renderDashboard() {
   const { list } = window.BOQStore;
   const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
-  const boqs = list("boqs");
+  const boqs = list("boqs").map((boq) => ({
+    ...boq,
+    ...window.BOQCalculations.calculateSummary(boq.items || []),
+  }));
   const projects = list("projects");
   const customers = list("customers");
   const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
@@ -14,7 +17,7 @@
     0,
   );
   const marginValue = totalSelling - totalCogs;
-  const averageMargin = totalCogs > 0 ? marginValue / totalCogs * 100 : 0;
+  const averageMargin = totalSelling > 0 ? marginValue / totalSelling * 100 : 0;
   const decided = boqs.filter((boq) => ["Won", "Lost"].includes(boq.status));
   const won = decided.filter((boq) => boq.status === "Won").length;
   const winRate = decided.length ? won / decided.length * 100 : 0;

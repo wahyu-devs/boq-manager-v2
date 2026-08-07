@@ -133,7 +133,7 @@
                         type="button"
                         data-sort-key="margin"
                       >
-                        Margin
+                        Gross margin
                       </button>
                     </th>
                     <th class="align-right">Selling price</th>
@@ -240,11 +240,12 @@
                   step="0.01"
                   required
                 ></label><label class="field col-4"><span class="field-label"
-                >Default margin %</span><input
+                >Default gross margin %</span><input
                   class="input align-right"
                   name="defaultMargin"
                   type="number"
                   min="0"
+                  max="99.99"
                   step="0.1"
                   required
                 ></label><label class="field col-4"><span class="field-label"
@@ -253,7 +254,7 @@
                   data-selling-price
                   disabled
                 ><span class="field-hint"
-                >Calculated from COGS + margin</span></label><label
+                >Calculated using gross margin</span></label><label
                 class="field col-12"
               ><span class="field-label">Description</span><textarea
                   class="textarea"

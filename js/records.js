@@ -53,6 +53,10 @@
   }
 
   function renderBoq(record) {
+    record = {
+      ...record,
+      ...window.BOQCalculations.calculateSummary(record.items || []),
+    };
     const search = [
       record.number,
       record.title,
@@ -121,7 +125,7 @@
           escapeHtml(record.customerName || "—")
         }</dd></div><div><dt>Value</dt><dd>${
           formatCurrency(record.totalSelling || 0, record.currency || "USD")
-        }</dd></div><div><dt>Margin</dt><dd>${margin}</dd></div></dl><div class="cluster space-between card-actions"><span class="subtle text-sm">Updated ${
+        }</dd></div><div><dt>Gross margin</dt><dd>${margin}</dd></div></dl><div class="cluster space-between card-actions"><span class="subtle text-sm">Updated ${
           dateText(record.updatedAt)
         }</span><a class="button button-secondary button-sm" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
@@ -184,8 +188,11 @@
   }
 
   function renderProduct(record) {
-    const selling = Number(record.defaultCogs || 0) *
-      (1 + Number(record.defaultMargin || 0) / 100);
+    const margin = Math.max(
+      0,
+      Math.min(Number(record.defaultMargin || 0), 99.99),
+    );
+    const selling = Number(record.defaultCogs || 0) / (1 - margin / 100);
     const search = [record.sku, record.name, record.description].filter(Boolean)
       .join(" ");
     return {
@@ -457,7 +464,7 @@
     const cogs = Number(form.elements.defaultCogs.value || 0);
     const margin = Number(form.elements.defaultMargin.value || 0);
     output.value = formatCurrency(
-      cogs * (1 + margin / 100),
+      cogs / (1 - Math.max(0, Math.min(margin, 99.99)) / 100),
       defaultCurrency,
     );
   }

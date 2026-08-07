@@ -4,12 +4,16 @@
     return Number.isFinite(number) && number > 0 ? number : 0;
   }
 
+  function safeMargin(value) {
+    return Math.min(safeNumber(value), 99.99);
+  }
+
   function calculateItem(item) {
     const quantity = safeNumber(item.qty);
     const unitCogs = safeNumber(item.unitCogs);
-    const margin = safeNumber(item.margin);
+    const margin = safeMargin(item.margin);
     const totalCogs = quantity * unitCogs;
-    const unitSelling = unitCogs * (1 + margin / 100);
+    const unitSelling = unitCogs / (1 - margin / 100);
     const totalSelling = quantity * unitSelling;
     return {
       totalCogs,
@@ -28,8 +32,8 @@
     }, { totalCogs: 0, totalSelling: 0 });
 
     totals.marginValue = totals.totalSelling - totals.totalCogs;
-    totals.marginPercent = totals.totalCogs > 0
-      ? (totals.marginValue / totals.totalCogs) * 100
+    totals.marginPercent = totals.totalSelling > 0
+      ? (totals.marginValue / totals.totalSelling) * 100
       : 0;
     return totals;
   }
