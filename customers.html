@@ -33,7 +33,9 @@
             <div class="page-actions">
               <button
                 class="button button-primary"
-                data-open-modal="new-customer-modal"
+                type="button"
+                data-record-create
+                data-open-modal="record-form-modal"
               >
                 <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
                   <path d="M12 5v14M5 12h14" />
@@ -49,8 +51,9 @@
             <div class="panel-header">
               <div>
                 <h2 id="customer-directory-heading">Customer directory</h2>
-                <p><span data-result-count>6 results</span> · 24 companies</p>
-              </div><span class="badge">18 active relationships</span>
+                <p><span data-result-count>0 results</span></p>
+              </div><span class="badge"><span data-total-records>0</span>
+                companies</span>
             </div>
             <div class="toolbar">
               <label class="search-field"><span class="sr-only"
@@ -64,7 +67,7 @@
                 </svg><input
                   class="input"
                   type="search"
-                  placeholder="Search company, contact, or email"
+                  placeholder="Search company, contact, email, or phone"
                   data-table-search
                 ></label><label><span class="sr-only"
                 >Filter status</span><select
@@ -77,25 +80,36 @@
                   <option value="inactive">Inactive</option>
                 </select></label>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap" data-records-table hidden>
               <table class="data-table">
                 <thead>
                   <tr>
                     <th>
-                      <button class="sort-button" data-sort-key="company">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="company"
+                      >
                         Company
                       </button>
                     </th>
                     <th>Contact person</th>
                     <th>Contact details</th>
-                    <th>Location</th>
                     <th class="align-right">
-                      <button class="sort-button" data-sort-key="projects">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="projects"
+                      >
                         Projects
                       </button>
                     </th>
                     <th class="align-right">
-                      <button class="sort-button" data-sort-key="boqs">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="boqs"
+                      >
                         BOQs
                       </button>
                     </th>
@@ -103,396 +117,66 @@
                     <th><span class="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr
-                    data-table-row
-                    data-search="Meridian Foods Dana Foster dana.foster@meridian.example"
-                    data-status="active"
-                    data-company="Meridian Foods"
-                    data-projects="3"
-                    data-boqs="7"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        data-open-modal="customer-detail-modal"
-                      >
-                        Meridian Foods
-                      </button><span class="cell-secondary"
-                      >Food manufacturing</span>
-                    </td>
-                    <td>
-                      Dana Foster<span class="cell-secondary"
-                      >Director of IT</span>
-                    </td>
-                    <td>
-                      dana.foster@meridian.example<span class="cell-secondary"
-                      >+1 312 555 0192</span>
-                    </td>
-                    <td>Chicago, IL</td>
-                    <td class="align-right number">3</td>
-                    <td class="align-right number">7</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="customer-detail-modal"
-                        aria-label="Open Meridian Foods"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Polar Logistics Jamie Park jamie.park@polar.example"
-                    data-status="active"
-                    data-company="Polar Logistics"
-                    data-projects="2"
-                    data-boqs="5"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        data-open-modal="customer-detail-modal"
-                      >
-                        Polar Logistics
-                      </button><span class="cell-secondary"
-                      >Logistics & distribution</span>
-                    </td>
-                    <td>
-                      Jamie Park<span class="cell-secondary"
-                      >Facilities Lead</span>
-                    </td>
-                    <td>
-                      jamie.park@polar.example<span class="cell-secondary"
-                      >+1 206 555 0171</span>
-                    </td>
-                    <td>Seattle, WA</td>
-                    <td class="align-right number">2</td>
-                    <td class="align-right number">5</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="customer-detail-modal"
-                        aria-label="Open Polar Logistics"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Aster Health Priya Raman p.raman@asterhealth.example"
-                    data-status="active"
-                    data-company="Aster Health"
-                    data-projects="4"
-                    data-boqs="8"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        data-open-modal="customer-detail-modal"
-                      >
-                        Aster Health
-                      </button><span class="cell-secondary">Healthcare</span>
-                    </td>
-                    <td>
-                      Priya Raman<span class="cell-secondary"
-                      >Capital Projects Manager</span>
-                    </td>
-                    <td>
-                      p.raman@asterhealth.example<span class="cell-secondary"
-                      >+1 617 555 0128</span>
-                    </td>
-                    <td>Boston, MA</td>
-                    <td class="align-right number">4</td>
-                    <td class="align-right number">8</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="customer-detail-modal"
-                        aria-label="Open Aster Health"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Harbor Properties Luis Moreno l.moreno@harbor.example"
-                    data-status="prospect"
-                    data-company="Harbor Properties"
-                    data-projects="1"
-                    data-boqs="2"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        data-open-modal="customer-detail-modal"
-                      >
-                        Harbor Properties
-                      </button><span class="cell-secondary"
-                      >Commercial real estate</span>
-                    </td>
-                    <td>
-                      Luis Moreno<span class="cell-secondary"
-                      >Development Manager</span>
-                    </td>
-                    <td>
-                      l.moreno@harbor.example<span class="cell-secondary"
-                      >+1 305 555 0144</span>
-                    </td>
-                    <td>Miami, FL</td>
-                    <td class="align-right number">1</td>
-                    <td class="align-right number">2</td>
-                    <td><span class="status status-review">Prospect</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="customer-detail-modal"
-                        aria-label="Open Harbor Properties"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Cedar University Ellen Wright e.wright@cedar.example"
-                    data-status="inactive"
-                    data-company="Cedar University"
-                    data-projects="2"
-                    data-boqs="3"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        data-open-modal="customer-detail-modal"
-                      >
-                        Cedar University
-                      </button><span class="cell-secondary"
-                      >Higher education</span>
-                    </td>
-                    <td>
-                      Ellen Wright<span class="cell-secondary"
-                      >Procurement Manager</span>
-                    </td>
-                    <td>
-                      e.wright@cedar.example<span class="cell-secondary"
-                      >+1 503 555 0198</span>
-                    </td>
-                    <td>Portland, OR</td>
-                    <td class="align-right number">2</td>
-                    <td class="align-right number">3</td>
-                    <td>
-                      <span class="status status-inactive">Inactive</span>
-                    </td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="customer-detail-modal"
-                        aria-label="Open Cedar University"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Orion Ventures Isaac Bell ibell@orion.example"
-                    data-status="active"
-                    data-company="Orion Ventures"
-                    data-projects="2"
-                    data-boqs="4"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        data-open-modal="customer-detail-modal"
-                      >
-                        Orion Ventures
-                      </button><span class="cell-secondary"
-                      >Professional services</span>
-                    </td>
-                    <td>
-                      Isaac Bell<span class="cell-secondary"
-                      >Operations Director</span>
-                    </td>
-                    <td>
-                      ibell@orion.example<span class="cell-secondary"
-                      >+1 212 555 0113</span>
-                    </td>
-                    <td>New York, NY</td>
-                    <td class="align-right number">2</td>
-                    <td class="align-right number">4</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="customer-detail-modal"
-                        aria-label="Open Orion Ventures"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody data-records-body></tbody>
               </table>
             </div>
-            <div class="record-card-list">
-              <article
-                class="record-card"
-                data-record-card
-                data-search="Meridian Foods Dana Foster dana.foster@meridian.example"
-                data-status="active"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <button
-                      class="link cell-primary"
-                      data-open-modal="customer-detail-modal"
-                    >
-                      Meridian Foods
-                    </button>
-                    <div class="muted text-sm">
-                      Dana Foster · Director of IT
-                    </div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Email</dt>
-                    <dd>dana.foster@meridian.example</dd>
-                  </div>
-                  <div>
-                    <dt>Location</dt>
-                    <dd>Chicago, IL</dd>
-                  </div>
-                  <div>
-                    <dt>Projects</dt>
-                    <dd>3</dd>
-                  </div>
-                  <div>
-                    <dt>BOQs</dt>
-                    <dd>7</dd>
-                  </div>
-                </dl>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-search="Polar Logistics Jamie Park jamie.park@polar.example"
-                data-status="active"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <button
-                      class="link cell-primary"
-                      data-open-modal="customer-detail-modal"
-                    >
-                      Polar Logistics
-                    </button>
-                    <div class="muted text-sm">
-                      Jamie Park · Facilities Lead
-                    </div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Email</dt>
-                    <dd>jamie.park@polar.example</dd>
-                  </div>
-                  <div>
-                    <dt>Location</dt>
-                    <dd>Seattle, WA</dd>
-                  </div>
-                  <div>
-                    <dt>Projects</dt>
-                    <dd>2</dd>
-                  </div>
-                  <div>
-                    <dt>BOQs</dt>
-                    <dd>5</dd>
-                  </div>
-                </dl>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-search="Aster Health Priya Raman p.raman@asterhealth.example"
-                data-status="active"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <button
-                      class="link cell-primary"
-                      data-open-modal="customer-detail-modal"
-                    >
-                      Aster Health
-                    </button>
-                    <div class="muted text-sm">
-                      Priya Raman · Projects Manager
-                    </div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Email</dt>
-                    <dd>p.raman@asterhealth.example</dd>
-                  </div>
-                  <div>
-                    <dt>Location</dt>
-                    <dd>Boston, MA</dd>
-                  </div>
-                  <div>
-                    <dt>Projects</dt>
-                    <dd>4</dd>
-                  </div>
-                  <div>
-                    <dt>BOQs</dt>
-                    <dd>8</dd>
-                  </div>
-                </dl>
-              </article>
+            <div class="record-card-list" data-records-cards hidden></div>
+            <div class="empty-state" data-records-empty>
+              <div class="empty-state-content">
+                <div class="empty-state-icon" aria-hidden="true">＋</div>
+                <h3>No customers yet</h3>
+                <p>Add a customer before linking projects and BOQs.</p>
+                <button
+                  class="button button-primary"
+                  type="button"
+                  data-record-create
+                  data-open-modal="record-form-modal"
+                >
+                  Add customer
+                </button>
+              </div>
             </div>
             <div class="empty-state" data-no-results hidden>
               <div class="empty-state-content">
-                <div class="empty-state-icon">⌕</div>
+                <div class="empty-state-icon" aria-hidden="true">⌕</div>
                 <h3>No customers found</h3>
-                <p>Try a different company, contact, or status.</p>
+                <p>Try changing your search or filters.</p>
               </div>
             </div>
           </section>
         </main>
       </div>
     </div>
-    <div class="modal-backdrop" id="new-customer-modal" hidden>
+
+    <div class="modal-backdrop" id="record-form-modal" hidden>
       <section
         class="modal modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="new-customer-title"
+        aria-labelledby="customer-form-title"
       >
         <header class="modal-header">
-          <h2 id="new-customer-title">Add customer</h2>
-          <button class="icon-button" data-close-modal aria-label="Close">
+          <h2 id="customer-form-title" data-record-form-title>Add customer</h2>
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
-        <form
-          data-demo-form
-          data-success-message="Customer added successfully."
-        >
+        <form data-record-form>
           <div class="modal-body">
             <div class="form-grid">
               <label class="field col-8 field-wide-mobile"><span
                   class="field-label"
-                >Company name</span><input class="input" required></label><label
-                class="field col-4"
-              ><span class="field-label">Status</span><select class="select">
+                >Company name</span><input
+                  class="input"
+                  name="companyName"
+                  required
+                ></label><label class="field col-4"><span class="field-label"
+                >Status</span><select class="select" name="status">
                   <option>Prospect</option>
                   <option>Active</option>
                   <option>Inactive</option>
@@ -500,19 +184,21 @@
                   class="field-label"
                 >Contact person</span><input
                   class="input"
-                  required
+                  name="contactPerson"
                 ></label><label class="field col-6"><span class="field-label"
-                >Role / title</span><input class="input"></label><label
-                class="field col-6"
-              ><span class="field-label">Email</span><input
+                >Email</span><input
                   class="input"
+                  name="email"
                   type="email"
-                  required
                 ></label><label class="field col-6"><span class="field-label"
-                >Phone</span><input class="input" type="tel"></label><label
-                class="field col-12"
-              ><span class="field-label">Address</span><textarea
+                >Phone</span><input
+                  class="input"
+                  name="phone"
+                  type="tel"
+                ></label><label class="field col-12"><span class="field-label"
+                >Address</span><textarea
                   class="textarea"
+                  name="address"
                 ></textarea></label>
             </div>
           </div>
@@ -525,120 +211,38 @@
               Cancel
             </button>
             <button class="button button-primary" type="submit">
-              Add customer
+              Save customer
             </button>
           </footer>
         </form>
       </section>
     </div>
-    <div class="modal-backdrop" id="customer-detail-modal" hidden>
+    <div class="modal-backdrop" id="record-detail-modal" hidden>
       <section
-        class="modal modal-lg"
+        class="modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="customer-title"
+        aria-labelledby="customer-detail-title"
       >
         <header class="modal-header">
-          <div>
-            <h2 id="customer-title">Meridian Foods</h2>
-            <p class="muted text-sm">Active customer · Chicago, IL</p>
-          </div>
-          <button class="icon-button" data-close-modal aria-label="Close">
+          <h2 id="customer-detail-title">Customer details</h2>
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
-        <div class="modal-body stack-lg">
-          <div class="form-grid">
-            <div class="field col-4">
-              <span class="field-label">Primary contact</span><strong>Dana
-                Foster</strong><span class="muted text-sm">Director of IT</span>
-            </div>
-            <div class="field col-4">
-              <span class="field-label">Email</span><a
-                class="link text-sm"
-                href="mailto:dana.foster@meridian.example"
-              >dana.foster@meridian.example</a>
-            </div>
-            <div class="field col-4">
-              <span class="field-label">Phone</span><strong>+1 312 555
-                0192</strong>
-            </div>
-          </div>
-          <div>
-            <div class="cluster space-between">
-              <h3>Related projects</h3><a
-                class="link text-sm"
-                href="projects.html"
-              >View projects</a>
-            </div>
-            <div class="table-wrap detail-table-wrap">
-              <table class="data-table detail-table">
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Status</th>
-                    <th class="align-right">BOQs</th>
-                    <th class="align-right">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      Meridian HQ Upgrade<span class="cell-secondary mono"
-                      >PRJ-26017</span>
-                    </td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td class="align-right">3</td>
-                    <td class="align-right">$612,000</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      Distribution Office Refresh<span
-                        class="cell-secondary mono"
-                      >PRJ-25072</span>
-                    </td>
-                    <td>
-                      <span class="status status-approved">Completed</span>
-                    </td>
-                    <td class="align-right">2</td>
-                    <td class="align-right">$228,000</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div>
-            <div class="cluster space-between">
-              <h3>Recent BOQs</h3><a class="link text-sm" href="boqs.html"
-              >View BOQs</a>
-            </div>
-            <ul class="activity-list">
-              <li class="activity-item">
-                <span class="avatar">84</span><p>
-                  <strong>BOQ-2026-084 · HQ Network Refresh</strong><br>$186,420
-                  · In Review<span class="activity-time"
-                  >Updated 18 minutes ago</span>
-                </p>
-              </li>
-              <li class="activity-item">
-                <span class="avatar">73</span><p>
-                  <strong>BOQ-2026-073 · AV Conference
-                    Rooms</strong><br>$148,500 · Won<span class="activity-time"
-                  >Updated 5 days ago</span>
-                </p>
-              </li>
-            </ul>
-          </div>
-        </div>
+        <div class="modal-body" data-record-detail></div>
         <footer class="modal-footer">
-          <button class="button button-secondary" data-close-modal>
-            Close
-          </button>
           <button
-            class="button button-primary"
-            data-demo-action="Customer details are ready to edit."
+            class="button button-secondary"
+            type="button"
+            data-close-modal
           >
-            Edit customer
+            Close
           </button>
         </footer>
       </section>
@@ -647,6 +251,8 @@
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/records.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

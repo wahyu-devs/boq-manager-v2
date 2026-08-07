@@ -37,9 +37,7 @@
               <button
                 class="button button-primary"
                 type="button"
-                form="settings-form"
-                data-save
-                data-success-message="BOQ Manager settings saved."
+                data-settings-save
               >
                 <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
                   <path d="M5 4h12l2 2v14H5V4Z" />
@@ -70,27 +68,33 @@
                     <p>Details printed on customer-facing BOQ documents.</p>
                   </div>
                 </div>
-                <div class="panel-body stack-lg">
-                  <div class="logo-upload">
-                    <div class="company-logo" aria-hidden="true">NS</div>
+                <div class="panel-body">
+                  <div class="logo-upload settings-logo-upload">
+                    <div
+                      class="company-logo"
+                      data-company-logo-preview
+                      aria-label="No company logo"
+                    >
+                      —
+                    </div>
                     <div class="stack-xs">
-                      <strong>Company logo</strong><div class="cluster">
-                        <button
-                          class="button button-secondary button-sm"
-                          type="button"
-                          data-demo-action="Choose a PNG or JPG up to 2 MB."
-                        >
-                          Replace logo
-                        </button>
-                        <button
-                          class="button button-ghost button-sm danger-text"
-                          type="button"
-                          data-demo-action="Company logo removed from preview."
-                        >
-                          Remove
-                        </button>
-                      </div><span class="field-hint"
-                      >PNG or JPG, recommended size 400 × 120 px.</span>
+                      <strong>Company logo</strong>
+                      <input
+                        class="input input-sm"
+                        type="file"
+                        accept="image/png, image/jpeg"
+                        data-company-logo-input
+                      >
+                      <button
+                        class="button button-ghost button-sm danger-text logo-remove-button"
+                        type="button"
+                        data-remove-company-logo
+                        hidden
+                      >
+                        Remove logo
+                      </button>
+                      <span class="field-hint"
+                      >PNG or JPG. Used on exported documents.</span>
                     </div>
                   </div>
                   <div class="form-grid">
@@ -98,34 +102,34 @@
                         class="field-label"
                       >Company name</span><input
                         class="input"
-                        value="Northstar Systems Ltd."
-                        required
+                        name="companyName"
                       ></label><label class="field col-4"><span
                         class="field-label"
                       >Registration number</span><input
                         class="input"
-                        value="NS-884291"
+                        name="registrationNumber"
                       ></label><label class="field col-6"><span
                         class="field-label"
                       >Email</span><input
                         class="input"
+                        name="email"
                         type="email"
-                        value="sales@northstarsystems.example"
                       ></label><label class="field col-6"><span
                         class="field-label"
                       >Phone</span><input
                         class="input"
+                        name="phone"
                         type="tel"
-                        value="+1 415 555 0184"
                       ></label><label class="field col-12"><span
                         class="field-label"
-                      >Address</span><textarea class="textarea"
-                      >120 Market Street
-San Francisco, CA 94105
-United States</textarea></label>
+                      >Address</span><textarea
+                        class="textarea"
+                        name="address"
+                      ></textarea></label>
                   </div>
                 </div>
               </section>
+
               <section
                 class="panel settings-section"
                 id="commercial"
@@ -140,47 +144,52 @@ United States</textarea></label>
                 <div class="panel-body">
                   <div class="form-grid">
                     <label class="field col-4"><span class="field-label"
-                      >Default currency</span><select class="select">
-                        <option selected>USD — US Dollar</option>
-                        <option>EUR — Euro</option>
-                        <option>GBP — Pound Sterling</option>
-                        <option>IDR — Indonesian Rupiah</option>
+                      >Default currency</span><select
+                        class="select"
+                        name="defaultCurrency"
+                      >
+                        <option value="USD">USD — US Dollar</option>
+                        <option value="EUR">EUR — Euro</option>
+                        <option value="GBP">GBP — Pound Sterling</option>
+                        <option value="IDR">IDR — Indonesian Rupiah</option>
                       </select></label><label class="field col-4"><span
                         class="field-label"
                       >Default margin</span><div class="input-affix">
                         <input
                           class="input align-right"
+                          name="defaultMargin"
                           type="number"
                           min="0"
                           step="0.1"
-                          value="25.0"
                         ><span>%</span>
                       </div></label><label class="field col-4"><span
                         class="field-label"
-                      >Default validity</span><select class="select">
-                        <option>14 days</option>
-                        <option selected>30 days</option>
-                        <option>45 days</option>
-                        <option>60 days</option>
+                      >Default validity</span><select
+                        class="select"
+                        name="defaultValidity"
+                      >
+                        <option value="14">14 days</option>
+                        <option value="30">30 days</option>
+                        <option value="45">45 days</option>
+                        <option value="60">60 days</option>
                       </select></label><label class="field col-6"><span
                         class="field-label"
                       >BOQ numbering format</span><input
                         class="input mono"
-                        value="BOQ-{YYYY}-{NNN}"
-                        required
+                        name="numberingFormat"
                       ><span class="field-hint"
-                      >Next number: BOQ-2026-085</span></label><label
-                      class="field col-6"
-                    ><span class="field-label">Rounding</span><select
-                        class="select"
-                      >
-                        <option selected>2 decimal places</option>
-                        <option>Whole currency units</option>
-                        <option>Nearest 5 currency units</option>
+                      >Use {YYYY} for year and {NNN} for
+                        sequence.</span></label><label class="field col-6"><span
+                        class="field-label"
+                      >Rounding</span><select class="select" name="rounding">
+                        <option value="2">2 decimal places</option>
+                        <option value="0">Whole currency units</option>
+                        <option value="5">Nearest 5 currency units</option>
                       </select></label>
                   </div>
                 </div>
               </section>
+
               <section
                 class="panel settings-section"
                 id="documents"
@@ -200,7 +209,7 @@ United States</textarea></label>
                       </p>
                     </div><label class="switch"><input
                         type="checkbox"
-                        checked
+                        name="showDescriptions"
                       ><span class="switch-track"></span><span class="sr-only"
                       >Show item descriptions</span></label>
                   </div>
@@ -209,9 +218,11 @@ United States</textarea></label>
                       <strong>Show item SKU</strong><p>
                         Print internal catalog codes in customer documents.
                       </p>
-                    </div><label class="switch"><input type="checkbox"><span
-                        class="switch-track"
-                      ></span><span class="sr-only">Show item SKU</span></label>
+                    </div><label class="switch"><input
+                        type="checkbox"
+                        name="showSku"
+                      ><span class="switch-track"></span><span class="sr-only"
+                      >Show item SKU</span></label>
                   </div>
                   <div class="switch-row">
                     <div>
@@ -220,27 +231,18 @@ United States</textarea></label>
                       </p>
                     </div><label class="switch"><input
                         type="checkbox"
-                        checked
+                        name="showUnitPricing"
                       ><span class="switch-track"></span><span class="sr-only"
                       >Show unit pricing</span></label>
-                  </div>
-                  <div class="switch-row">
-                    <div>
-                      <strong>Confidential footer</strong><p>
-                        Add a confidentiality notice to every PDF page.
-                      </p>
-                    </div><label class="switch"><input type="checkbox"><span
-                        class="switch-track"
-                      ></span><span class="sr-only"
-                      >Show confidential footer</span></label>
                   </div><label class="field document-footer-field"><span
                       class="field-label"
                     >Default footer text</span><input
                       class="input"
-                      value="Thank you for the opportunity to submit our proposal."
+                      name="footerText"
                     ></label>
                 </div>
               </section>
+
               <section
                 class="panel settings-section"
                 id="tax"
@@ -260,7 +262,8 @@ United States</textarea></label>
                       </p>
                     </div><label class="switch"><input
                         type="checkbox"
-                        data-controls="default-tax-rate"
+                        name="taxEnabled"
+                        data-tax-toggle
                       ><span class="switch-track"></span><span class="sr-only"
                       >Enable tax calculation</span></label>
                   </div>
@@ -269,9 +272,10 @@ United States</textarea></label>
                       >Default tax rate</span><div class="input-affix">
                         <input
                           class="input align-right"
-                          id="default-tax-rate"
+                          name="taxRate"
                           type="number"
-                          value="0.0"
+                          min="0"
+                          step="0.1"
                           disabled
                         ><span>%</span>
                       </div></label><label
@@ -279,12 +283,13 @@ United States</textarea></label>
                     ><span class="field-label"
                       >Tax registration number</span><input
                         class="input"
-                        placeholder="Not configured"
+                        name="taxRegistrationNumber"
                         disabled
                       ></label>
                   </div>
                 </div>
               </section>
+
               <section
                 class="panel settings-section"
                 id="preferences"
@@ -293,22 +298,28 @@ United States</textarea></label>
                 <div class="panel-header">
                   <div>
                     <h2 id="preferences-heading">User preferences</h2>
-                    <p>Defaults that apply only to your account.</p>
+                    <p>Defaults that apply to this browser.</p>
                   </div>
                 </div>
                 <div class="panel-body">
                   <div class="form-grid">
                     <label class="field col-6"><span class="field-label"
-                      >Date format</span><select class="select">
-                        <option>MM/DD/YYYY</option>
-                        <option selected>DD MMM YYYY</option>
-                        <option>YYYY-MM-DD</option>
+                      >Date format</span><select
+                        class="select"
+                        name="dateFormat"
+                      >
+                        <option value="mdy">MM/DD/YYYY</option>
+                        <option value="dmy">DD MMM YYYY</option>
+                        <option value="iso">YYYY-MM-DD</option>
                       </select></label><label class="field col-6"><span
                         class="field-label"
-                      >Number format</span><select class="select">
-                        <option selected>1,234.56</option>
-                        <option>1.234,56</option>
-                        <option>1 234,56</option>
+                      >Number format</span><select
+                        class="select"
+                        name="numberFormat"
+                      >
+                        <option value="comma">1,234.56</option>
+                        <option value="dot">1.234,56</option>
+                        <option value="space">1 234,56</option>
                       </select></label>
                   </div>
                   <div class="switch-row preferences-switch">
@@ -318,12 +329,13 @@ United States</textarea></label>
                       </p>
                     </div><label class="switch"><input
                         type="checkbox"
-                        checked
+                        name="compactTables"
                       ><span class="switch-track"></span><span class="sr-only"
                       >Use compact tables</span></label>
                   </div>
                 </div>
               </section>
+
               <section
                 class="panel settings-section"
                 id="appearance"
@@ -346,7 +358,7 @@ United States</textarea></label>
                       <option value="light">Light</option>
                       <option value="dark">Dark</option>
                     </select><span class="field-hint"
-                    >The theme switch in the header remains available on every
+                    >The header theme switch remains available on every
                       page.</span></label>
                 </div>
               </section>
@@ -359,6 +371,8 @@ United States</textarea></label>
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/store.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/settings.js"></script>
   </body>
 </html>

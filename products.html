@@ -35,16 +35,10 @@
             </div>
             <div class="page-actions">
               <button
-                class="button button-secondary"
-                data-demo-action="Catalog import template downloaded."
-              >
-                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
-                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
-                </svg><span>Import</span>
-              </button>
-              <button
                 class="button button-primary"
-                data-open-modal="new-product-modal"
+                type="button"
+                data-record-create
+                data-open-modal="record-form-modal"
               >
                 <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
                   <path d="M12 5v14M5 12h14" />
@@ -60,11 +54,9 @@
             <div class="panel-header">
               <div>
                 <h2 id="catalog-heading">Product & service catalog</h2>
-                <p>
-                  <span data-result-count>7 results</span> · Costs reviewed 2
-                  Aug 2026
-                </p>
-              </div><span class="badge">126 active items</span>
+                <p><span data-result-count>0 results</span></p>
+              </div><span class="badge"><span data-total-records>0</span>
+                items</span>
             </div>
             <div class="toolbar">
               <label class="search-field"><span class="sr-only"
@@ -90,6 +82,7 @@
                     <option value="cabling">Cabling</option>
                     <option value="power">Power</option>
                     <option value="services">Services</option>
+                    <option value="other">Other</option>
                   </select></label><label><span class="sr-only"
                   >Status</span><select
                     class="select select-sm"
@@ -101,29 +94,45 @@
                   </select></label>
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap" data-records-table hidden>
               <table class="data-table">
                 <thead>
                   <tr>
                     <th>
-                      <button class="sort-button" data-sort-key="sku">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="sku"
+                      >
                         SKU
                       </button>
                     </th>
                     <th>
-                      <button class="sort-button" data-sort-key="productName">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="productName"
+                      >
                         Product
                       </button>
                     </th>
                     <th>Category</th>
                     <th>Unit</th>
                     <th class="align-right">
-                      <button class="sort-button" data-sort-key="cogs">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="cogs"
+                      >
                         Default COGS
                       </button>
                     </th>
                     <th class="align-right">
-                      <button class="sort-button" data-sort-key="margin">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="margin"
+                      >
                         Margin
                       </button>
                     </th>
@@ -132,443 +141,123 @@
                     <th><span class="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr
-                    data-table-row
-                    data-record-id="product-switch"
-                    data-search="NET-SW-048 Managed PoE Switch 48-port Layer 3 managed PoE+ switch"
-                    data-category="network"
-                    data-status="active"
-                    data-sku="NET-SW-048"
-                    data-product-name="Managed PoE Switch"
-                    data-cogs="4200"
-                    data-margin="28"
-                  >
-                    <td class="mono">NET-SW-048</td>
-                    <td>
-                      <span class="cell-primary">Managed PoE Switch</span><span
-                        class="cell-secondary"
-                      >48-port Layer 3 managed PoE+ switch</span>
-                    </td>
-                    <td>Network</td>
-                    <td>Each</td>
-                    <td class="align-right currency">$4,200.00</td>
-                    <td class="align-right number">28.0%</td>
-                    <td class="align-right currency cell-primary">$5,376.00</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit Managed PoE Switch"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="product-ap"
-                    data-search="NET-AP-006 Wi-Fi 6 Access Point Enterprise dual-band indoor access point"
-                    data-category="network"
-                    data-status="active"
-                    data-sku="NET-AP-006"
-                    data-product-name="Wi-Fi 6 Access Point"
-                    data-cogs="680"
-                    data-margin="25"
-                  >
-                    <td class="mono">NET-AP-006</td>
-                    <td>
-                      <span class="cell-primary"
-                      >Wi-Fi 6 Access Point</span><span class="cell-secondary"
-                      >Enterprise dual-band indoor access point</span>
-                    </td>
-                    <td>Network</td>
-                    <td>Each</td>
-                    <td class="align-right currency">$680.00</td>
-                    <td class="align-right number">25.0%</td>
-                    <td class="align-right currency cell-primary">$850.00</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit Wi-Fi 6 Access Point"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="product-cable"
-                    data-search="CAB-CAT6-BLU CAT6 UTP Cable Low-smoke zero-halogen network cable"
-                    data-category="cabling"
-                    data-status="active"
-                    data-sku="CAB-CAT6-BLU"
-                    data-product-name="CAT6 UTP Cable"
-                    data-cogs="0.52"
-                    data-margin="35"
-                  >
-                    <td class="mono">CAB-CAT6-BLU</td>
-                    <td>
-                      <span class="cell-primary">CAT6 UTP Cable</span><span
-                        class="cell-secondary"
-                      >Low-smoke, zero-halogen network cable</span>
-                    </td>
-                    <td>Cabling</td>
-                    <td>Meter</td>
-                    <td class="align-right currency">$0.52</td>
-                    <td class="align-right number">35.0%</td>
-                    <td class="align-right currency cell-primary">$0.70</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit CAT6 UTP Cable"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="product-rack"
-                    data-search="RCK-42U-800 42U Server Rack Enclosed rack cable management"
-                    data-category="network"
-                    data-status="active"
-                    data-sku="RCK-42U-800"
-                    data-product-name="42U Server Rack"
-                    data-cogs="1850"
-                    data-margin="28"
-                  >
-                    <td class="mono">RCK-42U-800</td>
-                    <td>
-                      <span class="cell-primary">42U Server Rack</span><span
-                        class="cell-secondary"
-                      >800 mm enclosed rack with cable management</span>
-                    </td>
-                    <td>Network</td>
-                    <td>Each</td>
-                    <td class="align-right currency">$1,850.00</td>
-                    <td class="align-right number">28.0%</td>
-                    <td class="align-right currency cell-primary">$2,368.00</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit 42U Server Rack"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="product-ups"
-                    data-search="UPS-3000-RT 3 kVA Rack UPS Online double-conversion network card"
-                    data-category="power"
-                    data-status="active"
-                    data-sku="UPS-3000-RT"
-                    data-product-name="3 kVA Rack UPS"
-                    data-cogs="2140"
-                    data-margin="26"
-                  >
-                    <td class="mono">UPS-3000-RT</td>
-                    <td>
-                      <span class="cell-primary">3 kVA Rack UPS</span><span
-                        class="cell-secondary"
-                      >Online double-conversion UPS with network card</span>
-                    </td>
-                    <td>Power</td>
-                    <td>Each</td>
-                    <td class="align-right currency">$2,140.00</td>
-                    <td class="align-right number">26.0%</td>
-                    <td class="align-right currency cell-primary">$2,696.40</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit 3 kVA Rack UPS"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="product-install"
-                    data-search="SVC-INSTALL Installation Services Installation termination labeling testing"
-                    data-category="services"
-                    data-status="active"
-                    data-sku="SVC-INSTALL"
-                    data-product-name="Installation Services"
-                    data-cogs="48"
-                    data-margin="40"
-                  >
-                    <td class="mono">SVC-INSTALL</td>
-                    <td>
-                      <span class="cell-primary"
-                      >Installation Services</span><span class="cell-secondary"
-                      >Installation, termination, labeling, and testing</span>
-                    </td>
-                    <td>Services</td>
-                    <td>Hour</td>
-                    <td class="align-right currency">$48.00</td>
-                    <td class="align-right number">40.0%</td>
-                    <td class="align-right currency cell-primary">$67.20</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit Installation Services"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="product-legacy"
-                    data-search="NET-SW-024-L Legacy 24-port Switch Discontinued access switch"
-                    data-category="network"
-                    data-status="inactive"
-                    data-sku="NET-SW-024-L"
-                    data-product-name="Legacy 24-port Switch"
-                    data-cogs="960"
-                    data-margin="20"
-                  >
-                    <td class="mono">NET-SW-024-L</td>
-                    <td>
-                      <span class="cell-primary"
-                      >Legacy 24-port Switch</span><span class="cell-secondary"
-                      >Discontinued access switch</span>
-                    </td>
-                    <td>Network</td>
-                    <td>Each</td>
-                    <td class="align-right currency">$960.00</td>
-                    <td class="align-right number">20.0%</td>
-                    <td class="align-right currency cell-primary">$1,152.00</td>
-                    <td>
-                      <span class="status status-inactive">Inactive</span>
-                    </td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="new-product-modal"
-                        aria-label="Edit Legacy 24-port Switch"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody data-records-body></tbody>
               </table>
             </div>
-            <div class="record-card-list">
-              <article
-                class="record-card"
-                data-record-card
-                data-search="NET-SW-048 Managed PoE Switch"
-                data-category="network"
-                data-status="active"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <strong>Managed PoE Switch</strong><div
-                      class="muted text-sm mono"
-                    >
-                      NET-SW-048
-                    </div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Category</dt>
-                    <dd>Network</dd>
-                  </div>
-                  <div>
-                    <dt>Unit</dt>
-                    <dd>Each</dd>
-                  </div>
-                  <div>
-                    <dt>COGS</dt>
-                    <dd>$4,200.00</dd>
-                  </div>
-                  <div>
-                    <dt>Selling</dt>
-                    <dd>$5,376.00</dd>
-                  </div>
-                </dl>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-search="NET-AP-006 Wi-Fi 6 Access Point"
-                data-category="network"
-                data-status="active"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <strong>Wi-Fi 6 Access Point</strong><div
-                      class="muted text-sm mono"
-                    >
-                      NET-AP-006
-                    </div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Category</dt>
-                    <dd>Network</dd>
-                  </div>
-                  <div>
-                    <dt>Unit</dt>
-                    <dd>Each</dd>
-                  </div>
-                  <div>
-                    <dt>COGS</dt>
-                    <dd>$680.00</dd>
-                  </div>
-                  <div>
-                    <dt>Selling</dt>
-                    <dd>$850.00</dd>
-                  </div>
-                </dl>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-search="CAB-CAT6-BLU CAT6 UTP Cable"
-                data-category="cabling"
-                data-status="active"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <strong>CAT6 UTP Cable</strong><div
-                      class="muted text-sm mono"
-                    >
-                      CAB-CAT6-BLU
-                    </div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Category</dt>
-                    <dd>Cabling</dd>
-                  </div>
-                  <div>
-                    <dt>Unit</dt>
-                    <dd>Meter</dd>
-                  </div>
-                  <div>
-                    <dt>COGS</dt>
-                    <dd>$0.52</dd>
-                  </div>
-                  <div>
-                    <dt>Selling</dt>
-                    <dd>$0.70</dd>
-                  </div>
-                </dl>
-              </article>
+            <div class="record-card-list" data-records-cards hidden></div>
+            <div class="empty-state" data-records-empty>
+              <div class="empty-state-content">
+                <div class="empty-state-icon" aria-hidden="true">＋</div>
+                <h3>No products yet</h3>
+                <p>Add products or services to reuse them in BOQs.</p>
+                <button
+                  class="button button-primary"
+                  type="button"
+                  data-record-create
+                  data-open-modal="record-form-modal"
+                >
+                  Add product
+                </button>
+              </div>
             </div>
             <div class="empty-state" data-no-results hidden>
               <div class="empty-state-content">
-                <div class="empty-state-icon">⌕</div>
-                <h3>No catalog items found</h3>
-                <p>Try a different SKU, name, category, or status.</p>
+                <div class="empty-state-icon" aria-hidden="true">⌕</div>
+                <h3>No products found</h3>
+                <p>Try changing your search or filters.</p>
               </div>
             </div>
           </section>
         </main>
       </div>
     </div>
-    <div class="modal-backdrop" id="new-product-modal" hidden>
+
+    <div class="modal-backdrop" id="record-form-modal" hidden>
       <section
         class="modal modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="new-product-title"
+        aria-labelledby="product-form-title"
       >
         <header class="modal-header">
           <div>
-            <h2 id="new-product-title">Product details</h2>
+            <h2 id="product-form-title" data-record-form-title>Add product</h2>
             <p class="muted text-sm">
-              Standard values can be adjusted inside individual BOQs.
+              These defaults can be adjusted inside each BOQ.
             </p>
           </div>
-          <button class="icon-button" data-close-modal aria-label="Close">
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
-        <form
-          data-demo-form
-          data-success-message="Product saved to the catalog."
-        >
+        <form data-record-form>
           <div class="modal-body">
             <div class="form-grid">
               <label class="field col-4"><span class="field-label"
                 >SKU</span><input
                   class="input mono"
+                  name="sku"
                   required
-                  placeholder="e.g. NET-SW-048"
                 ></label><label class="field col-8 field-wide-mobile"><span
                   class="field-label"
                 >Product name</span><input
                   class="input"
+                  name="name"
                   required
-                  placeholder="Product or service name"
                 ></label><label class="field col-4"><span class="field-label"
-                >Category</span><select class="select">
+                >Category</span><select class="select" name="category">
                   <option>Network</option>
                   <option>Cabling</option>
                   <option>Power</option>
                   <option>Services</option>
+                  <option>Other</option>
                 </select></label><label class="field col-4"><span
                   class="field-label"
-                >Unit</span><select class="select">
+                >Unit</span><select class="select" name="unit">
                   <option>Each</option>
                   <option>Lot</option>
                   <option>Meter</option>
                   <option>Hour</option>
                   <option>Day</option>
+                  <option>Month</option>
                 </select></label><label class="field col-4"><span
                   class="field-label"
-                >Status</span><select class="select">
+                >Status</span><select class="select" name="status">
                   <option>Active</option>
                   <option>Inactive</option>
                 </select></label><label class="field col-4"><span
                   class="field-label"
                 >Default COGS</span><input
                   class="input align-right"
+                  name="defaultCogs"
                   type="number"
                   min="0"
                   step="0.01"
                   required
-                  value="0.00"
                 ></label><label class="field col-4"><span class="field-label"
                 >Default margin %</span><input
                   class="input align-right"
+                  name="defaultMargin"
                   type="number"
                   min="0"
                   step="0.1"
                   required
-                  value="25.0"
                 ></label><label class="field col-4"><span class="field-label"
                 >Default selling price</span><input
                   class="input align-right"
-                  value="$0.00"
+                  data-selling-price
                   disabled
                 ><span class="field-hint"
                 >Calculated from COGS + margin</span></label><label
                 class="field col-12"
               ><span class="field-label">Description</span><textarea
                   class="textarea"
-                  placeholder="Concise description for BOQ documents"
+                  name="description"
                 ></textarea></label>
             </div>
           </div>
@@ -591,6 +280,8 @@
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/records.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

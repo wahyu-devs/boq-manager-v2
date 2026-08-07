@@ -98,7 +98,7 @@
     document.querySelectorAll("[data-filter-scope]").forEach((scope) => {
       const search = scope.querySelector("[data-table-search]");
       const filters = [...scope.querySelectorAll("[data-table-filter]")];
-      const rows = [...scope.querySelectorAll("[data-table-row]")];
+      let rows = [...scope.querySelectorAll("[data-table-row]")];
       const cardList = scope.querySelector(".record-card-list");
 
       if (cardList) {
@@ -140,10 +140,11 @@
           cardList.append(card);
         });
       }
-      const cards = [...scope.querySelectorAll("[data-record-card]")];
       const noResults = scope.querySelector("[data-no-results]");
 
       const update = () => {
+        rows = [...scope.querySelectorAll("[data-table-row]")];
+        const cards = [...scope.querySelectorAll("[data-record-card]")];
         const query = (search?.value || "").trim().toLowerCase();
         const activeFilters = filters.map((filter) => ({
           key: filter.dataset.tableFilter,
@@ -175,7 +176,12 @@
           card.hidden = !(matchesQuery && matchesFilters);
         });
 
-        if (noResults) noResults.hidden = visibleCount > 0;
+        const hasCriteria = Boolean(query) ||
+          activeFilters.some(({ value }) => Boolean(value));
+        if (noResults) {
+          noResults.hidden = visibleCount > 0 || rows.length === 0 ||
+            !hasCriteria;
+        }
         scope.querySelector("[data-result-count]")?.replaceChildren(
           document.createTextNode(
             `${visibleCount} result${visibleCount === 1 ? "" : "s"}`,
@@ -185,6 +191,7 @@
 
       search?.addEventListener("input", window.BOQUtils.debounce(update, 100));
       filters.forEach((filter) => filter.addEventListener("change", update));
+      document.addEventListener("records:changed", update);
       update();
     });
   }
@@ -309,9 +316,6 @@
     if (confirmation) requestConfirmation(confirmation);
     if (event.target.closest("[data-confirm-action]")) confirmPendingAction();
 
-    const demoAction = event.target.closest("[data-demo-action]");
-    if (demoAction) showToast(demoAction.dataset.demoAction, "info");
-
     const saveButton = event.target.closest("[data-save]");
     if (saveButton) {
       event.preventDefault();
@@ -332,18 +336,6 @@
         showToast("Dashboard data is up to date.");
       }, 720);
     }
-  });
-
-  document.addEventListener("submit", (event) => {
-    if (!event.target.matches("[data-demo-form]")) return;
-    event.preventDefault();
-    const modal = event.target.closest(".modal-backdrop");
-    if (!event.target.checkValidity()) return;
-    if (modal) window.BOQModal.close(modal);
-    showToast(
-      event.target.dataset.successMessage || "Record created successfully.",
-    );
-    event.target.reset();
   });
 
   document.addEventListener("change", (event) => {

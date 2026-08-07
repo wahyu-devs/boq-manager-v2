@@ -4,107 +4,23 @@
 
   const { calculateItem, calculateSummary } = window.BOQCalculations;
   const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
-  let nextId = 7;
+  const store = window.BOQStore;
+  const settings = store.getSettings();
+  let nextId = 1;
   let dirty = false;
   let pendingDeleteId = null;
-
-  const items = [
-    {
-      id: 1,
-      sku: "NET-SW-048",
-      item: "Managed PoE Switch",
-      description: "48-port Layer 3 managed PoE+ switch",
-      qty: 4,
-      unit: "Each",
-      unitCogs: 4200,
-      margin: 28,
-    },
-    {
-      id: 2,
-      sku: "NET-AP-006",
-      item: "Wi-Fi 6 Access Point",
-      description: "Enterprise dual-band indoor access point",
-      qty: 24,
-      unit: "Each",
-      unitCogs: 680,
-      margin: 25,
-    },
-    {
-      id: 3,
-      sku: "NET-CTL-001",
-      item: "Network Controller",
-      description: "Central management appliance with 3-year license",
-      qty: 1,
-      unit: "Lot",
-      unitCogs: 7200,
-      margin: 30,
-    },
-    {
-      id: 4,
-      sku: "CAB-CAT6-BLU",
-      item: "CAT6 UTP Cable",
-      description: "Low-smoke, zero-halogen network cable",
-      qty: 12000,
-      unit: "Meter",
-      unitCogs: 0.52,
-      margin: 35,
-    },
-    {
-      id: 5,
-      sku: "SVC-INSTALL",
-      item: "Installation Services",
-      description: "Installation, termination, labeling, and testing",
-      qty: 160,
-      unit: "Hour",
-      unitCogs: 48,
-      margin: 40,
-    },
-    {
-      id: 6,
-      sku: "SVC-PM-DAY",
-      item: "Project Management",
-      description: "Project coordination, reporting, and handover",
-      qty: 8,
-      unit: "Day",
-      unitCogs: 650,
-      margin: 25,
-    },
-  ];
-
-  const catalog = [
-    {
-      sku: "RCK-42U-800",
-      item: "42U Server Rack",
-      description: "800 mm wide enclosed rack with cable management",
-      unit: "Each",
-      unitCogs: 1850,
-      margin: 28,
-    },
-    {
-      sku: "UPS-3000-RT",
-      item: "3 kVA Rack UPS",
-      description: "Online double-conversion UPS with network card",
-      unit: "Each",
-      unitCogs: 2140,
-      margin: 26,
-    },
-    {
-      sku: "NET-SFP-10G",
-      item: "10G SFP+ Module",
-      description: "10G short-range optical transceiver",
-      unit: "Each",
-      unitCogs: 185,
-      margin: 32,
-    },
-    {
-      sku: "SVC-COMMISSION",
-      item: "Testing & Commissioning",
-      description: "System testing, commissioning, and documentation",
-      unit: "Day",
-      unitCogs: 720,
-      margin: 35,
-    },
-  ];
+  let currentRecordId = new URLSearchParams(location.search).get("id");
+  let items = [];
+  const catalog = store.list("products").filter((product) =>
+    product.status !== "Inactive"
+  ).map((product) => ({
+    sku: product.sku,
+    item: product.name,
+    description: product.description || "",
+    unit: product.unit || "Each",
+    unitCogs: Number(product.defaultCogs || 0),
+    margin: Number(product.defaultMargin || 0),
+  }));
 
   const desktopBody = editor.querySelector("[data-items-body]");
   const mobileList = editor.querySelector("[data-mobile-items]");
@@ -112,6 +28,82 @@
 
   function currentCurrency() {
     return currencySelect?.value || "USD";
+  }
+
+  function populateRecordOptions() {
+    const projectSelect = document.querySelector("#boq-project");
+    const customerSelect = document.querySelector("#boq-customer");
+    projectSelect.innerHTML = '<option value="">No project selected</option>' +
+      store.list("projects").map((project) =>
+        `<option value="${project.id}">${escapeHtml(project.name)}</option>`
+      ).join("");
+    customerSelect.innerHTML =
+      '<option value="">No customer selected</option>' +
+      store.list("customers").map((customer) =>
+        `<option value="${customer.id}">${
+          escapeHtml(customer.companyName)
+        }</option>`
+      ).join("");
+  }
+
+  function localDate(date) {
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+  }
+
+  function initializeDocument() {
+    populateRecordOptions();
+    const record = currentRecordId ? store.get("boqs", currentRecordId) : null;
+    if (record) {
+      document.querySelector("#boq-number").value = record.number || "";
+      document.querySelector("#boq-title").value = record.title || "";
+      document.querySelector("#boq-status").value = record.status || "Draft";
+      document.querySelector("#boq-project").value = record.projectId || "";
+      document.querySelector("#boq-customer").value = record.customerId || "";
+      document.querySelector("#boq-currency").value = record.currency || "USD";
+      document.querySelector("#boq-date").value = record.date || "";
+      document.querySelector("#boq-valid-until").value = record.validUntil ||
+        "";
+      document.querySelector("#boq-notes").value = record.notes || "";
+      items = (record.items || []).map((item, index) => ({
+        ...item,
+        id: index + 1,
+      }));
+      nextId = items.length + 1;
+      document.querySelector("[data-save-state]").textContent =
+        "All changes saved";
+    } else {
+      currentRecordId = null;
+      const today = new Date();
+      const validUntil = new Date(today);
+      validUntil.setDate(
+        validUntil.getDate() + Number(settings.defaultValidity || 30),
+      );
+      document.querySelector("#boq-number").value = store.nextNumber(
+        "boqs",
+        "BOQ",
+      );
+      document.querySelector("#boq-date").value = localDate(today);
+      document.querySelector("#boq-valid-until").value = localDate(validUntil);
+      document.querySelector("#boq-currency").value =
+        settings.defaultCurrency || "USD";
+    }
+    updateEditorHeader();
+  }
+
+  function updateEditorHeader() {
+    const title = document.querySelector("#boq-title").value.trim();
+    const number = document.querySelector("#boq-number").value.trim();
+    const status = document.querySelector("#boq-status").value;
+    document.querySelector("[data-editor-title]").textContent = title ||
+      "New BOQ";
+    document.querySelector("[data-editor-number]").textContent = number ||
+      "New";
+    const statusNode = document.querySelector("[data-editor-status]");
+    statusNode.textContent = status;
+    statusNode.className = `status status-${
+      status === "In Review" ? "review" : status.toLowerCase()
+    }`;
   }
 
   function desktopRow(item, index) {
@@ -214,6 +206,8 @@
   function renderItems() {
     desktopBody.innerHTML = items.map(desktopRow).join("");
     mobileList.innerHTML = items.map(mobileCard).join("");
+    editor.querySelector("[data-editor-table]").hidden = items.length === 0;
+    editor.querySelector("[data-items-empty]").hidden = items.length > 0;
     editor.querySelector("[data-item-count]").textContent =
       `${items.length} item${items.length === 1 ? "" : "s"}`;
     updateSummary();
@@ -285,16 +279,18 @@
     items.push({
       id: nextId++,
       sku: source.sku || "CUSTOM",
-      item: source.item || "New custom item",
+      item: source.item || "",
       description: source.description || "",
       qty: source.qty || 1,
       unit: source.unit || "Each",
       unitCogs: source.unitCogs || 0,
-      margin: source.margin ?? 25,
+      margin: source.margin ?? Number(settings.defaultMargin || 0),
     });
     renderItems();
     markDirty();
-    window.BOQApp.showToast(`${source.item || "Custom item"} added.`);
+    window.BOQApp.showToast(
+      source.item ? `${source.item} added.` : "Custom item added.",
+    );
   }
 
   function duplicateItem(id) {
@@ -353,8 +349,10 @@
     const info = {
       number: document.querySelector("#boq-number").value,
       title: document.querySelector("#boq-title").value,
-      project: document.querySelector("#boq-project").selectedOptions[0].text,
-      customer: document.querySelector("#boq-customer").selectedOptions[0].text,
+      project:
+        document.querySelector("#boq-project").selectedOptions[0]?.text || "",
+      customer:
+        document.querySelector("#boq-customer").selectedOptions[0]?.text || "",
       date: document.querySelector("#boq-date").value,
       valid: document.querySelector("#boq-valid-until").value,
       notes: document.querySelector("#boq-notes").value,
@@ -373,7 +371,7 @@
     );
     rows.push(
       `<row r="2">${stringCell("A2", "Company")}${
-        stringCell("B2", "Northstar Systems Ltd.")
+        stringCell("B2", settings.companyName || "")
       }</row>`,
     );
     rows.push(
@@ -552,14 +550,21 @@
     const number = document.querySelector("#boq-number").value;
     const title = document.querySelector("#boq-title").value;
     const project =
-      document.querySelector("#boq-project").selectedOptions[0].text;
+      document.querySelector("#boq-project").selectedOptions[0]?.text || "";
     const customer =
-      document.querySelector("#boq-customer").selectedOptions[0].text;
+      document.querySelector("#boq-customer").selectedOptions[0]?.text || "";
     const date = document.querySelector("#boq-date").value;
     const valid = document.querySelector("#boq-valid-until").value;
     const notes = document.querySelector("#boq-notes").value;
+    const companyDetails = [settings.address, settings.email, settings.phone]
+      .filter(Boolean).map(escapeHtml).join("<br>");
+    const companyLogo = settings.companyLogo
+      ? `<img class="pdf-company-logo" src="${settings.companyLogo}" alt="">`
+      : "";
     host.innerHTML =
-      `<div class="pdf-preview-content"><header class="pdf-preview-header"><div><strong class="pdf-company">NORTHSTAR SYSTEMS</strong><p>120 Market Street · San Francisco, CA 94105<br>sales@northstarsystems.example · +1 415 555 0184</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${
+      `<div class="pdf-preview-content"><header class="pdf-preview-header"><div>${companyLogo}<strong class="pdf-company">${
+        escapeHtml(settings.companyName || "Company information not configured")
+      }</strong><p>${companyDetails}</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${
         escapeHtml(number)
       }</strong><br>Date: ${escapeHtml(date)}<br>Valid until: ${
         escapeHtml(valid)
@@ -591,6 +596,43 @@
       }</strong></div></div><div class="pdf-notes"><strong>Terms / Notes</strong><p>${
         escapeHtml(notes)
       }</p></div><footer class="pdf-footer">Generated by BOQ Manager · Pricing excludes applicable taxes unless stated otherwise.</footer></div>`;
+  }
+
+  function saveDocument() {
+    const summary = calculateSummary(items);
+    const projectSelect = document.querySelector("#boq-project");
+    const customerSelect = document.querySelector("#boq-customer");
+    const existing = currentRecordId
+      ? store.get("boqs", currentRecordId)
+      : null;
+    const record = store.save("boqs", {
+      id: currentRecordId || undefined,
+      createdAt: existing?.createdAt,
+      number: document.querySelector("#boq-number").value.trim(),
+      title: document.querySelector("#boq-title").value.trim(),
+      status: document.querySelector("#boq-status").value,
+      projectId: projectSelect.value,
+      projectName: projectSelect.value
+        ? projectSelect.selectedOptions[0]?.text || ""
+        : "",
+      customerId: customerSelect.value,
+      customerName: customerSelect.value
+        ? customerSelect.selectedOptions[0]?.text || ""
+        : "",
+      currency: currentCurrency(),
+      date: document.querySelector("#boq-date").value,
+      validUntil: document.querySelector("#boq-valid-until").value,
+      notes: document.querySelector("#boq-notes").value.trim(),
+      items: items.map(({ id, ...item }) => item),
+      ...summary,
+    });
+    currentRecordId = record.id;
+    history.replaceState(
+      null,
+      "",
+      `boq-editor.html?id=${encodeURIComponent(record.id)}`,
+    );
+    updateEditorHeader();
   }
 
   editor.addEventListener("input", (event) => {
@@ -693,12 +735,18 @@
   );
   document.querySelectorAll(
     "#boq-info input, #boq-info select, #boq-info textarea",
-  ).forEach((input) => input.addEventListener("change", markDirty));
+  ).forEach((input) =>
+    input.addEventListener("input", () => {
+      updateEditorHeader();
+      markDirty();
+    })
+  );
   currencySelect?.addEventListener("change", () => {
     renderItems();
     markDirty();
   });
   document.addEventListener("boq:saved", () => {
+    saveDocument();
     dirty = false;
     document.querySelectorAll("[data-save-state]").forEach((element) => {
       element.textContent = "All changes saved";
@@ -710,6 +758,7 @@
     event.returnValue = "";
   });
 
+  initializeDocument();
   renderItems();
   updateCatalogResults();
 })();

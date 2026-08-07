@@ -34,7 +34,8 @@
               <button
                 class="button button-primary"
                 type="button"
-                data-open-modal="new-project-modal"
+                data-record-create
+                data-open-modal="record-form-modal"
               >
                 <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
                   <path d="M12 5v14M5 12h14" />
@@ -50,10 +51,9 @@
             <div class="panel-header">
               <div>
                 <h2 id="project-register-heading">Project register</h2>
-                <p>
-                  <span data-result-count>6 results</span> · 18 active projects
-                </p>
-              </div><span class="badge">$4.12M estimated value</span>
+                <p><span data-result-count>0 results</span></p>
+              </div><span class="badge"><span data-total-records>0</span>
+                projects</span>
             </div>
             <div class="toolbar">
               <label class="search-field"><span class="sr-only"
@@ -67,7 +67,7 @@
                 </svg><input
                   class="input"
                   type="search"
-                  placeholder="Search project, code, or customer"
+                  placeholder="Search project, code, customer, or owner"
                   data-table-search
                 ></label><div class="toolbar-group">
                 <label><span class="sr-only">Filter status</span><select
@@ -77,26 +77,28 @@
                     <option value="">All statuses</option>
                     <option value="active">Active</option>
                     <option value="planning">Planning</option>
-                    <option value="on-hold">On hold</option>
+                    <option value="on-hold">On Hold</option>
                     <option value="completed">Completed</option>
                   </select></label><label><span class="sr-only"
                   >Filter owner</span><select
                     class="select select-sm"
                     data-table-filter="owner"
+                    data-owner-filter
                   >
                     <option value="">All owners</option>
-                    <option value="alex">Alex Rivera</option>
-                    <option value="maya">Maya Chen</option>
-                    <option value="sam">Sam Okafor</option>
                   </select></label>
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap" data-records-table hidden>
               <table class="data-table">
                 <thead>
                   <tr>
                     <th>
-                      <button class="sort-button" data-sort-key="projectName">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="projectName"
+                      >
                         Project
                       </button>
                     </th>
@@ -106,358 +108,50 @@
                     <th>Status</th>
                     <th>Start date</th>
                     <th class="align-right">
-                      <button class="sort-button" data-sort-key="value">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="value"
+                      >
                         Est. value
                       </button>
                     </th>
                     <th class="align-right">
-                      <button class="sort-button" data-sort-key="boqs">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="boqs"
+                      >
                         BOQs
                       </button>
                     </th>
                     <th><span class="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr
-                    data-table-row
-                    data-search="Meridian HQ Upgrade PRJ-26017 Meridian Foods Alex Rivera"
-                    data-status="active"
-                    data-owner="alex"
-                    data-project-name="Meridian HQ Upgrade"
-                    data-value="612000"
-                    data-boqs="3"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        type="button"
-                        data-open-modal="project-detail-modal"
-                      >
-                        Meridian HQ Upgrade
-                      </button><span class="cell-secondary"
-                      >Corporate infrastructure modernization</span>
-                    </td>
-                    <td class="mono">PRJ-26017</td>
-                    <td>Meridian Foods</td>
-                    <td>Alex Rivera</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>12 May 2026</td>
-                    <td class="align-right currency">$612,000</td>
-                    <td class="align-right number">3</td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="project-detail-modal"
-                        aria-label="Open Meridian HQ Upgrade"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="North Hub Phase 2 PRJ-26014 Polar Logistics Maya Chen"
-                    data-status="active"
-                    data-owner="maya"
-                    data-project-name="North Hub Phase 2"
-                    data-value="489000"
-                    data-boqs="2"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        type="button"
-                        data-open-modal="project-detail-modal"
-                      >
-                        North Hub Phase 2
-                      </button><span class="cell-secondary"
-                      >Distribution center expansion</span>
-                    </td>
-                    <td class="mono">PRJ-26014</td>
-                    <td>Polar Logistics</td>
-                    <td>Maya Chen</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>28 Apr 2026</td>
-                    <td class="align-right currency">$489,000</td>
-                    <td class="align-right number">2</td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="project-detail-modal"
-                        aria-label="Open North Hub Phase 2"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Aster Medical Center PRJ-26011 Aster Health Sam Okafor"
-                    data-status="active"
-                    data-owner="sam"
-                    data-project-name="Aster Medical Center"
-                    data-value="354000"
-                    data-boqs="4"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        type="button"
-                        data-open-modal="project-detail-modal"
-                      >
-                        Aster Medical Center
-                      </button><span class="cell-secondary"
-                      >New outpatient facility</span>
-                    </td>
-                    <td class="mono">PRJ-26011</td>
-                    <td>Aster Health</td>
-                    <td>Sam Okafor</td>
-                    <td><span class="status status-active">Active</span></td>
-                    <td>7 Apr 2026</td>
-                    <td class="align-right currency">$354,000</td>
-                    <td class="align-right number">4</td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="project-detail-modal"
-                        aria-label="Open Aster Medical Center"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Harbor Point Fit-out PRJ-26008 Harbor Properties Alex Rivera"
-                    data-status="planning"
-                    data-owner="alex"
-                    data-project-name="Harbor Point Fit-out"
-                    data-value="276000"
-                    data-boqs="1"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        type="button"
-                        data-open-modal="project-detail-modal"
-                      >
-                        Harbor Point Fit-out
-                      </button><span class="cell-secondary"
-                      >Tenant technology and security works</span>
-                    </td>
-                    <td class="mono">PRJ-26008</td>
-                    <td>Harbor Properties</td>
-                    <td>Alex Rivera</td>
-                    <td><span class="status status-review">Planning</span></td>
-                    <td>18 Aug 2026</td>
-                    <td class="align-right currency">$276,000</td>
-                    <td class="align-right number">1</td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="project-detail-modal"
-                        aria-label="Open Harbor Point Fit-out"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Cedar Campus Wi-Fi PRJ-25093 Cedar University Maya Chen"
-                    data-status="on-hold"
-                    data-owner="maya"
-                    data-project-name="Cedar Campus Wi-Fi"
-                    data-value="198000"
-                    data-boqs="2"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        type="button"
-                        data-open-modal="project-detail-modal"
-                      >
-                        Cedar Campus Wi-Fi
-                      </button><span class="cell-secondary"
-                      >Campus wireless coverage upgrade</span>
-                    </td>
-                    <td class="mono">PRJ-25093</td>
-                    <td>Cedar University</td>
-                    <td>Maya Chen</td>
-                    <td><span class="status status-draft">On hold</span></td>
-                    <td>4 Nov 2025</td>
-                    <td class="align-right currency">$198,000</td>
-                    <td class="align-right number">2</td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="project-detail-modal"
-                        aria-label="Open Cedar Campus Wi-Fi"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-search="Orion Office Move PRJ-25088 Orion Ventures Sam Okafor"
-                    data-status="completed"
-                    data-owner="sam"
-                    data-project-name="Orion Office Move"
-                    data-value="143000"
-                    data-boqs="2"
-                  >
-                    <td>
-                      <button
-                        class="link cell-primary"
-                        type="button"
-                        data-open-modal="project-detail-modal"
-                      >
-                        Orion Office Move
-                      </button><span class="cell-secondary"
-                      >Office relocation and commissioning</span>
-                    </td>
-                    <td class="mono">PRJ-25088</td>
-                    <td>Orion Ventures</td>
-                    <td>Sam Okafor</td>
-                    <td>
-                      <span class="status status-approved">Completed</span>
-                    </td>
-                    <td>15 Sep 2025</td>
-                    <td class="align-right currency">$143,000</td>
-                    <td class="align-right number">2</td>
-                    <td>
-                      <button
-                        class="icon-button"
-                        data-open-modal="project-detail-modal"
-                        aria-label="Open Orion Office Move"
-                      >
-                        →
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody data-records-body></tbody>
               </table>
             </div>
-            <div class="record-card-list">
-              <article
-                class="record-card"
-                data-record-card
-                data-search="Meridian HQ Upgrade PRJ-26017 Meridian Foods Alex Rivera"
-                data-status="active"
-                data-owner="alex"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <button
-                      class="link cell-primary"
-                      data-open-modal="project-detail-modal"
-                    >
-                      Meridian HQ Upgrade
-                    </button>
-                    <div class="muted text-sm mono">PRJ-26017</div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Meridian Foods</dd>
-                  </div>
-                  <div>
-                    <dt>Owner</dt>
-                    <dd>Alex Rivera</dd>
-                  </div>
-                  <div>
-                    <dt>Est. value</dt>
-                    <dd>$612,000</dd>
-                  </div>
-                  <div>
-                    <dt>BOQs</dt>
-                    <dd>3</dd>
-                  </div>
-                </dl>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-search="North Hub Phase 2 PRJ-26014 Polar Logistics Maya Chen"
-                data-status="active"
-                data-owner="maya"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <button
-                      class="link cell-primary"
-                      data-open-modal="project-detail-modal"
-                    >
-                      North Hub Phase 2
-                    </button>
-                    <div class="muted text-sm mono">PRJ-26014</div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Polar Logistics</dd>
-                  </div>
-                  <div>
-                    <dt>Owner</dt>
-                    <dd>Maya Chen</dd>
-                  </div>
-                  <div>
-                    <dt>Est. value</dt>
-                    <dd>$489,000</dd>
-                  </div>
-                  <div>
-                    <dt>BOQs</dt>
-                    <dd>2</dd>
-                  </div>
-                </dl>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-search="Aster Medical Center PRJ-26011 Aster Health Sam Okafor"
-                data-status="active"
-                data-owner="sam"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <button
-                      class="link cell-primary"
-                      data-open-modal="project-detail-modal"
-                    >
-                      Aster Medical Center
-                    </button>
-                    <div class="muted text-sm mono">PRJ-26011</div>
-                  </div><span class="status status-active">Active</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Aster Health</dd>
-                  </div>
-                  <div>
-                    <dt>Owner</dt>
-                    <dd>Sam Okafor</dd>
-                  </div>
-                  <div>
-                    <dt>Est. value</dt>
-                    <dd>$354,000</dd>
-                  </div>
-                  <div>
-                    <dt>BOQs</dt>
-                    <dd>4</dd>
-                  </div>
-                </dl>
-              </article>
+            <div class="record-card-list" data-records-cards hidden></div>
+            <div class="empty-state" data-records-empty>
+              <div class="empty-state-content">
+                <div class="empty-state-icon" aria-hidden="true">＋</div>
+                <h3>No projects yet</h3>
+                <p>Add a project before connecting it to a BOQ.</p>
+                <button
+                  class="button button-primary"
+                  type="button"
+                  data-record-create
+                  data-open-modal="record-form-modal"
+                >
+                  Add project
+                </button>
+              </div>
             </div>
             <div class="empty-state" data-no-results hidden>
               <div class="empty-state-content">
-                <div class="empty-state-icon">⌕</div>
+                <div class="empty-state-icon" aria-hidden="true">⌕</div>
                 <h3>No projects found</h3>
-                <p>Try another project name, owner, or status.</p>
+                <p>Try changing your search or filters.</p>
               </div>
             </div>
           </section>
@@ -465,63 +159,69 @@
       </div>
     </div>
 
-    <div class="modal-backdrop" id="new-project-modal" hidden>
+    <div class="modal-backdrop" id="record-form-modal" hidden>
       <section
         class="modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="new-project-title"
+        aria-labelledby="project-form-title"
       >
         <header class="modal-header">
-          <h2 id="new-project-title">Create project</h2>
-          <button class="icon-button" data-close-modal aria-label="Close">
+          <h2 id="project-form-title" data-record-form-title>Add project</h2>
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
-        <form
-          data-demo-form
-          data-success-message="Project created successfully."
-        >
+        <form data-record-form>
           <div class="modal-body">
             <div class="form-grid">
               <label class="field col-8 field-wide-mobile"><span
                   class="field-label"
                 >Project name</span><input
                   class="input"
+                  name="name"
                   required
-                  placeholder="e.g. Central Office Upgrade"
                 ></label><label class="field col-4"><span class="field-label"
                 >Project code</span><input
                   class="input mono"
+                  name="code"
                   required
-                  value="PRJ-26018"
                 ></label><label class="field col-6"><span class="field-label"
-                >Customer</span><select class="select" required>
-                  <option value="">Select customer</option>
-                  <option>Meridian Foods</option>
-                  <option>Polar Logistics</option>
+                >Customer</span><select class="select" name="customerId">
+                  <option value="">No customer selected</option>
                 </select></label><label class="field col-6"><span
                   class="field-label"
-                >Project owner</span><select class="select">
-                  <option>Alex Rivera</option>
-                  <option>Maya Chen</option>
-                  <option>Sam Okafor</option>
-                </select></label><label class="field col-6"><span
+                >Project owner</span><input
+                  class="input"
+                  name="owner"
+                ></label><label class="field col-4"><span class="field-label"
+                >Status</span><select class="select" name="status">
+                  <option>Planning</option>
+                  <option>Active</option>
+                  <option>On Hold</option>
+                  <option>Completed</option>
+                </select></label><label class="field col-4"><span
                   class="field-label"
                 >Start date</span><input
                   class="input"
+                  name="startDate"
                   type="date"
-                  value="2026-08-07"
-                ></label><label class="field col-6"><span class="field-label"
+                ></label><label class="field col-4"><span class="field-label"
                 >Estimated value</span><input
                   class="input align-right"
+                  name="estimatedValue"
                   type="number"
                   min="0"
-                  placeholder="0.00"
+                  step="0.01"
                 ></label><label class="field col-12"><span class="field-label"
                 >Notes</span><textarea
                   class="textarea"
-                  placeholder="Project scope or commercial context"
+                  name="notes"
                 ></textarea></label>
             </div>
           </div>
@@ -534,99 +234,38 @@
               Cancel
             </button>
             <button class="button button-primary" type="submit">
-              Create project
+              Save project
             </button>
           </footer>
         </form>
       </section>
     </div>
-    <div class="modal-backdrop" id="project-detail-modal" hidden>
+    <div class="modal-backdrop" id="record-detail-modal" hidden>
       <section
-        class="modal modal-lg"
+        class="modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-detail-title"
       >
         <header class="modal-header">
-          <div>
-            <h2 id="project-detail-title">Meridian HQ Upgrade</h2>
-            <p class="muted text-sm mono">PRJ-26017 · Meridian Foods</p>
-          </div>
-          <button class="icon-button" data-close-modal aria-label="Close">
+          <h2 id="project-detail-title">Project details</h2>
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
-        <div class="modal-body stack-lg">
-          <div class="form-grid">
-            <div class="field col-3">
-              <span class="field-label">Owner</span><strong>Alex Rivera</strong>
-            </div>
-            <div class="field col-3">
-              <span class="field-label">Status</span><span><span
-                  class="status status-active"
-                >Active</span></span>
-            </div>
-            <div class="field col-3">
-              <span class="field-label">Estimated value</span><strong
-              >$612,000</strong>
-            </div>
-            <div class="field col-3">
-              <span class="field-label">Start date</span><strong>12 May
-                2026</strong>
-            </div>
-          </div>
-          <div>
-            <div class="cluster space-between">
-              <h3>Related BOQs</h3><a
-                class="link text-sm"
-                href="boq-editor.html"
-              >Create BOQ</a>
-            </div>
-            <div class="table-wrap detail-table-wrap">
-              <table class="data-table detail-table">
-                <thead>
-                  <tr>
-                    <th>BOQ</th>
-                    <th>Status</th>
-                    <th class="align-right">Value</th>
-                    <th>Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <a class="link" href="boq-editor.html"
-                      >BOQ-2026-084</a><span class="cell-secondary"
-                      >HQ Network Refresh</span>
-                    </td>
-                    <td><span class="status status-review">In Review</span></td>
-                    <td class="align-right">$186,420</td>
-                    <td>18 min ago</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a class="link" href="boq-editor.html"
-                      >BOQ-2026-073</a><span class="cell-secondary"
-                      >AV Conference Rooms</span>
-                    </td>
-                    <td><span class="status status-won">Won</span></td>
-                    <td class="align-right">$148,500</td>
-                    <td>5 days ago</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <div class="modal-body" data-record-detail></div>
         <footer class="modal-footer">
-          <button class="button button-secondary" data-close-modal>
-            Close
-          </button>
           <button
-            class="button button-primary"
-            data-demo-action="Project details are ready to edit."
+            class="button button-secondary"
+            type="button"
+            data-close-modal
           >
-            Edit project
+            Close
           </button>
         </footer>
       </section>
@@ -635,6 +274,8 @@
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/records.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

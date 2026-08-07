@@ -27,7 +27,7 @@
           <header class="page-header">
             <div class="page-header-copy">
               <h1>Dashboard</h1>
-              <p>Pricing activity and project work requiring attention.</p>
+              <p>Your project pricing activity and current workload.</p>
             </div>
             <div class="page-actions">
               <button
@@ -55,27 +55,27 @@
                 <div class="panel-header">
                   <div>
                     <h2 id="portfolio-heading">Commercial portfolio</h2>
-                    <p>Open and issued BOQs, excluding lost opportunities.</p>
+                    <p>Calculated from BOQs entered in this browser.</p>
                   </div>
-                  <span class="badge">As of 7 Aug 2026</span>
+                  <span class="badge" data-dashboard-date></span>
                 </div>
                 <div class="metric-overview">
                   <div class="primary-metric">
                     <div class="metric-label">Total BOQ value</div>
-                    <div class="metric-value">$2.84M</div>
-                    <div class="metric-detail">
-                      <span class="delta">+8.6%</span> from last month
-                    </div>
+                    <div class="metric-value" data-metric="boqValue">$0.00</div>
+                    <div class="metric-detail">All saved BOQs</div>
                   </div>
                   <div class="supporting-metric">
                     <div class="metric-label">Average margin</div>
-                    <div class="metric-value">27.4%</div>
-                    <div class="metric-detail">Target: 25.0%</div>
+                    <div class="metric-value" data-metric="margin">0.0%</div>
+                    <div class="metric-detail">Weighted by COGS</div>
                   </div>
                   <div class="supporting-metric">
                     <div class="metric-label">Win rate</div>
-                    <div class="metric-value">42%</div>
-                    <div class="metric-detail">12 of 29 decided</div>
+                    <div class="metric-value" data-metric="winRate">0%</div>
+                    <div class="metric-detail" data-metric-detail="winRate">
+                      No decided BOQs
+                    </div>
                   </div>
                 </div>
                 <div class="panel-body">
@@ -84,37 +84,15 @@
                       <strong>BOQ status overview</strong><div
                         class="muted text-sm"
                       >
-                        47 BOQs across all active projects
+                        <span data-metric="boqCount">0</span> BOQs
                       </div>
-                    </div>
-                    <a class="link text-sm" href="boqs.html">View all BOQs</a>
+                    </div><a class="link text-sm" href="boqs.html"
+                    >View all BOQs</a>
                   </div>
-                  <div class="status-overview status-overview-spaced">
-                    <div class="status-row">
-                      <span>Draft</span><div class="progress-track">
-                        <div class="progress-bar muted progress-54"></div>
-                      </div><strong>13</strong>
-                    </div>
-                    <div class="status-row">
-                      <span>In review</span><div class="progress-track">
-                        <div class="progress-bar warning progress-33"></div>
-                      </div><strong>8</strong>
-                    </div>
-                    <div class="status-row">
-                      <span>Approved</span><div class="progress-track">
-                        <div class="progress-bar progress-25"></div>
-                      </div><strong>6</strong>
-                    </div>
-                    <div class="status-row">
-                      <span>Sent</span><div class="progress-track">
-                        <div class="progress-bar info progress-42"></div>
-                      </div><strong>10</strong>
-                    </div>
-                    <div class="status-row">
-                      <span>Won</span><div class="progress-track">
-                        <div class="progress-bar progress-29"></div>
-                      </div><strong>7</strong>
-                    </div>
+                  <div
+                    class="status-overview status-overview-spaced"
+                    data-status-overview
+                  >
                   </div>
                 </div>
               </section>
@@ -123,13 +101,11 @@
                 <div class="panel-header">
                   <div>
                     <h2 id="recent-boqs-heading">Recently updated BOQs</h2>
-                    <p>
-                      Documents changed by your team in the last seven days.
-                    </p>
-                  </div>
-                  <a class="link text-sm" href="boqs.html">Open register</a>
+                    <p>Your latest saved documents.</p>
+                  </div><a class="link text-sm" href="boqs.html"
+                  >Open register</a>
                 </div>
-                <div class="table-wrap">
+                <div class="table-wrap" data-recent-boqs-table hidden>
                   <table class="data-table table-dashboard">
                     <thead>
                       <tr>
@@ -141,61 +117,18 @@
                         <th>Updated</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <a class="cell-primary" href="boq-editor.html"
-                          >BOQ-2026-084</a><span class="cell-secondary"
-                          >HQ Network Refresh</span>
-                        </td>
-                        <td>Meridian HQ Upgrade</td>
-                        <td>
-                          <span class="status status-review">In Review</span>
-                        </td>
-                        <td class="align-right currency">$186,420.00</td>
-                        <td class="align-right number">28.6%</td>
-                        <td>18 min ago</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <a class="cell-primary" href="boq-editor.html"
-                          >BOQ-2026-081</a><span class="cell-secondary"
-                          >Warehouse Automation</span>
-                        </td>
-                        <td>North Hub Phase 2</td>
-                        <td><span class="status status-sent">Sent</span></td>
-                        <td class="align-right currency">$428,900.00</td>
-                        <td class="align-right number">26.2%</td>
-                        <td>Yesterday</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <a class="cell-primary" href="boq-editor.html"
-                          >BOQ-2026-079</a><span class="cell-secondary"
-                          >Security System Package</span>
-                        </td>
-                        <td>Harbor Point Fit-out</td>
-                        <td>
-                          <span class="status status-approved">Approved</span>
-                        </td>
-                        <td class="align-right currency">$94,760.00</td>
-                        <td class="align-right number">30.4%</td>
-                        <td>2 days ago</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <a class="cell-primary" href="boq-editor.html"
-                          >BOQ-2026-077</a><span class="cell-secondary"
-                          >Electrical Works</span>
-                        </td>
-                        <td>Aster Medical Center</td>
-                        <td><span class="status status-draft">Draft</span></td>
-                        <td class="align-right currency">$251,300.00</td>
-                        <td class="align-right number">24.8%</td>
-                        <td>3 days ago</td>
-                      </tr>
-                    </tbody>
+                    <tbody data-recent-boqs></tbody>
                   </table>
+                </div>
+                <div class="empty-state" data-recent-boqs-empty>
+                  <div class="empty-state-content">
+                    <div class="empty-state-icon" aria-hidden="true">＋</div>
+                    <h3>No BOQs yet</h3>
+                    <p>Create your first BOQ to see pricing activity here.</p><a
+                      class="button button-primary"
+                      href="boq-editor.html"
+                    >Create BOQ</a>
+                  </div>
                 </div>
               </section>
             </div>
@@ -205,26 +138,40 @@
                 <div class="panel-header">
                   <div>
                     <h2>Operating snapshot</h2>
-                    <p>Current workload</p>
+                    <p>Current saved records</p>
                   </div>
                 </div>
                 <div class="panel-body">
                   <dl class="stack-md">
                     <div class="cluster space-between">
                       <dt class="muted">Active projects</dt>
-                      <dd class="text-medium number">18</dd>
+                      <dd
+                        class="text-medium number"
+                        data-metric="activeProjects"
+                      >
+                        0
+                      </dd>
                     </div>
                     <div class="cluster space-between">
                       <dt class="muted">Total BOQs</dt>
-                      <dd class="text-medium number">47</dd>
+                      <dd class="text-medium number" data-metric="boqCount">
+                        0
+                      </dd>
                     </div>
                     <div class="cluster space-between">
                       <dt class="muted">Awaiting review</dt>
-                      <dd class="text-medium number">8</dd>
+                      <dd class="text-medium number" data-metric="reviewCount">
+                        0
+                      </dd>
                     </div>
                     <div class="cluster space-between">
-                      <dt class="muted">Expiring in 7 days</dt>
-                      <dd class="text-medium number danger-text">3</dd>
+                      <dt class="muted">Customers</dt>
+                      <dd
+                        class="text-medium number"
+                        data-metric="customerCount"
+                      >
+                        0
+                      </dd>
                     </div>
                   </dl>
                 </div>
@@ -234,31 +181,17 @@
                 <div class="panel-header">
                   <div>
                     <h2>Attention needed</h2>
-                    <p>Small signals worth acting on</p>
+                    <p>Items that may require action</p>
                   </div>
                 </div>
                 <div class="panel-body panel-body-compact-y">
-                  <ul class="insight-list">
-                    <li class="insight-item">
-                      <span class="insight-icon">!</span><p>
-                        <strong>3 BOQs expire this week.</strong><br>Follow up
-                        before pricing validity ends.
-                      </p>
-                    </li>
-                    <li class="insight-item">
-                      <span class="insight-icon">↗</span><p>
-                        <strong>Network equipment COGS rose
-                          4.2%.</strong><br>Review two draft BOQs using older
-                        catalog rates.
-                      </p>
-                    </li>
-                    <li class="insight-item">
-                      <span class="insight-icon">✓</span><p>
-                        <strong>Margin is above target.</strong><br>Portfolio
-                        margin is 2.4 points over plan.
-                      </p>
-                    </li>
-                  </ul>
+                  <ul class="insight-list" data-insights></ul>
+                  <div class="empty-state compact-empty" data-insights-empty>
+                    <div class="empty-state-content">
+                      <h3>Nothing needs attention</h3>
+                      <p>Alerts will appear as you add and update BOQs.</p>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -266,34 +199,24 @@
                 <div class="panel-header">
                   <div>
                     <h2>Recent projects</h2>
-                    <p>Latest project activity</p>
+                    <p>Your latest project records</p>
                   </div><a class="link text-sm" href="projects.html"
                   >View all</a>
                 </div>
                 <div class="panel-body panel-body-compact-y">
-                  <ul class="activity-list">
-                    <li class="activity-item">
-                      <span class="avatar">MH</span><p>
-                        <strong>Meridian HQ Upgrade</strong><br>3 BOQs ·
-                        $612K<span class="activity-time"
-                        >Updated 18 minutes ago</span>
-                      </p>
-                    </li>
-                    <li class="activity-item">
-                      <span class="avatar">NH</span><p>
-                        <strong>North Hub Phase 2</strong><br>2 BOQs ·
-                        $489K<span class="activity-time"
-                        >Updated yesterday</span>
-                      </p>
-                    </li>
-                    <li class="activity-item">
-                      <span class="avatar">AM</span><p>
-                        <strong>Aster Medical Center</strong><br>4 BOQs ·
-                        $354K<span class="activity-time"
-                        >Updated 3 days ago</span>
-                      </p>
-                    </li>
-                  </ul>
+                  <ul class="activity-list" data-recent-projects></ul>
+                  <div
+                    class="empty-state compact-empty"
+                    data-recent-projects-empty
+                  >
+                    <div class="empty-state-content">
+                      <h3>No projects yet</h3>
+                      <p>Add a project to connect it with BOQs.</p><a
+                        class="button button-secondary button-sm"
+                        href="projects.html"
+                      >Add project</a>
+                    </div>
+                  </div>
                 </div>
               </section>
             </aside>
@@ -305,6 +228,8 @@
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/dashboard.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

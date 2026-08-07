@@ -32,15 +32,6 @@
               </p>
             </div>
             <div class="page-actions">
-              <button
-                class="button button-secondary"
-                type="button"
-                data-demo-action="The BOQ register has been exported."
-              >
-                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
-                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
-                </svg><span>Export register</span>
-              </button>
               <a class="button button-primary" href="boq-editor.html"><svg
                   class="icon"
                   aria-hidden="true"
@@ -60,31 +51,27 @@
               <div>
                 <h2 id="boq-register-heading">BOQ register</h2>
                 <p>
-                  <span data-result-count>8 results</span> · Values shown before
+                  <span data-result-count>0 results</span> · Values shown before
                   tax
                 </p>
-              </div>
-              <div class="cluster">
-                <span class="badge">47 total</span><span class="badge"
-                >$2.84M open value</span>
-              </div>
+              </div><span class="badge"><span data-total-records>0</span>
+                total</span>
             </div>
             <div class="toolbar">
-              <div class="toolbar-group">
-                <label class="search-field">
-                  <span class="sr-only">Search BOQs</span>
-                  <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-4-4" />
-                  </svg>
-                  <input
-                    class="input"
-                    type="search"
-                    placeholder="Search BOQ, project, or customer"
-                    data-table-search
-                  >
-                </label>
-              </div>
+              <label class="search-field"><span class="sr-only"
+                >Search BOQs</span><svg
+                  class="icon"
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-4-4" />
+                </svg><input
+                  class="input"
+                  type="search"
+                  placeholder="Search BOQ, project, or customer"
+                  data-table-search
+                ></label>
               <div class="toolbar-group">
                 <label><span class="sr-only">Filter by status</span><select
                     class="select select-sm"
@@ -92,7 +79,7 @@
                   >
                     <option value="">All statuses</option>
                     <option value="draft">Draft</option>
-                    <option value="review">In Review</option>
+                    <option value="in-review">In Review</option>
                     <option value="approved">Approved</option>
                     <option value="sent">Sent</option>
                     <option value="won">Won</option>
@@ -101,16 +88,13 @@
                 <label><span class="sr-only">Filter by project</span><select
                     class="select select-sm"
                     data-table-filter="project"
+                    data-project-filter
                   >
                     <option value="">All projects</option>
-                    <option value="meridian">Meridian HQ</option>
-                    <option value="north-hub">North Hub</option>
-                    <option value="aster">Aster Medical</option>
-                    <option value="harbor">Harbor Point</option>
                   </select></label>
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap" data-records-table hidden>
               <table class="data-table">
                 <thead>
                   <tr>
@@ -173,632 +157,25 @@
                     <th><span class="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr
-                    data-table-row
-                    data-record-id="boq-084"
-                    data-search="BOQ-2026-084 HQ Network Refresh Meridian HQ Upgrade Meridian Foods"
-                    data-status="review"
-                    data-project="meridian"
-                    data-number="84"
-                    data-project-name="Meridian HQ Upgrade"
-                    data-value="186420"
-                    data-margin="28.6"
-                    data-created="20260801"
-                    data-updated="20260807"
-                  >
-                    <td>
-                      <a class="cell-primary" href="boq-editor.html"
-                      >BOQ-2026-084</a><span class="cell-secondary"
-                      >HQ Network Refresh</span>
-                    </td>
-                    <td>Meridian HQ Upgrade</td>
-                    <td>Meridian Foods</td>
-                    <td><span class="status status-review">In Review</span></td>
-                    <td class="align-right currency">$186,420.00</td>
-                    <td class="align-right number">28.6%</td>
-                    <td>1 Aug 2026</td>
-                    <td>18 min ago</td>
-                    <td>
-                      <div class="row-actions">
-                        <a
-                          class="icon-button"
-                          href="boq-editor.html"
-                          aria-label="Edit BOQ-2026-084"
-                          title="Edit"
-                        >✎</a><div class="menu-wrap">
-                          <button
-                            class="icon-button"
-                            type="button"
-                            data-menu-trigger
-                            aria-expanded="false"
-                            aria-label="More actions for BOQ-2026-084"
-                          >
-                            •••
-                          </button>
-                          <div class="dropdown-menu" hidden>
-                            <button
-                              class="menu-item"
-                              type="button"
-                              data-open-modal="boq-preview-modal"
-                            >
-                              Preview
-                            </button>
-                            <button
-                              class="menu-item"
-                              type="button"
-                              data-demo-action="BOQ-2026-084 duplicated as a new draft."
-                            >
-                              Duplicate
-                            </button>
-                            <button
-                              class="menu-item"
-                              type="button"
-                              data-demo-action="BOQ-2026-084 export prepared."
-                            >
-                              Export
-                            </button>
-                            <button
-                              class="menu-item danger-text"
-                              type="button"
-                              data-confirm
-                              data-target-id="boq-084"
-                              data-confirm-title="Delete BOQ-2026-084?"
-                              data-confirm-message="The BOQ and its pricing details will be permanently removed."
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="boq-081"
-                    data-search="BOQ-2026-081 Warehouse Automation North Hub Phase 2 Polar Logistics"
-                    data-status="sent"
-                    data-project="north-hub"
-                    data-number="81"
-                    data-project-name="North Hub Phase 2"
-                    data-value="428900"
-                    data-margin="26.2"
-                    data-created="20260724"
-                    data-updated="20260806"
-                  >
-                    <td>
-                      <a class="cell-primary" href="boq-editor.html"
-                      >BOQ-2026-081</a><span class="cell-secondary"
-                      >Warehouse Automation</span>
-                    </td>
-                    <td>North Hub Phase 2</td>
-                    <td>Polar Logistics</td>
-                    <td><span class="status status-sent">Sent</span></td>
-                    <td class="align-right currency">$428,900.00</td>
-                    <td class="align-right number">26.2%</td>
-                    <td>24 Jul 2026</td>
-                    <td>Yesterday</td>
-                    <td>
-                      <div class="row-actions">
-                        <a
-                          class="icon-button"
-                          href="boq-editor.html"
-                          aria-label="Edit BOQ-2026-081"
-                        >✎</a><div class="menu-wrap">
-                          <button
-                            class="icon-button"
-                            type="button"
-                            data-menu-trigger
-                            aria-expanded="false"
-                            aria-label="More actions for BOQ-2026-081"
-                          >
-                            •••
-                          </button>
-                          <div class="dropdown-menu" hidden>
-                            <button
-                              class="menu-item"
-                              data-open-modal="boq-preview-modal"
-                            >
-                              Preview
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-081 duplicated as a new draft."
-                            >
-                              Duplicate
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-081 export prepared."
-                            >
-                              Export
-                            </button>
-                            <button
-                              class="menu-item danger-text"
-                              data-confirm
-                              data-target-id="boq-081"
-                              data-confirm-title="Delete BOQ-2026-081?"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="boq-079"
-                    data-search="BOQ-2026-079 Security System Package Harbor Point Fit-out Harbor Properties"
-                    data-status="approved"
-                    data-project="harbor"
-                    data-number="79"
-                    data-project-name="Harbor Point Fit-out"
-                    data-value="94760"
-                    data-margin="30.4"
-                    data-created="20260719"
-                    data-updated="20260805"
-                  >
-                    <td>
-                      <a class="cell-primary" href="boq-editor.html"
-                      >BOQ-2026-079</a><span class="cell-secondary"
-                      >Security System Package</span>
-                    </td>
-                    <td>Harbor Point Fit-out</td>
-                    <td>Harbor Properties</td>
-                    <td>
-                      <span class="status status-approved">Approved</span>
-                    </td>
-                    <td class="align-right currency">$94,760.00</td>
-                    <td class="align-right number">30.4%</td>
-                    <td>19 Jul 2026</td>
-                    <td>2 days ago</td>
-                    <td>
-                      <div class="row-actions">
-                        <a
-                          class="icon-button"
-                          href="boq-editor.html"
-                          aria-label="Edit BOQ-2026-079"
-                        >✎</a><div class="menu-wrap">
-                          <button
-                            class="icon-button"
-                            data-menu-trigger
-                            aria-expanded="false"
-                            aria-label="More actions for BOQ-2026-079"
-                          >
-                            •••
-                          </button>
-                          <div class="dropdown-menu" hidden>
-                            <button
-                              class="menu-item"
-                              data-open-modal="boq-preview-modal"
-                            >
-                              Preview
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-079 duplicated as a new draft."
-                            >
-                              Duplicate
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-079 export prepared."
-                            >
-                              Export
-                            </button>
-                            <button
-                              class="menu-item danger-text"
-                              data-confirm
-                              data-target-id="boq-079"
-                              data-confirm-title="Delete BOQ-2026-079?"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="boq-077"
-                    data-search="BOQ-2026-077 Electrical Works Aster Medical Center Aster Health"
-                    data-status="draft"
-                    data-project="aster"
-                    data-number="77"
-                    data-project-name="Aster Medical Center"
-                    data-value="251300"
-                    data-margin="24.8"
-                    data-created="20260713"
-                    data-updated="20260804"
-                  >
-                    <td>
-                      <a class="cell-primary" href="boq-editor.html"
-                      >BOQ-2026-077</a><span class="cell-secondary"
-                      >Electrical Works</span>
-                    </td>
-                    <td>Aster Medical Center</td>
-                    <td>Aster Health</td>
-                    <td><span class="status status-draft">Draft</span></td>
-                    <td class="align-right currency">$251,300.00</td>
-                    <td class="align-right number">24.8%</td>
-                    <td>13 Jul 2026</td>
-                    <td>3 days ago</td>
-                    <td>
-                      <div class="row-actions">
-                        <a
-                          class="icon-button"
-                          href="boq-editor.html"
-                          aria-label="Edit BOQ-2026-077"
-                        >✎</a><div class="menu-wrap">
-                          <button
-                            class="icon-button"
-                            data-menu-trigger
-                            aria-expanded="false"
-                            aria-label="More actions for BOQ-2026-077"
-                          >
-                            •••
-                          </button>
-                          <div class="dropdown-menu" hidden>
-                            <button
-                              class="menu-item"
-                              data-open-modal="boq-preview-modal"
-                            >
-                              Preview
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-077 duplicated as a new draft."
-                            >
-                              Duplicate
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-077 export prepared."
-                            >
-                              Export
-                            </button>
-                            <button
-                              class="menu-item danger-text"
-                              data-confirm
-                              data-target-id="boq-077"
-                              data-confirm-title="Delete BOQ-2026-077?"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="boq-073"
-                    data-search="BOQ-2026-073 AV Conference Rooms Meridian HQ Upgrade Meridian Foods"
-                    data-status="won"
-                    data-project="meridian"
-                    data-number="73"
-                    data-project-name="Meridian HQ Upgrade"
-                    data-value="148500"
-                    data-margin="31.1"
-                    data-created="20260704"
-                    data-updated="20260802"
-                  >
-                    <td>
-                      <a class="cell-primary" href="boq-editor.html"
-                      >BOQ-2026-073</a><span class="cell-secondary"
-                      >AV Conference Rooms</span>
-                    </td>
-                    <td>Meridian HQ Upgrade</td>
-                    <td>Meridian Foods</td>
-                    <td><span class="status status-won">Won</span></td>
-                    <td class="align-right currency">$148,500.00</td>
-                    <td class="align-right number">31.1%</td>
-                    <td>4 Jul 2026</td>
-                    <td>5 days ago</td>
-                    <td>
-                      <div class="row-actions">
-                        <a
-                          class="icon-button"
-                          href="boq-editor.html"
-                          aria-label="Edit BOQ-2026-073"
-                        >✎</a><div class="menu-wrap">
-                          <button
-                            class="icon-button"
-                            data-menu-trigger
-                            aria-expanded="false"
-                            aria-label="More actions for BOQ-2026-073"
-                          >
-                            •••
-                          </button>
-                          <div class="dropdown-menu" hidden>
-                            <button
-                              class="menu-item"
-                              data-open-modal="boq-preview-modal"
-                            >
-                              Preview
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-073 duplicated as a new draft."
-                            >
-                              Duplicate
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-073 export prepared."
-                            >
-                              Export
-                            </button>
-                            <button
-                              class="menu-item danger-text"
-                              data-confirm
-                              data-target-id="boq-073"
-                              data-confirm-title="Delete BOQ-2026-073?"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    data-table-row
-                    data-record-id="boq-070"
-                    data-search="BOQ-2026-070 Data Cabling North Hub Phase 2 Polar Logistics"
-                    data-status="lost"
-                    data-project="north-hub"
-                    data-number="70"
-                    data-project-name="North Hub Phase 2"
-                    data-value="72500"
-                    data-margin="22.5"
-                    data-created="20260628"
-                    data-updated="20260730"
-                  >
-                    <td>
-                      <a class="cell-primary" href="boq-editor.html"
-                      >BOQ-2026-070</a><span class="cell-secondary"
-                      >Data Cabling</span>
-                    </td>
-                    <td>North Hub Phase 2</td>
-                    <td>Polar Logistics</td>
-                    <td><span class="status status-lost">Lost</span></td>
-                    <td class="align-right currency">$72,500.00</td>
-                    <td class="align-right number">22.5%</td>
-                    <td>28 Jun 2026</td>
-                    <td>30 Jul 2026</td>
-                    <td>
-                      <div class="row-actions">
-                        <a
-                          class="icon-button"
-                          href="boq-editor.html"
-                          aria-label="Edit BOQ-2026-070"
-                        >✎</a><div class="menu-wrap">
-                          <button
-                            class="icon-button"
-                            data-menu-trigger
-                            aria-expanded="false"
-                            aria-label="More actions for BOQ-2026-070"
-                          >
-                            •••
-                          </button>
-                          <div class="dropdown-menu" hidden>
-                            <button
-                              class="menu-item"
-                              data-open-modal="boq-preview-modal"
-                            >
-                              Preview
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-070 duplicated as a new draft."
-                            >
-                              Duplicate
-                            </button>
-                            <button
-                              class="menu-item"
-                              data-demo-action="BOQ-2026-070 export prepared."
-                            >
-                              Export
-                            </button>
-                            <button
-                              class="menu-item danger-text"
-                              data-confirm
-                              data-target-id="boq-070"
-                              data-confirm-title="Delete BOQ-2026-070?"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody data-records-body></tbody>
               </table>
             </div>
-
-            <div class="record-card-list">
-              <article
-                class="record-card"
-                data-record-card
-                data-record-id="boq-084"
-                data-search="BOQ-2026-084 HQ Network Refresh Meridian HQ Upgrade Meridian Foods"
-                data-status="review"
-                data-project="meridian"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <a class="cell-primary" href="boq-editor.html"
-                    >BOQ-2026-084</a><div class="muted text-sm">
-                      HQ Network Refresh
-                    </div>
-                  </div><span class="status status-review">In Review</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Project</dt>
-                    <dd>Meridian HQ Upgrade</dd>
-                  </div>
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Meridian Foods</dd>
-                  </div>
-                  <div>
-                    <dt>Value</dt>
-                    <dd class="currency">$186,420.00</dd>
-                  </div>
-                  <div>
-                    <dt>Margin</dt>
-                    <dd>28.6%</dd>
-                  </div>
-                </dl>
-                <div class="cluster space-between card-actions">
-                  <span class="subtle text-sm">Updated 18 min ago</span><a
-                    class="button button-secondary button-sm"
-                    href="boq-editor.html"
-                  >Edit</a>
-                </div>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-record-id="boq-081"
-                data-search="BOQ-2026-081 Warehouse Automation North Hub Phase 2 Polar Logistics"
-                data-status="sent"
-                data-project="north-hub"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <a class="cell-primary" href="boq-editor.html"
-                    >BOQ-2026-081</a><div class="muted text-sm">
-                      Warehouse Automation
-                    </div>
-                  </div><span class="status status-sent">Sent</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Project</dt>
-                    <dd>North Hub Phase 2</dd>
-                  </div>
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Polar Logistics</dd>
-                  </div>
-                  <div>
-                    <dt>Value</dt>
-                    <dd class="currency">$428,900.00</dd>
-                  </div>
-                  <div>
-                    <dt>Margin</dt>
-                    <dd>26.2%</dd>
-                  </div>
-                </dl>
-                <div class="cluster space-between card-actions">
-                  <span class="subtle text-sm">Updated yesterday</span><a
-                    class="button button-secondary button-sm"
-                    href="boq-editor.html"
-                  >Edit</a>
-                </div>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-record-id="boq-079"
-                data-search="BOQ-2026-079 Security System Package Harbor Point Fit-out Harbor Properties"
-                data-status="approved"
-                data-project="harbor"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <a class="cell-primary" href="boq-editor.html"
-                    >BOQ-2026-079</a><div class="muted text-sm">
-                      Security System Package
-                    </div>
-                  </div><span class="status status-approved">Approved</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Project</dt>
-                    <dd>Harbor Point Fit-out</dd>
-                  </div>
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Harbor Properties</dd>
-                  </div>
-                  <div>
-                    <dt>Value</dt>
-                    <dd class="currency">$94,760.00</dd>
-                  </div>
-                  <div>
-                    <dt>Margin</dt>
-                    <dd>30.4%</dd>
-                  </div>
-                </dl>
-                <div class="cluster space-between card-actions">
-                  <span class="subtle text-sm">Updated 2 days ago</span><a
-                    class="button button-secondary button-sm"
-                    href="boq-editor.html"
-                  >Edit</a>
-                </div>
-              </article>
-              <article
-                class="record-card"
-                data-record-card
-                data-record-id="boq-077"
-                data-search="BOQ-2026-077 Electrical Works Aster Medical Center Aster Health"
-                data-status="draft"
-                data-project="aster"
-              >
-                <div class="record-card-header">
-                  <div>
-                    <a class="cell-primary" href="boq-editor.html"
-                    >BOQ-2026-077</a><div class="muted text-sm">
-                      Electrical Works
-                    </div>
-                  </div><span class="status status-draft">Draft</span>
-                </div>
-                <dl class="record-card-grid">
-                  <div>
-                    <dt>Project</dt>
-                    <dd>Aster Medical Center</dd>
-                  </div>
-                  <div>
-                    <dt>Customer</dt>
-                    <dd>Aster Health</dd>
-                  </div>
-                  <div>
-                    <dt>Value</dt>
-                    <dd class="currency">$251,300.00</dd>
-                  </div>
-                  <div>
-                    <dt>Margin</dt>
-                    <dd>24.8%</dd>
-                  </div>
-                </dl>
-                <div class="cluster space-between card-actions">
-                  <span class="subtle text-sm">Updated 3 days ago</span><a
-                    class="button button-secondary button-sm"
-                    href="boq-editor.html"
-                  >Edit</a>
-                </div>
-              </article>
+            <div class="record-card-list" data-records-cards hidden></div>
+            <div class="empty-state" data-records-empty>
+              <div class="empty-state-content">
+                <div class="empty-state-icon" aria-hidden="true">＋</div>
+                <h3>No BOQs yet</h3>
+                <p>
+                  Create your first BOQ to start building project pricing.
+                </p><a class="button button-primary" href="boq-editor.html"
+                >Create BOQ</a>
+              </div>
             </div>
-
             <div class="empty-state" data-no-results hidden>
               <div class="empty-state-content">
                 <div class="empty-state-icon" aria-hidden="true">⌕</div>
                 <h3>No BOQs found</h3>
-                <p>Try changing your search or removing one of the filters.</p>
-                <button
-                  class="button button-secondary"
-                  type="button"
-                  data-demo-action="Filters can be cleared from the toolbar above."
-                >
-                  Clear guidance
-                </button>
+                <p>Try changing your search or filters.</p>
               </div>
             </div>
           </section>
@@ -806,23 +183,15 @@
       </div>
     </div>
 
-    <div
-      class="modal-backdrop"
-      id="boq-preview-modal"
-      role="presentation"
-      hidden
-    >
+    <div class="modal-backdrop" id="record-detail-modal" hidden>
       <section
         class="modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="preview-title"
+        aria-labelledby="boq-preview-title"
       >
         <header class="modal-header">
-          <div>
-            <h2 id="preview-title">BOQ preview</h2>
-            <p class="muted text-sm">Customer-facing document summary</p>
-          </div>
+          <h2 id="boq-preview-title">BOQ preview</h2>
           <button
             class="icon-button"
             type="button"
@@ -832,34 +201,7 @@
             ×
           </button>
         </header>
-        <div class="modal-body stack-md">
-          <div class="cluster space-between">
-            <div>
-              <div class="muted text-sm">BOQ Manager</div>
-              <h3>HQ Network Refresh</h3>
-              <div class="muted text-sm">Prepared for Meridian Foods</div>
-            </div><span class="status status-review">In Review</span>
-          </div>
-          <div class="divider"></div>
-          <dl class="stack-sm">
-            <div class="cluster space-between">
-              <dt class="muted">BOQ number</dt>
-              <dd class="mono">BOQ-2026-084</dd>
-            </div>
-            <div class="cluster space-between">
-              <dt class="muted">Valid until</dt>
-              <dd>31 Aug 2026</dd>
-            </div>
-            <div class="cluster space-between">
-              <dt class="muted">Items</dt>
-              <dd>8</dd>
-            </div>
-            <div class="cluster space-between">
-              <dt class="muted">Total</dt>
-              <dd class="text-medium currency">$186,420.00</dd>
-            </div>
-          </dl>
-        </div>
+        <div class="modal-body" data-record-detail></div>
         <footer class="modal-footer">
           <button
             class="button button-secondary"
@@ -867,8 +209,7 @@
             data-close-modal
           >
             Close
-          </button><a class="button button-primary" href="boq-editor.html"
-          >Open full preview</a>
+          </button>
         </footer>
       </section>
     </div>
@@ -877,6 +218,8 @@
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/records.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>
