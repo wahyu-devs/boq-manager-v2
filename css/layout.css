@@ -18,23 +18,8 @@
   display: flex;
   height: var(--header-height);
   align-items: center;
-  gap: 10px;
   padding: 0 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.brand-mark {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius-sm);
-  background: #e8f1ed;
-  color: #244f43;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
 }
 
 .brand-name {
@@ -127,19 +112,20 @@
   color: #244f43;
   font-size: 11px;
   font-weight: 750;
+  line-height: 1;
 }
 
-.user-card strong,
-.user-card span {
+.user-card > div strong,
+.user-card > div span {
   display: block;
 }
 
-.user-card strong {
+.user-card > div strong {
   color: #eef3f1;
   font-size: 12px;
 }
 
-.user-card span {
+.user-card > div span {
   color: var(--color-sidebar-muted);
   font-size: 11px;
 }

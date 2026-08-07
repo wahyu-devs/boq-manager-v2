@@ -59,17 +59,9 @@
 
   .mobile-brand {
     align-items: center;
-    gap: 8px;
     color: var(--color-text);
     font-size: 13px;
     font-weight: 680;
-  }
-
-  .mobile-brand .brand-mark {
-    width: 25px;
-    height: 25px;
-    background: var(--color-primary-soft);
-    color: var(--color-primary);
   }
 
   .breadcrumb {

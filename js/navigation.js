@@ -42,7 +42,6 @@
       <div class="sidebar-overlay" data-nav-close aria-hidden="true"></div>
       <aside class="sidebar" aria-label="Primary navigation">
         <a class="sidebar-brand" href="index.html" aria-label="BOQ Manager dashboard">
-          <span class="brand-mark" aria-hidden="true">BM</span>
           <span class="brand-name">BOQ Manager</span>
         </a>
         <nav class="sidebar-nav">
@@ -88,7 +87,7 @@
           <button class="icon-button mobile-nav-trigger" type="button" data-nav-open aria-label="Open navigation" aria-expanded="false">${
       icon("menu")
     }</button>
-          <a class="mobile-brand" href="index.html"><span class="brand-mark" aria-hidden="true">BM</span><span>BOQ Manager</span></a>
+          <a class="mobile-brand" href="index.html">BOQ Manager</a>
           <div class="breadcrumb"><span>BOQ Manager</span> / <strong>${
       titles[page]
     }</strong></div>
