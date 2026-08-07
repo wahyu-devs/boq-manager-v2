@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Create and price a project bill of quantities in BOQ Manager."
+    >
+    <title>BOQ Editor — BOQ Manager</title>
+    <script src="js/theme-init.js"></script>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/utilities.css">
+    <link rel="stylesheet" href="css/responsive.css">
+  </head>
+  <body data-page="boq-editor">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div class="app-shell">
+      <div data-navigation></div>
+      <div class="app-column">
+        <div data-topbar></div>
+        <main class="main-content" id="main-content" data-boq-editor>
+          <header class="page-header editor-page-header">
+            <div class="page-header-copy">
+              <div class="cluster editor-kicker">
+                <a class="link text-sm" href="boqs.html">← BOQs</a><span
+                  class="subtle"
+                >/</span><span class="mono text-sm">BOQ-2026-084</span><span
+                  class="status status-review"
+                >In Review</span>
+              </div>
+              <h1>HQ Network Refresh</h1>
+              <p>
+                <span data-save-state>All changes saved</span> · Last edited by
+                Alex Rivera at 3:42 PM
+              </p>
+            </div>
+            <div class="page-actions">
+              <button
+                class="button button-secondary"
+                type="button"
+                data-open-modal="pdf-modal"
+                data-preview-pdf
+              >
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="2.5" />
+                </svg>Preview
+              </button>
+              <button
+                class="button button-primary"
+                type="button"
+                form="boq-info"
+                data-save
+                data-success-message="BOQ-2026-084 saved."
+              >
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M5 4h12l2 2v14H5V4Z" />
+                  <path d="M8 4v6h8V4M8 20v-6h8v6" />
+                </svg>Save BOQ
+              </button>
+              <div class="menu-wrap">
+                <button
+                  class="button button-secondary button-icon"
+                  type="button"
+                  data-menu-trigger
+                  aria-expanded="false"
+                  aria-label="More BOQ actions"
+                >
+                  •••
+                </button>
+                <div class="dropdown-menu" hidden>
+                  <button class="menu-item" type="button" data-export-excel>
+                    Download Excel
+                  </button>
+                  <button class="menu-item" type="button" data-download-pdf>
+                    Download PDF
+                  </button>
+                  <button
+                    class="menu-item"
+                    type="button"
+                    data-demo-action="A copy of BOQ-2026-084 has been created as a draft."
+                  >
+                    Duplicate BOQ
+                  </button>
+                  <button
+                    class="menu-item danger-text"
+                    type="button"
+                    data-confirm
+                    data-confirm-title="Discard this BOQ?"
+                    data-confirm-message="Unsaved pricing changes will be permanently lost."
+                    data-confirm-label="Discard"
+                  >
+                    Discard changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div class="editor-layout">
+            <div class="editor-main stack-lg">
+              <section class="panel" aria-labelledby="boq-information-heading">
+                <div class="panel-header">
+                  <div>
+                    <h2 id="boq-information-heading">BOQ information</h2>
+                    <p>Document details shown on customer exports.</p>
+                  </div><span class="badge">USD · Excl. tax</span>
+                </div>
+                <form class="panel-body" id="boq-info">
+                  <div class="form-grid">
+                    <label class="field col-3"><span class="field-label"
+                      >BOQ number</span><input
+                        class="input mono"
+                        id="boq-number"
+                        name="boqNumber"
+                        value="BOQ-2026-084"
+                        required
+                      ></label>
+                    <label class="field col-5 field-wide-mobile"><span
+                        class="field-label"
+                      >BOQ title</span><input
+                        class="input"
+                        id="boq-title"
+                        name="boqTitle"
+                        value="HQ Network Refresh"
+                        required
+                      ></label>
+                    <label class="field col-4"><span class="field-label"
+                      >Status</span><select
+                        class="select"
+                        id="boq-status"
+                        name="status"
+                      >
+                        <option>Draft</option>
+                        <option selected>In Review</option>
+                        <option>Approved</option>
+                        <option>Sent</option>
+                        <option>Won</option>
+                        <option>Lost</option>
+                      </select></label>
+                    <label class="field col-4"><span class="field-label"
+                      >Project</span><select
+                        class="select"
+                        id="boq-project"
+                        name="project"
+                      >
+                        <option selected>Meridian HQ Upgrade</option>
+                        <option>North Hub Phase 2</option>
+                        <option>Aster Medical Center</option>
+                        <option>Harbor Point Fit-out</option>
+                      </select></label>
+                    <label class="field col-4"><span class="field-label"
+                      >Customer</span><select
+                        class="select"
+                        id="boq-customer"
+                        name="customer"
+                      >
+                        <option selected>Meridian Foods</option>
+                        <option>Polar Logistics</option>
+                        <option>Aster Health</option>
+                        <option>Harbor Properties</option>
+                      </select></label>
+                    <label class="field col-4"><span class="field-label"
+                      >Currency</span><select
+                        class="select"
+                        id="boq-currency"
+                        name="currency"
+                      >
+                        <option selected>USD</option>
+                        <option>EUR</option>
+                        <option>GBP</option>
+                        <option>IDR</option>
+                      </select></label>
+                    <label class="field col-3"><span class="field-label"
+                      >Date</span><input
+                        class="input"
+                        id="boq-date"
+                        name="date"
+                        type="date"
+                        value="2026-08-07"
+                        required
+                      ></label>
+                    <label class="field col-3"><span class="field-label"
+                      >Valid until</span><input
+                        class="input"
+                        id="boq-valid-until"
+                        name="validUntil"
+                        type="date"
+                        value="2026-08-31"
+                        required
+                      ></label>
+                    <label class="field col-6 field-wide-mobile"><span
+                        class="field-label"
+                      >Notes / terms</span><input
+                        class="input"
+                        id="boq-notes"
+                        name="notes"
+                        value="Pricing valid for 30 days. Delivery 6–8 weeks from purchase order."
+                      ></label>
+                  </div>
+                </form>
+              </section>
+
+              <section class="panel" aria-labelledby="boq-items-heading">
+                <div class="panel-header">
+                  <div>
+                    <h2 id="boq-items-heading">BOQ items</h2>
+                    <p>
+                      <span data-item-count>6 items</span> · Edit values
+                      directly; totals update immediately.
+                    </p>
+                  </div>
+                  <span class="badge desktop-only"
+                  >Tip: Enter moves to the next field</span>
+                </div>
+                <div class="toolbar editor-toolbar">
+                  <div class="toolbar-group">
+                    <button
+                      class="button button-secondary button-sm"
+                      type="button"
+                      data-open-modal="catalog-modal"
+                    >
+                      <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-4-4" />
+                      </svg>Add from catalog
+                    </button>
+                    <button
+                      class="button button-secondary button-sm"
+                      type="button"
+                      data-add-custom
+                    >
+                      <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>Add <span class="optional-label">custom item</span>
+                    </button>
+                  </div>
+                  <div class="toolbar-group">
+                    <span class="muted text-sm">All prices exclude tax</span>
+                  </div>
+                </div>
+                <div class="table-wrap editor-table-wrap editor-desktop-table">
+                  <table class="data-table editor-table">
+                    <colgroup>
+                      <col class="item-col-index"><col
+                        class="item-col-name"
+                      ><col class="item-col-description"><col
+                        class="item-col-qty"
+                      ><col class="item-col-unit"><col
+                        class="item-col-money"
+                      ><col class="item-col-money"><col
+                        class="item-col-margin"
+                      ><col class="item-col-money"><col
+                        class="item-col-money"
+                      ><col class="item-col-actions">
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Item</th>
+                        <th>Description</th>
+                        <th class="align-right">Qty</th>
+                        <th>Unit</th>
+                        <th class="align-right">Unit COGS</th>
+                        <th class="align-right">Total COGS</th>
+                        <th class="align-right">Margin %</th>
+                        <th class="align-right">Unit selling</th>
+                        <th class="align-right">Total selling</th>
+                        <th><span class="sr-only">Actions</span></th>
+                      </tr>
+                    </thead>
+                    <tbody data-items-body></tbody>
+                  </table>
+                </div>
+                <div class="mobile-item-list" data-mobile-items></div>
+              </section>
+            </div>
+
+            <aside class="editor-summary" aria-label="BOQ financial summary">
+              <section class="summary-card" aria-live="polite">
+                <div class="summary-card-header">
+                  <h2>Financial summary</h2>
+                </div>
+                <dl class="summary-list">
+                  <div class="summary-row">
+                    <dt>Total COGS</dt>
+                    <dd><strong data-summary="totalCogs">$0.00</strong></dd>
+                  </div>
+                  <div class="summary-row">
+                    <dt>Margin value</dt>
+                    <dd><strong data-summary="marginValue">$0.00</strong></dd>
+                  </div>
+                  <div class="summary-row">
+                    <dt>Margin %</dt>
+                    <dd>
+                      <strong class="positive" data-summary="marginPercent"
+                      >0.0%</strong>
+                    </dd>
+                  </div>
+                </dl>
+                <div class="summary-total">
+                  <span>Total selling</span><strong data-summary="totalSelling"
+                  >$0.00</strong>
+                </div>
+                <div class="summary-meta">
+                  Calculated from item-level margins. Tax is not included.
+                </div>
+              </section>
+              <div class="stack-sm summary-actions">
+                <button
+                  class="button button-secondary w-full"
+                  type="button"
+                  data-export-excel
+                >
+                  <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+                  </svg>Download Excel
+                </button>
+                <button
+                  class="button button-secondary w-full"
+                  type="button"
+                  data-download-pdf
+                >
+                  <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+                  </svg>Download PDF
+                </button>
+              </div>
+            </aside>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="mobile-save-bar">
+      <div>
+        <strong data-summary="totalSelling">$0.00</strong><span>Total
+          selling</span>
+      </div>
+      <button
+        class="button button-primary"
+        type="button"
+        form="boq-info"
+        data-save
+        data-success-message="BOQ-2026-084 saved."
+      >
+        Save BOQ
+      </button>
+    </div>
+
+    <div class="modal-backdrop" id="catalog-modal" role="presentation" hidden>
+      <section
+        class="modal modal-lg"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="catalog-title"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="catalog-title">Add product from catalog</h2>
+            <p class="muted text-sm">
+              Select a product to apply its standard cost and margin.
+            </p>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close product catalog"
+          >
+            ×
+          </button>
+        </header>
+        <div class="modal-body stack-md">
+          <label class="search-field w-full"><span class="sr-only"
+            >Search product catalog</span><svg
+              class="icon"
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-4-4" />
+            </svg><input
+              class="input"
+              type="search"
+              placeholder="Search by product name, SKU, or description"
+              data-catalog-search
+            ></label>
+          <div class="catalog-list" data-catalog-list></div>
+        </div>
+        <footer class="modal-footer">
+          <span class="muted text-sm">Showing active catalog items</span><button
+            class="button button-secondary"
+            type="button"
+            data-close-modal
+          >
+            Cancel
+          </button>
+        </footer>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="pdf-modal" role="presentation" hidden>
+      <section
+        class="modal modal-lg"
+        id="print-document"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pdf-title"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="pdf-title">Customer PDF preview</h2>
+            <p class="muted text-sm">
+              Review pricing and details before download.
+            </p>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            data-close-modal
+            aria-label="Close PDF preview"
+          >
+            ×
+          </button>
+        </header>
+        <div class="modal-body">
+          <div class="pdf-preview" data-pdf-preview></div>
+        </div>
+        <footer class="modal-footer">
+          <button
+            class="button button-secondary"
+            type="button"
+            data-close-modal
+          >
+            Close
+          </button>
+          <button class="button button-primary" type="button" data-download-pdf>
+            <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+            </svg>Download PDF
+          </button>
+        </footer>
+      </section>
+    </div>
+
+    <script src="js/navigation.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/calculations.js"></script>
+    <script src="js/boq.js"></script>
+  </body>
+</html>
