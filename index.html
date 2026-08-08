@@ -51,32 +51,13 @@
 
           <div class="content-grid dashboard-grid">
             <div class="stack-lg">
-              <section class="panel" aria-labelledby="portfolio-heading">
+              <section class="panel" aria-labelledby="boq-overview-heading">
                 <div class="panel-header">
                   <div>
-                    <h2 id="portfolio-heading">Commercial portfolio</h2>
-                    <p>Calculated from BOQs entered in this browser.</p>
+                    <h2 id="boq-overview-heading">BOQ overview</h2>
+                    <p>Current document status across your workspace.</p>
                   </div>
                   <span class="badge" data-dashboard-date></span>
-                </div>
-                <div class="metric-overview">
-                  <div class="primary-metric">
-                    <div class="metric-label">Total BOQ value</div>
-                    <div class="metric-value" data-metric="boqValue">$0.00</div>
-                    <div class="metric-detail">All saved BOQs</div>
-                  </div>
-                  <div class="supporting-metric">
-                    <div class="metric-label">Average gross margin</div>
-                    <div class="metric-value" data-metric="margin">0.0%</div>
-                    <div class="metric-detail">Weighted by selling value</div>
-                  </div>
-                  <div class="supporting-metric">
-                    <div class="metric-label">Sent rate</div>
-                    <div class="metric-value" data-metric="sentRate">0%</div>
-                    <div class="metric-detail" data-metric-detail="sentRate">
-                      No BOQs yet
-                    </div>
-                  </div>
                 </div>
                 <div class="panel-body">
                   <div class="cluster space-between">
@@ -112,8 +93,6 @@
                         <th>BOQ</th>
                         <th>Project</th>
                         <th>Status</th>
-                        <th class="align-right">Value</th>
-                        <th class="align-right">Gross margin</th>
                         <th>Updated</th>
                       </tr>
                     </thead>
@@ -124,7 +103,7 @@
                   <div class="empty-state-content">
                     <div class="empty-state-icon" aria-hidden="true">＋</div>
                     <h3>No BOQs yet</h3>
-                    <p>Create your first BOQ to see pricing activity here.</p><a
+                    <p>Create your first BOQ to see document activity here.</p><a
                       class="button button-primary"
                       href="boq-editor.html"
                     >Create BOQ</a>
@@ -158,6 +137,12 @@
                     <div class="cluster space-between">
                       <dt class="muted">Sent BOQs</dt>
                       <dd class="text-medium number" data-metric="sentCount">
+                        0
+                      </dd>
+                    </div>
+                    <div class="cluster space-between">
+                      <dt class="muted">Products</dt>
+                      <dd class="text-medium number" data-metric="productCount">
                         0
                       </dd>
                     </div>

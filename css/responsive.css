@@ -187,30 +187,6 @@
     padding-inline: 14px;
   }
 
-  .metric-overview {
-    grid-template-columns: 1.25fr 1fr;
-  }
-
-  .primary-metric,
-  .supporting-metric {
-    min-height: 110px;
-    padding: 16px;
-  }
-
-  .supporting-metric:last-child {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--color-border);
-    border-left: 0;
-  }
-
-  .primary-metric .metric-value {
-    font-size: 28px;
-  }
-
-  .metric-value {
-    font-size: 23px;
-  }
-
   .toolbar {
     align-items: stretch;
     padding: 11px;
@@ -395,24 +371,6 @@
   .col-8,
   .col-12 {
     grid-column: 1;
-  }
-
-  .metric-overview {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .primary-metric {
-    grid-column: 1 / -1;
-  }
-
-  .supporting-metric:nth-child(2) {
-    border-top: 1px solid var(--color-border);
-    border-left: 0;
-  }
-
-  .supporting-metric:last-child {
-    grid-column: auto;
-    border-left: 1px solid var(--color-border);
   }
 
   .mobile-item-body {
