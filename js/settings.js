@@ -61,6 +61,19 @@
     return result;
   }
 
+  function updateNumberingPreview() {
+    const input = form.elements.numberingFormat;
+    const preview = document.querySelector("[data-numbering-preview]");
+    if (!input || !preview) return;
+    const valid = store.isValidNumberingFormat(input.value);
+    input.setCustomValidity(
+      valid ? "" : "Include exactly one sequence token such as {NNN}.",
+    );
+    preview.textContent = valid
+      ? store.formatDocumentNumber(input.value, 1)
+      : "invalid format";
+  }
+
   function downloadBackup() {
     const state = store.exportState();
     const timestamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13);
@@ -89,6 +102,7 @@
   }
 
   form.elements.taxEnabled.addEventListener("change", updateTaxControls);
+  form.elements.numberingFormat.addEventListener("input", updateNumberingPreview);
   document.querySelector("[data-company-logo-input]").addEventListener(
     "change",
     (event) => {
@@ -185,4 +199,5 @@
   updateTaxControls();
   updateLogoPreview();
   updateSyncStatus();
+  updateNumberingPreview();
 })();

@@ -106,10 +106,67 @@
     write(collection, list(collection).filter((record) => record.id !== id));
   }
 
+  function escapePattern(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function numberingTokens(format, date = new Date()) {
+    return {
+      YYYY: String(date.getFullYear()),
+      YY: String(date.getFullYear()).slice(-2),
+      MM: String(date.getMonth() + 1).padStart(2, "0"),
+    };
+  }
+
+  function formatDocumentNumber(format, sequence, date = new Date()) {
+    const template = String(format || "BOQ-{YYYY}-{NNN}");
+    const tokens = numberingTokens(template, date);
+    return template.replace(/\{(YYYY|YY|MM|N+)\}/g, (token, name) => {
+      if (name.startsWith("N")) {
+        return String(sequence).padStart(name.length, "0");
+      }
+      return tokens[name];
+    });
+  }
+
+  function isValidNumberingFormat(format) {
+    return (String(format || "").match(/\{N+\}/g) || []).length === 1;
+  }
+
+  function numberingMatcher(format, date = new Date()) {
+    const template = String(format || "BOQ-{YYYY}-{NNN}");
+    const tokens = numberingTokens(template, date);
+    let sequenceCaptured = false;
+    let cursor = 0;
+    let pattern = "";
+    for (const match of template.matchAll(/\{(YYYY|YY|MM|N+)\}/g)) {
+      pattern += escapePattern(template.slice(cursor, match.index));
+      if (match[1].startsWith("N")) {
+        pattern += sequenceCaptured ? "\\d+" : "(\\d+)";
+        sequenceCaptured = true;
+      } else {
+        pattern += escapePattern(tokens[match[1]]);
+      }
+      cursor = match.index + match[0].length;
+    }
+    pattern += escapePattern(template.slice(cursor));
+    return sequenceCaptured ? new RegExp(`^${pattern}$`) : null;
+  }
+
   function nextNumber(collection, prefixText) {
+    if (collection === "boqs") {
+      const format = getSettings().numberingFormat ||
+        `${prefixText || "BOQ"}-{YYYY}-{NNN}`;
+      const matcher = numberingMatcher(format);
+      const sequence = list(collection).reduce((highest, record) => {
+        const match = String(record.number || "").match(matcher || /$^/);
+        return match ? Math.max(highest, Number(match[1])) : highest;
+      }, 0) + 1;
+      return formatDocumentNumber(format, sequence);
+    }
     const year = new Date().getFullYear();
     const sequence = list(collection).reduce((highest, record) => {
-      const match = String(record.number || record.code || "").match(/(\d+)$/);
+      const match = String(record.code || "").match(/(\d+)$/);
       return match ? Math.max(highest, Number(match[1])) : highest;
     }, 0) + 1;
     return `${prefixText}-${year}-${String(sequence).padStart(3, "0")}`;
@@ -582,6 +639,8 @@
     save,
     remove,
     nextNumber,
+    formatDocumentNumber,
+    isValidNumberingFormat,
     getSettings,
     saveSettings,
     createId,

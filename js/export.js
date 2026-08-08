@@ -1,7 +1,7 @@
 (function initializeDocumentExports() {
   if (!document.querySelector("[data-boq-editor]")) return;
 
-  const { formatCurrency } = window.BOQUtils;
+  const { formatCurrency, formatNumber, formatPercent } = window.BOQUtils;
   const { calculateItem, calculateSummary } = window.BOQCalculations;
 
   function editorData() {
@@ -243,6 +243,7 @@
   function groupedPdfRows(data, mode) {
     const rows = [];
     let index = 0;
+    const decimals = data.document.currency === "IDR" ? 0 : 2;
     data.categories.forEach((category) => {
       const columnCount = mode === "cogs" ? 7 : 6;
       rows.push([{
@@ -255,15 +256,15 @@
         if (mode === "cogs") {
           rows.push([
             ++index, item.item, item.qty, item.unit,
-            Number(item.unitCogs || 0).toLocaleString("id-ID"),
-            calc.totalCogs.toLocaleString("id-ID"),
-            `${Number(item.margin || 0).toFixed(2)}%`,
+            formatNumber(item.unitCogs || 0, decimals),
+            formatNumber(calc.totalCogs, decimals),
+            formatPercent(item.margin || 0),
           ]);
         } else {
           rows.push([
             ++index, item.item, item.qty, item.unit,
-            calc.unitSelling.toLocaleString("id-ID"),
-            calc.totalSelling.toLocaleString("id-ID"),
+            formatNumber(calc.unitSelling, decimals),
+            formatNumber(calc.totalSelling, decimals),
           ]);
         }
       });
@@ -299,7 +300,7 @@
           formatCurrency(summary.totalSelling, data.document.currency),
           formatCurrency(summary.commission, data.document.currency),
           formatCurrency(summary.marginValue, data.document.currency),
-          `${summary.marginPercent.toFixed(2)}%`,
+          formatPercent(summary.marginPercent),
         ]],
         theme: "grid",
         headStyles: { fillColor: [49, 93, 80] },

@@ -425,7 +425,7 @@
     host.innerHTML = filtered.length
       ? filtered.map((product) => {
         const source = catalogItem(product);
-        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.sku || "CUSTOM")} · ${escapeHtml(product.description || product.category || "No description")}</span></div><div class="align-right"><strong>${formatCurrency(product.defaultCogs || 0, currentCurrency())}</strong><span>${Number(product.defaultMargin || 0).toFixed(2)}% default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
+        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.sku || "CUSTOM")} · ${escapeHtml(product.description || product.category || "No description")}</span></div><div class="align-right"><strong>${formatCurrency(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
       : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No products found</h3><p>Try searching by product name, SKU, category, or description.</p></div></div>';
     document.querySelector("#product-suggestions").innerHTML = catalog.map(

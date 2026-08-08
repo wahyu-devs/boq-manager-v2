@@ -63,6 +63,7 @@ localStorage.setItem(
 
 await import("../js/store.js");
 await import("../js/calculations.js");
+await import("../js/utils.js");
 
 function equal(actual, expected, message) {
   if (actual !== expected) {
@@ -123,6 +124,39 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const backup = store.exportState();
   equal(backup.application, "BOQ Manager", "backup application metadata");
   equal(backup.meta.schemaVersion, 2, "backup schema version");
+
+  equal(
+    store.formatDocumentNumber(
+      "Q-{YY}-{MM}-{NNNN}",
+      7,
+      new Date(2031, 2, 1),
+    ),
+    "Q-31-03-0007",
+    "document number tokens",
+  );
+  equal(store.isValidNumberingFormat("BOQ-{NNN}"), true, "valid numbering format");
+  equal(store.isValidNumberingFormat("BOQ-{YYYY}"), false, "missing sequence token");
+  const year = new Date().getFullYear();
+  store.saveSettings({
+    ...store.getSettings(),
+    numberingFormat: "EST-{YYYY}-{NN}",
+    numberFormat: "comma",
+  });
+  store.save("boqs", {
+    number: `EST-${year}-09`,
+    title: "Numbering Test",
+    status: "Draft",
+    items: [],
+  });
+  equal(store.nextNumber("boqs", "BOQ"), `EST-${year}-10`, "next BOQ number");
+  equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1,234.50", "comma number format");
+
+  store.saveSettings({ ...store.getSettings(), numberFormat: "dot" });
+  equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1.234,50", "dot number format");
+  equal(window.BOQUtils.formatPercent(12.5), "12,5%", "dot percentage format");
+
+  store.saveSettings({ ...store.getSettings(), numberFormat: "space" });
+  equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1 234,50", "space number format");
 
   store.applyState({
     project: "Single Project Backup",
