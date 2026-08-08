@@ -27,7 +27,7 @@
           <header class="page-header">
             <div class="page-header-copy">
               <h1>Dashboard</h1>
-              <p>Your BOQ pricing activity and current workload.</p>
+              <p>Operational view of BOQs, catalog readiness, and customer data.</p>
             </div>
             <div class="page-actions">
               <button
@@ -54,28 +54,34 @@
             aria-label="Workspace records"
           >
             <div class="record-metric-overview">
-              <div class="record-metric">
+              <a class="record-metric" href="boqs.html">
                 <div class="record-metric-label">Total BOQs</div>
                 <div class="record-metric-value" data-metric="boqCount">
                   0
                 </div>
-                <div class="record-metric-detail">Saved documents</div>
-              </div>
-              <div class="record-metric">
+                <div class="record-metric-detail" data-metric-detail="boqCount">
+                  No documents yet
+                </div>
+              </a>
+              <a class="record-metric" href="boqs.html">
                 <div class="record-metric-label">Draft BOQs</div>
                 <div class="record-metric-value" data-metric="draftCount">
                   0
                 </div>
-                <div class="record-metric-detail">Work in progress</div>
-              </div>
-              <div class="record-metric">
+                <div class="record-metric-detail" data-metric-detail="draftCount">
+                  No work in progress
+                </div>
+              </a>
+              <a class="record-metric" href="boqs.html">
                 <div class="record-metric-label">Sent BOQs</div>
                 <div class="record-metric-value" data-metric="sentCount">
                   0
                 </div>
-                <div class="record-metric-detail">Issued documents</div>
-              </div>
-              <div class="record-metric">
+                <div class="record-metric-detail" data-metric-detail="sentCount">
+                  No issued documents
+                </div>
+              </a>
+              <a class="record-metric" href="products.html">
                 <div class="record-metric-label">Products</div>
                 <div
                   class="record-metric-value"
@@ -83,9 +89,11 @@
                 >
                   0
                 </div>
-                <div class="record-metric-detail">Catalog records</div>
-              </div>
-              <div class="record-metric">
+                <div class="record-metric-detail" data-metric-detail="productCount">
+                  Catalog is empty
+                </div>
+              </a>
+              <a class="record-metric" href="customers.html">
                 <div class="record-metric-label">Customers</div>
                 <div
                   class="record-metric-value"
@@ -93,8 +101,10 @@
                 >
                   0
                 </div>
-                <div class="record-metric-detail">Customer records</div>
-              </div>
+                <div class="record-metric-detail" data-metric-detail="customerCount">
+                  No customer records
+                </div>
+              </a>
             </div>
           </section>
 
@@ -137,11 +147,11 @@
             </div>
 
             <aside class="stack-lg" aria-label="Operational details">
-              <section class="panel">
+              <section class="panel" aria-labelledby="attention-heading">
                 <div class="panel-header">
                   <div>
-                    <h2>Attention needed</h2>
-                    <p>Items that may require action</p>
+                    <h2 id="attention-heading">Attention needed</h2>
+                    <p>Time-sensitive BOQ follow-up</p>
                   </div>
                 </div>
                 <div class="panel-body panel-body-compact-y">
@@ -152,6 +162,18 @@
                       <p>Alerts will appear as you add and update BOQs.</p>
                     </div>
                   </div>
+                </div>
+              </section>
+
+              <section class="panel" aria-labelledby="checks-heading">
+                <div class="panel-header">
+                  <div>
+                    <h2 id="checks-heading">Data checks</h2>
+                    <p>Common gaps across your records</p>
+                  </div>
+                </div>
+                <div class="panel-body panel-body-compact-y">
+                  <ul class="data-check-list" data-data-checks></ul>
                 </div>
               </section>
             </aside>

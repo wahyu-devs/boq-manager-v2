@@ -188,12 +188,17 @@
   }
 
   .record-metric {
-    min-height: 110px;
-    padding: 16px;
+    min-height: 88px;
+    padding: 14px 16px;
   }
 
   .record-metric-value {
-    font-size: 23px;
+    margin-top: 7px;
+    font-size: 25px;
+  }
+
+  .record-metric-detail {
+    margin-top: 6px;
   }
 
   .record-metric-overview {
