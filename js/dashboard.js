@@ -80,7 +80,9 @@
         encodeURIComponent(boq.id)
       }">${
         escapeHtml(boq.number || "Untitled")
-      }</a></td><td><span class="status">${
+      }</a></td><td>${
+        escapeHtml(boq.projectName || "—")
+      }</td><td><span class="status">${
         escapeHtml(boq.status || "Draft")
       }</span></td><td class="align-right currency">${
         formatCurrency(boq.totalSelling || 0, boq.currency || currency)
