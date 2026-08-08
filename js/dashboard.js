@@ -29,6 +29,7 @@
     sentRate: `${sentRate.toFixed(0)}%`,
     boqCount: String(boqs.length),
     draftCount: String(boqs.filter((boq) => boq.status === "Draft").length),
+    sentCount: String(sentCount),
     customerCount: String(customers.length),
   };
   Object.entries(metrics).forEach(([name, value]) => {
