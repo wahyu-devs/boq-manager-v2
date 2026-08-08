@@ -89,6 +89,17 @@
           <a class="button button-secondary" href="boq-editor.html">${
       icon("plus")
     }<span>New BOQ</span></a>
+          <div class="menu-wrap user-menu-wrap">
+            <button class="user-menu-trigger" type="button" data-menu-trigger aria-expanded="false" aria-label="Open user menu">
+              <span class="avatar" data-user-initials>—</span>
+              <span class="desktop-only" data-user-name>User</span>
+            </button>
+            <div class="dropdown-menu user-dropdown" hidden>
+              <div class="user-dropdown-header"><strong data-user-name>User</strong><span data-user-email></span></div>
+              <button class="menu-item" type="button" data-change-password>Change password</button>
+              <button class="menu-item danger-text" type="button" data-logout>Sign out</button>
+            </div>
+          </div>
         </div>
       </header>`;
   }

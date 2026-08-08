@@ -859,6 +859,93 @@
   animation: fade-in 150ms ease;
 }
 
+.auth-pending .app-shell,
+.auth-pending .mobile-save-bar {
+  visibility: hidden;
+}
+
+.auth-screen {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--color-bg);
+}
+
+.auth-toolbar {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.auth-panel {
+  width: min(390px, 100%);
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.auth-brand {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 24px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.auth-panel h1 {
+  font-size: 21px;
+}
+
+.auth-panel p {
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.auth-loading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 104px;
+}
+
+.auth-spinner {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border: 2px solid var(--color-border-strong);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: auth-spin 700ms linear infinite;
+}
+
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.form-error {
+  min-height: 16px;
+  color: var(--color-danger);
+  font-size: 11px;
+}
+
 .modal {
   width: min(560px, 100%);
   max-height: min(720px, calc(100vh - 40px));
