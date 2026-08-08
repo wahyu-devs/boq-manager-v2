@@ -119,4 +119,21 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const backup = store.exportState();
   equal(backup.application, "BOQ Manager", "backup application metadata");
   equal(backup.meta.schemaVersion, 2, "backup schema version");
+
+  store.applyState({
+    project: "Single Project Backup",
+    data: [{
+      name: "Installation",
+      qty: 1,
+      unit: "Lot",
+      price: 50000,
+      margin: 20,
+      category: "Services",
+    }],
+    commission: 2000,
+    categoryOrder: ["Services"],
+  }, { silent: true });
+  equal(store.list("projects").length, 1, "single-project restore count");
+  equal(store.list("boqs")[0].title, "Single Project Backup", "single-project restore title");
+  equal(store.list("boqs")[0].commission, 2000, "single-project restore commission");
 });

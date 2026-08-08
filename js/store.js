@@ -192,8 +192,58 @@
 
   function isLegacySnapshot(snapshot) {
     return Boolean(snapshot && typeof snapshot === "object" &&
-      (snapshot.projects || snapshot.working || snapshot.items) &&
+      (snapshot.projects || snapshot.projectList || snapshot.project ||
+        snapshot.data || snapshot.working || snapshot.boq_working ||
+        snapshot.items || snapshot.boq_items) &&
       !snapshot.collections);
+  }
+
+  function normalizeLegacySnapshot(snapshot) {
+    const safe = snapshot && typeof snapshot === "object" ? snapshot : {};
+    if (safe.project && Array.isArray(safe.data)) {
+      const projectName = String(safe.project).trim() || "Imported Project";
+      return {
+        projects: {
+          [projectName]: {
+            data: safe.data,
+            commission: Number(safe.commission || 0),
+            categoryOrder: Array.isArray(safe.categoryOrder)
+              ? safe.categoryOrder
+              : [],
+            lastSaved: Date.now(),
+          },
+        },
+        items: Array.isArray(safe.items) ? safe.items : [],
+        working: safe.data,
+        currentProjectName: projectName,
+        categoryOrder: Array.isArray(safe.categoryOrder)
+          ? safe.categoryOrder
+          : [],
+        unsavedCommission: Number(safe.commission || 0),
+        meta: safe.meta || {},
+      };
+    }
+    return {
+      projects: safe.projects || safe.projectList || {},
+      items: Array.isArray(safe.items)
+        ? safe.items
+        : Array.isArray(safe.boq_items)
+        ? safe.boq_items
+        : [],
+      working: Array.isArray(safe.working)
+        ? safe.working
+        : Array.isArray(safe.boq_working)
+        ? safe.boq_working
+        : [],
+      currentProjectName: safe.currentProjectName || safe.current || "",
+      categoryOrder: Array.isArray(safe.categoryOrder)
+        ? safe.categoryOrder
+        : [],
+      unsavedCommission: Number(
+        safe.unsavedCommission || safe.commission || 0,
+      ),
+      meta: safe.meta || {},
+    };
   }
 
   function mergeRecords(current, incoming) {
@@ -207,6 +257,7 @@
   }
 
   function convertLegacySnapshot(snapshot) {
+    snapshot = normalizeLegacySnapshot(snapshot);
     const sourceProjects = snapshot.projects &&
         typeof snapshot.projects === "object"
       ? snapshot.projects
@@ -404,6 +455,8 @@
         storageKey("currentBoqId"),
         JSON.stringify(converted.currentBoqId),
       );
+    } else if (!options.merge) {
+      localStorage.removeItem(storageKey("currentBoqId"));
     }
     if (converted.workingDraft) {
       localStorage.setItem(
@@ -527,6 +580,7 @@
     exportState,
     applyState,
     convertLegacySnapshot,
+    normalizeLegacySnapshot,
     isLegacySnapshot,
     setCurrentBoqId,
     getCurrentBoqId,
