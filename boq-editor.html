@@ -203,8 +203,29 @@
                         <path d="M12 5v14M5 12h14" />
                       </svg>Add <span class="optional-label">custom item</span>
                     </button>
-                  </div><span class="muted text-sm"
-                  >All prices exclude tax</span>
+                  </div>
+                  <div class="toolbar-group editor-view-controls">
+                    <label><span class="sr-only">Table view</span><select
+                        class="select select-sm"
+                        data-editor-view
+                      >
+                        <option value="all">All columns</option>
+                        <option value="cogs">COGS view</option>
+                        <option value="selling">Selling view</option>
+                      </select></label>
+                    <button
+                      class="button button-ghost button-sm"
+                      type="button"
+                      data-toggle-subtotals
+                      aria-pressed="true"
+                    >Subtotals on</button>
+                    <button
+                      class="button button-ghost button-sm"
+                      type="button"
+                      data-toggle-prices
+                      aria-pressed="true"
+                    >Prices shown</button>
+                  </div>
                 </div>
                 <div
                   class="table-wrap editor-table-wrap editor-desktop-table"
@@ -216,6 +237,8 @@
                       <col class="item-col-index"><col
                         class="item-col-name"
                       ><col class="item-col-description"><col
+                        class="item-col-category"
+                      ><col
                         class="item-col-qty"
                       ><col class="item-col-unit"><col
                         class="item-col-money"
@@ -229,14 +252,20 @@
                       <tr>
                         <th>#</th>
                         <th>Item</th>
-                        <th>Description</th>
+                        <th class="column-description">Description</th>
+                        <th>Category</th>
                         <th class="align-right">Qty</th>
                         <th>Unit</th>
-                        <th class="align-right">Unit COGS</th>
-                        <th class="align-right">Total COGS</th>
-                        <th class="align-right">Gross margin %</th>
-                        <th class="align-right">Unit selling</th>
-                        <th class="align-right">Total selling</th>
+                        <th class="align-right column-cogs column-price"
+                        >Unit COGS</th>
+                        <th class="align-right column-cogs column-price"
+                        >Total COGS</th>
+                        <th class="align-right column-margin column-price"
+                        >Gross margin %</th>
+                        <th class="align-right column-selling column-price"
+                        >Unit selling</th>
+                        <th class="align-right column-selling column-price"
+                        >Total selling</th>
                         <th><span class="sr-only">Actions</span></th>
                       </tr>
                     </thead>
@@ -272,7 +301,19 @@
                     <dd><strong data-summary="totalCogs">$0.00</strong></dd>
                   </div>
                   <div class="summary-row">
-                    <dt>Margin value</dt>
+                    <dt>Commission</dt>
+                    <dd><label class="summary-input-wrap"><span class="sr-only"
+                        >Commission</span><input
+                          class="editor-input numeric"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value="0"
+                          data-commission
+                        ></label></dd>
+                  </div>
+                  <div class="summary-row">
+                    <dt>Gross profit</dt>
                     <dd><strong data-summary="marginValue">$0.00</strong></dd>
                   </div>
                   <div class="summary-row">
@@ -288,7 +329,8 @@
                   >$0.00</strong>
                 </div>
                 <div class="summary-meta">
-                  Calculated from item-level margins. Tax is not included.
+                  Gross profit is calculated after commission. Tax is not
+                  included.
                 </div>
               </section>
               <div class="stack-sm summary-actions">
@@ -379,6 +421,7 @@
         </footer>
       </section>
     </div>
+    <datalist id="product-suggestions"></datalist>
     <div class="modal-backdrop" id="pdf-modal" hidden>
       <section
         class="modal modal-lg"

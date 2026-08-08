@@ -651,7 +651,7 @@
 }
 
 .editor-table {
-  min-width: 1230px;
+  min-width: 1420px;
 }
 
 .editor-table thead {
@@ -692,6 +692,11 @@
   outline: 0;
 }
 
+.editor-input.is-manual {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  background: var(--color-primary-soft);
+}
+
 .editor-input.numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -703,6 +708,40 @@
   font-weight: 560;
   text-align: right;
   white-space: nowrap;
+}
+
+.editor-category-row td {
+  height: auto;
+  padding: 7px 10px;
+  background: var(--color-surface-secondary);
+}
+
+.editor-category-row td > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editor-category-row strong {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.category-subtotal-row td {
+  height: 38px;
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-secondary) 55%, transparent);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+[data-editor-view-mode="cogs"] .column-selling,
+[data-editor-view-mode="selling"] .column-cogs,
+[data-editor-view-mode="selling"] .column-margin,
+.prices-hidden .column-price {
+  display: none;
 }
 
 .drag-handle {
@@ -744,6 +783,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.summary-input-wrap {
+  display: block;
+  width: 108px;
+}
+
+.summary-input-wrap .editor-input {
+  border-color: var(--color-border);
+  background: var(--color-surface-secondary);
+}
+
 .summary-total {
   margin: 5px 0 0;
   padding: 15px 16px;
@@ -779,6 +828,19 @@
 
 .mobile-item-list {
   display: none;
+}
+
+.mobile-category-section > header {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 14px;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  font-size: 11px;
 }
 
 .mobile-item-card {
@@ -1249,6 +1311,9 @@
 .item-col-description {
   width: 230px;
 }
+.item-col-category {
+  width: 130px;
+}
 .item-col-qty {
   width: 68px;
 }
@@ -1267,6 +1332,10 @@
 
 .summary-actions {
   margin-top: 12px;
+}
+
+.editor-view-controls {
+  margin-left: auto;
 }
 
 .catalog-list {

@@ -358,6 +358,7 @@
       ),
       settings: getSettings(),
       currentBoqId: read("currentBoqId", ""),
+      workingDraft: read("workingDraft", null),
       meta: {
         ...read("meta", {}),
         schemaVersion: 2,
@@ -389,6 +390,12 @@
       localStorage.setItem(
         storageKey("currentBoqId"),
         JSON.stringify(converted.currentBoqId),
+      );
+    }
+    if (converted.workingDraft) {
+      localStorage.setItem(
+        storageKey("workingDraft"),
+        JSON.stringify(converted.workingDraft),
       );
     }
     const incomingTs = Number(converted.meta?.clientUpdatedAt || Date.now());
@@ -467,6 +474,18 @@
     return read("meta", {});
   }
 
+  function saveWorkingDraft(draft) {
+    return write("workingDraft", draft);
+  }
+
+  function getWorkingDraft() {
+    return read("workingDraft", null);
+  }
+
+  function clearWorkingDraft() {
+    localStorage.removeItem(storageKey("workingDraft"));
+  }
+
   migrateCurrentNamespace();
 
   window.BOQStore = {
@@ -487,5 +506,8 @@
     isLegacySnapshot,
     setCurrentBoqId,
     getCurrentBoqId,
+    saveWorkingDraft,
+    getWorkingDraft,
+    clearWorkingDraft,
   };
 })();
