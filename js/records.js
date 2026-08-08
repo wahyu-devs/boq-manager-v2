@@ -596,6 +596,7 @@
         event.target.dataset.manual = event.target.value === ""
           ? "false"
           : "true";
+        if (event.target.value === "") updateCalculatedProductPrice();
         return;
       }
       updateCalculatedProductPrice();

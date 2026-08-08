@@ -169,6 +169,13 @@
     return Math.max(0, Math.min((price - cost) / price * 100, 99.99));
   }
 
+  function timestampValue(value) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric > 0) return numeric;
+    const parsed = Date.parse(value || "");
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
   function buildLegacySnapshot() {
     return {
       projects: legacyScopedValue("projects", {}),
@@ -211,6 +218,13 @@
     const currentSettings = getSettings();
     const currency = currentSettings.defaultCurrency || "IDR";
     const projectNames = Object.keys(sourceProjects);
+    const legacyUpdatedAt = Math.max(
+      timestampValue(snapshot.meta?.clientUpdatedAt),
+      ...Object.values(sourceProjects).map((project) =>
+        timestampValue(project?.lastSaved)
+      ),
+      ...legacyProducts.map((item) => timestampValue(item?.updatedAt)),
+    ) || Date.now();
 
     projectNames.forEach((name, index) => {
       const source = sourceProjects[name];
@@ -219,8 +233,7 @@
         : Array.isArray(source?.data)
         ? source.data
         : [];
-      const savedAt = Number(source?.lastSaved || snapshot.meta?.clientUpdatedAt ||
-        Date.now());
+      const savedAt = timestampValue(source?.lastSaved) || legacyUpdatedAt;
       const timestamp = new Date(savedAt).toISOString();
       const projectId = stableId("project", name);
       projectRecords.push({
@@ -276,7 +289,7 @@
       }
     } else if (working.length) {
       const timestamp = new Date(
-        Number(snapshot.meta?.clientUpdatedAt || Date.now()),
+        legacyUpdatedAt,
       ).toISOString();
       boqRecords.unshift({
         id: stableId("boq", `working-${timestamp}`),
@@ -343,7 +356,7 @@
       currentBoqId: currentName ? stableId("boq", currentName) : "",
       meta: {
         schemaVersion: 2,
-        clientUpdatedAt: Number(snapshot.meta?.clientUpdatedAt || Date.now()),
+        clientUpdatedAt: legacyUpdatedAt,
         importedFromPreviousVersion: true,
       },
     };
@@ -397,6 +410,8 @@
         storageKey("workingDraft"),
         JSON.stringify(converted.workingDraft),
       );
+    } else if (!options.merge) {
+      localStorage.removeItem(storageKey("workingDraft"));
     }
     const incomingTs = Number(converted.meta?.clientUpdatedAt || Date.now());
     localStorage.setItem(storageKey("meta"), JSON.stringify({

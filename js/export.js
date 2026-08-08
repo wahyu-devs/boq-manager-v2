@@ -105,6 +105,17 @@
     });
   }
 
+  function addNotes(sheet, notes, columnCount) {
+    if (!notes) return;
+    const spacer = sheet.addRow([]);
+    spacer.height = 5;
+    const row = sheet.addRow([`Terms / Notes: ${notes}`]);
+    sheet.mergeCells(row.number, 1, row.number, columnCount);
+    row.height = 34;
+    row.getCell(1).alignment = { vertical: "top", wrapText: true };
+    row.getCell(1).font = { name: "Arial", size: 9, color: { argb: "FF53615C" } };
+  }
+
   function addSellingSheet(workbook, data) {
     const sheet = workbook.addWorksheet("Selling", {
       views: [{ state: "frozen", ySplit: 6 }],
@@ -130,6 +141,7 @@
       });
     });
     addGrandTotal(sheet, "Grand Total", data.document.totalSelling, 6);
+    addNotes(sheet, data.document.notes, 6);
     return sheet;
   }
 
@@ -310,7 +322,11 @@
       const total = mode === "cogs"
         ? data.document.totalCogs
         : data.document.totalSelling;
-      const y = Math.min(doc.lastAutoTable.finalY + 9, 195);
+      let y = doc.lastAutoTable.finalY + 9;
+      if (y > 190) {
+        doc.addPage();
+        y = 18;
+      }
       doc.setFontSize(10);
       doc.setTextColor(36, 50, 45);
       doc.text(
@@ -319,6 +335,21 @@
         y,
         { align: "right" },
       );
+      if (data.document.notes) {
+        let notesY = y + 10;
+        if (notesY > 190) {
+          doc.addPage();
+          notesY = 18;
+        }
+        doc.setFontSize(8);
+        doc.setTextColor(90, 101, 96);
+        doc.text("Terms / Notes", 14, notesY);
+        doc.text(
+          doc.splitTextToSize(data.document.notes, 250),
+          14,
+          notesY + 5,
+        );
+      }
     }
     const suffix = mode === "selling" ? "" : ` - ${label}`;
     doc.save(`${safeFilename(data.document.number)}${suffix}.pdf`);
