@@ -18,7 +18,16 @@
 
   function list(collection) {
     if (!collections.includes(collection)) return [];
-    return read(collection, []);
+    const records = read(collection, []);
+    if (collection !== "boqs") return records;
+    let changed = false;
+    const normalized = records.map((record) => {
+      const status = record.status === "Sent" ? "Sent" : "Draft";
+      if (status !== record.status) changed = true;
+      return { ...record, status };
+    });
+    if (changed) write(collection, normalized);
+    return normalized;
   }
 
   function get(collection, id) {

@@ -3,6 +3,7 @@
   const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
   const boqs = list("boqs").map((boq) => ({
     ...boq,
+    status: boq.status === "Sent" ? "Sent" : "Draft",
     ...window.BOQCalculations.calculateSummary(boq.items || []),
   }));
   const projects = list("projects");
@@ -18,21 +19,18 @@
   );
   const marginValue = totalSelling - totalCogs;
   const averageMargin = totalSelling > 0 ? marginValue / totalSelling * 100 : 0;
-  const decided = boqs.filter((boq) => ["Won", "Lost"].includes(boq.status));
-  const won = decided.filter((boq) => boq.status === "Won").length;
-  const winRate = decided.length ? won / decided.length * 100 : 0;
+  const sentCount = boqs.filter((boq) => boq.status === "Sent").length;
+  const sentRate = boqs.length ? sentCount / boqs.length * 100 : 0;
 
   const metrics = {
     boqValue: formatCurrency(totalSelling, currency),
     margin: formatPercent(averageMargin),
-    winRate: `${winRate.toFixed(0)}%`,
+    sentRate: `${sentRate.toFixed(0)}%`,
     boqCount: String(boqs.length),
     activeProjects: String(
       projects.filter((project) => project.status === "Active").length,
     ),
-    reviewCount: String(
-      boqs.filter((boq) => boq.status === "In Review").length,
-    ),
+    draftCount: String(boqs.filter((boq) => boq.status === "Draft").length),
     customerCount: String(customers.length),
   };
   Object.entries(metrics).forEach(([name, value]) => {
@@ -40,8 +38,8 @@
       node.textContent = value
     );
   });
-  document.querySelector('[data-metric-detail="winRate"]').textContent =
-    decided.length ? `${won} of ${decided.length} decided` : "No decided BOQs";
+  document.querySelector('[data-metric-detail="sentRate"]').textContent =
+    boqs.length ? `${sentCount} of ${boqs.length} BOQs sent` : "No BOQs yet";
   document.querySelector("[data-dashboard-date]").textContent = new Intl
     .DateTimeFormat("en-GB", {
     day: "numeric",
@@ -49,7 +47,7 @@
     year: "numeric",
   }).format(new Date());
 
-  const statuses = ["Draft", "In Review", "Approved", "Sent", "Won", "Lost"];
+  const statuses = ["Draft", "Sent"];
   const statusHost = document.querySelector("[data-status-overview]");
   const maximum = Math.max(
     1,

@@ -21,11 +21,7 @@
   function statusClass(status) {
     const map = {
       Draft: "draft",
-      "In Review": "review",
-      Approved: "approved",
       Sent: "sent",
-      Won: "won",
-      Lost: "lost",
       Active: "active",
       Planning: "review",
       "On Hold": "draft",
@@ -55,6 +51,7 @@
   function renderBoq(record) {
     record = {
       ...record,
+      status: record.status === "Sent" ? "Sent" : "Draft",
       ...window.BOQCalculations.calculateSummary(record.items || []),
     };
     const search = [

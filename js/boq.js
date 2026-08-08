@@ -57,7 +57,9 @@
     if (record) {
       document.querySelector("#boq-number").value = record.number || "";
       document.querySelector("#boq-title").value = record.title || "";
-      document.querySelector("#boq-status").value = record.status || "Draft";
+      document.querySelector("#boq-status").value = record.status === "Sent"
+        ? "Sent"
+        : "Draft";
       document.querySelector("#boq-project").value = record.projectId || "";
       document.querySelector("#boq-customer").value = record.customerId || "";
       document.querySelector("#boq-currency").value = record.currency || "USD";
@@ -101,9 +103,7 @@
       "New";
     const statusNode = document.querySelector("[data-editor-status]");
     statusNode.textContent = status;
-    statusNode.className = `status status-${
-      status === "In Review" ? "review" : status.toLowerCase()
-    }`;
+    statusNode.className = `status status-${status.toLowerCase()}`;
   }
 
   function desktopRow(item, index) {
