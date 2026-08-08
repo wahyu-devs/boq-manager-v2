@@ -28,6 +28,8 @@ Object.defineProperty(globalThis, "localStorage", {
 
 localStorage.clear();
 localStorage.setItem("boq-manager-session-user", "test-user");
+localStorage.setItem("boq_show_table_prices", "false");
+localStorage.setItem("boq_show_category_subtotals", "true");
 localStorage.setItem("boq:user:test-user:projects", JSON.stringify({
   "Office Upgrade": {
     data: [{
@@ -82,6 +84,8 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(boqs[0].items[0].sellingOverride, 125, "stored selling price");
   equal(boqs[0].commission, 10, "commission");
   equal(boqs[0].status, "Draft", "migrated BOQ status");
+  equal(store.getSettings().showTablePrices, false, "price visibility preference");
+  equal(store.getSettings().showCategorySubtotals, true, "subtotal preference");
 
   store.saveSettings({ ...store.getSettings(), rounding: "2" });
   const exact = calculations.calculateItem({

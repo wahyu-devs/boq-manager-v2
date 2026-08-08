@@ -268,6 +268,17 @@
     const now = new Date().toISOString();
     const currentSettings = getSettings();
     const currency = currentSettings.defaultCurrency || "IDR";
+    const savedPricePreference = localStorage.getItem("boq_show_table_prices");
+    const previousHiddenPreference = localStorage.getItem("boq_hide_table_prices");
+    const showTablePrices = savedPricePreference === null
+      ? previousHiddenPreference !== "true"
+      : savedPricePreference === "true";
+    const savedSubtotalPreference = localStorage.getItem(
+      "boq_show_category_subtotals",
+    );
+    const showCategorySubtotals = savedSubtotalPreference === null
+      ? true
+      : savedSubtotalPreference === "true";
     const projectNames = Object.keys(sourceProjects);
     const legacyUpdatedAt = Math.max(
       timestampValue(snapshot.meta?.clientUpdatedAt),
@@ -401,8 +412,8 @@
         ...currentSettings,
         defaultCurrency: currency,
         rounding: currentSettings.rounding || "up1000",
-        showCategorySubtotals: true,
-        showTablePrices: true,
+        showCategorySubtotals,
+        showTablePrices,
       },
       currentBoqId: currentName ? stableId("boq", currentName) : "",
       meta: {
