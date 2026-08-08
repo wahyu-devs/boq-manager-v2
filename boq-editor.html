@@ -103,12 +103,14 @@
                       ></label>
                     <label class="field col-5 field-wide-mobile"><span
                         class="field-label"
-                      >BOQ title</span><input
+                      >Project</span><input
                         class="input"
-                        id="boq-title"
-                        name="boqTitle"
+                        id="boq-project"
+                        name="project"
+                        list="project-suggestions"
+                        placeholder="Enter or select a project"
                         required
-                      ></label>
+                      ><datalist id="project-suggestions"></datalist></label>
                     <label class="field col-4"><span class="field-label"
                       >Status</span><select
                         class="select"
@@ -117,14 +119,6 @@
                       >
                         <option>Draft</option>
                         <option>Sent</option>
-                      </select></label>
-                    <label class="field col-4"><span class="field-label"
-                      >Project</span><select
-                        class="select"
-                        id="boq-project"
-                        name="project"
-                      >
-                        <option value="">No project selected</option>
                       </select></label>
                     <label class="field col-4"><span class="field-label"
                       >Customer</span><select
@@ -145,7 +139,7 @@
                         <option>GBP</option>
                         <option>IDR</option>
                       </select></label>
-                    <label class="field col-3"><span class="field-label"
+                    <label class="field col-4"><span class="field-label"
                       >Date</span><input
                         class="input"
                         id="boq-date"
@@ -153,14 +147,14 @@
                         type="date"
                         required
                       ></label>
-                    <label class="field col-3"><span class="field-label"
+                    <label class="field col-4"><span class="field-label"
                       >Valid until</span><input
                         class="input"
                         id="boq-valid-until"
                         name="validUntil"
                         type="date"
                       ></label>
-                    <label class="field col-6 field-wide-mobile"><span
+                    <label class="field col-8 field-wide-mobile"><span
                         class="field-label"
                       >Notes / terms</span><input
                         class="input"

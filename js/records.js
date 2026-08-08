@@ -58,7 +58,6 @@
     };
     const search = [
       record.number,
-      record.title,
       record.projectName,
       record.customerName,
     ].filter(Boolean).join(" ");
@@ -70,7 +69,7 @@
         escapeHtml(
           (record.status || "Draft").toLowerCase().replaceAll(" ", "-"),
         )
-      }" data-project="${escapeHtml(record.projectId || "")}" data-number="${
+      }" data-project="${escapeHtml((record.projectName || "").toLowerCase())}" data-number="${
         escapeHtml(record.number || "")
       }" data-project-name="${
         escapeHtml(record.projectName || "")
@@ -82,9 +81,7 @@
         encodeURIComponent(record.id)
       }">${
         escapeHtml(record.number || "Untitled")
-      }</a><span class="cell-secondary">${
-        escapeHtml(record.title || "Untitled BOQ")
-      }</span></td><td>${escapeHtml(record.projectName || "—")}</td><td>${
+      }</a></td><td>${escapeHtml(record.projectName || "—")}</td><td>${
         escapeHtml(record.customerName || "—")
       }</td><td>${
         statusHtml(record.status)
@@ -109,17 +106,17 @@
             (record.status || "Draft").toLowerCase().replaceAll(" ", "-"),
           )
         }" data-project="${
-          escapeHtml(record.projectId || "")
+          escapeHtml((record.projectName || "").toLowerCase())
         }"><div class="record-card-header"><div><a class="cell-primary" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
         }">${
           escapeHtml(record.number || "Untitled")
         }</a><div class="muted text-sm">${
-          escapeHtml(record.title || "Untitled BOQ")
+          escapeHtml(record.projectName || "No project")
         }</div></div>${
           statusHtml(record.status)
-        }</div><dl class="record-card-grid"><div><dt>Project</dt><dd>${
-          escapeHtml(record.projectName || "—")
+        }</div><dl class="record-card-grid"><div><dt>Date</dt><dd>${
+          dateText(record.date)
         }</dd></div><div><dt>Customer</dt><dd>${
           escapeHtml(record.customerName || "—")
         }</dd></div><div><dt>Value</dt><dd>${
@@ -349,9 +346,13 @@
     const projectFilter = document.querySelector("[data-project-filter]");
     if (projectFilter) {
       const current = projectFilter.value;
+      const projectNames = [...new Set([
+        ...list("projects").map((record) => record.name),
+        ...list("boqs").map((record) => record.projectName),
+      ].filter(Boolean))].sort((a, b) => a.localeCompare(b));
       projectFilter.innerHTML = '<option value="">All projects</option>' +
-        list("projects").map((record) =>
-          `<option value="${record.id}">${escapeHtml(record.name)}</option>`
+        projectNames.map((name) =>
+          `<option value="${escapeHtml(name.toLowerCase())}">${escapeHtml(name)}</option>`
         ).join("");
       projectFilter.value = current;
     }
@@ -459,10 +460,8 @@
         `<div class="stack-md"><div><span class="muted text-sm">${
           escapeHtml(record.number || "Untitled")
         }</span><h2>${
-          escapeHtml(record.title || "Untitled BOQ")
-        }</h2></div><dl class="stack-sm"><div class="cluster space-between"><dt class="muted">Project</dt><dd>${
-          escapeHtml(record.projectName || "—")
-        }</dd></div><div class="cluster space-between"><dt class="muted">Customer</dt><dd>${
+          escapeHtml(record.projectName || "No project")
+        }</h2></div><dl class="stack-sm"><div class="cluster space-between"><dt class="muted">Customer</dt><dd>${
           escapeHtml(record.customerName || "—")
         }</dd></div><div class="cluster space-between"><dt class="muted">Status</dt><dd>${
           statusHtml(record.status)
@@ -475,7 +474,7 @@
       const related = list("boqs").filter((boq) => boq.projectId === record.id);
       const relatedList = related.length
         ? `<div class="related-records"><strong>Related BOQs</strong>${related.map((boq) =>
-          `<a href="boq-editor.html?id=${encodeURIComponent(boq.id)}"><span>${escapeHtml(boq.number || "BOQ")}</span><small>${escapeHtml(boq.title || "Untitled BOQ")}</small></a>`
+          `<a href="boq-editor.html?id=${encodeURIComponent(boq.id)}"><span>${escapeHtml(boq.number || "BOQ")}</span><small>${escapeHtml(boq.status || "Draft")}</small></a>`
         ).join("")}</div>`
         : '<p class="muted text-sm">No related BOQs yet.</p>';
       host.innerHTML =
@@ -502,7 +501,7 @@
         title: project.name,
       })), ...relatedBoqs.map((boq) => ({
         label: boq.number || "BOQ",
-        title: boq.title,
+        title: boq.projectName,
         href: `boq-editor.html?id=${encodeURIComponent(boq.id)}`,
       }))];
       const relatedList = relationships.length
@@ -554,7 +553,6 @@
         ...record,
         id: undefined,
         number: nextNumber("boqs", "BOQ"),
-        title: `${record.title || "Untitled BOQ"} Copy`,
         status: "Draft",
       };
       save(collection, duplicate);

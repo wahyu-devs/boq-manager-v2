@@ -68,7 +68,7 @@
     title.value = settings.companyName || "BOQ Manager";
     title.font = { name: "Arial", bold: true, size: 15, color: { argb: "FF263A33" } };
     sheet.mergeCells(2, 1, 2, lastColumn);
-    sheet.getCell(2, 1).value = `${document.number || "BOQ"} — ${document.title || "Bill of Quantities"}`;
+    sheet.getCell(2, 1).value = `${document.number || "BOQ"} — ${document.projectName || "Bill of Quantities"}`;
     sheet.getCell(2, 1).font = { name: "Arial", bold: true, size: 12 };
     sheet.addRow(["Customer", document.customerName || "—", "Project", document.projectName || "—"]);
     sheet.addRow(["Date", document.date || "—", "Valid until", document.validUntil || "—"]);
@@ -204,7 +204,7 @@
     const data = editorData();
     const workbook = new window.ExcelJS.Workbook();
     workbook.creator = "BOQ Manager";
-    workbook.subject = data.document.title || "Bill of Quantities";
+    workbook.subject = data.document.projectName || "Bill of Quantities";
     workbook.created = new Date();
     addSellingSheet(workbook, data);
     if (mode === "all") {
@@ -223,7 +223,7 @@
 
   function pdfHeader(doc, data, label) {
     doc.setProperties({
-      title: `${data.document.number} — ${data.document.title}`,
+      title: `${data.document.number} — ${data.document.projectName || "Bill of Quantities"}`,
       subject: label,
       author: data.settings.companyName || "BOQ Manager",
       creator: "BOQ Manager",

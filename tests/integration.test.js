@@ -81,7 +81,8 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(projects.length, 1, "project count");
   equal(boqs.length, 1, "BOQ count");
   equal(products.length, 1, "product count");
-  equal(boqs[0].title, "Office Upgrade", "BOQ title");
+  equal(boqs[0].projectName, "Office Upgrade", "BOQ project name");
+  equal(boqs[0].title, undefined, "BOQ title removed");
   equal(boqs[0].items[0].sellingOverride, 125, "stored selling price");
   equal(boqs[0].commission, 10, "commission");
   equal(boqs[0].status, "Draft", "migrated BOQ status");
@@ -144,11 +145,23 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   });
   store.save("boqs", {
     number: `EST-${year}-09`,
-    title: "Numbering Test",
+    projectName: "Numbering Test",
     status: "Draft",
     items: [],
   });
   equal(store.nextNumber("boqs", "BOQ"), `EST-${year}-10`, "next BOQ number");
+  const normalizedLegacyBoq = store.save("boqs", {
+    number: "LEGACY-001",
+    title: "Legacy Project Name",
+    status: "Draft",
+    items: [],
+  });
+  equal(
+    normalizedLegacyBoq.projectName,
+    "Legacy Project Name",
+    "legacy title becomes project name",
+  );
+  equal(normalizedLegacyBoq.title, undefined, "legacy title discarded");
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1,234.50", "comma number format");
 
   store.saveSettings({ ...store.getSettings(), numberFormat: "dot" });
@@ -172,6 +185,10 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     categoryOrder: ["Services"],
   }, { silent: true });
   equal(store.list("projects").length, 1, "single-project restore count");
-  equal(store.list("boqs")[0].title, "Single Project Backup", "single-project restore title");
+  equal(
+    store.list("boqs")[0].projectName,
+    "Single Project Backup",
+    "single-project restore project",
+  );
   equal(store.list("boqs")[0].commission, 2000, "single-project restore commission");
 });

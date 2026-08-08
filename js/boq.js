@@ -89,12 +89,11 @@
   }
 
   function populateRecordOptions() {
-    const projectSelect = document.querySelector("#boq-project");
+    const projectSuggestions = document.querySelector("#project-suggestions");
     const customerSelect = document.querySelector("#boq-customer");
-    projectSelect.innerHTML = '<option value="">No project selected</option>' +
-      store.list("projects").map((project) =>
-        `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>`
-      ).join("");
+    projectSuggestions.innerHTML = store.list("projects").map((project) =>
+      `<option value="${escapeHtml(project.name)}"></option>`
+    ).join("");
     customerSelect.innerHTML =
       '<option value="">No customer selected</option>' +
       store.list("customers").map((customer) =>
@@ -112,9 +111,14 @@
     const record = currentRecordId ? store.get("boqs", currentRecordId) : null;
     if (record) {
       setFormValue("#boq-number", record.number);
-      setFormValue("#boq-title", record.title);
       setFormValue("#boq-status", record.status === "Sent" ? "Sent" : "Draft");
-      setFormValue("#boq-project", record.projectId);
+      const linkedProject = record.projectId
+        ? store.get("projects", record.projectId)
+        : null;
+      setFormValue(
+        "#boq-project",
+        record.projectName || linkedProject?.name || "",
+      );
       setFormValue("#boq-customer", record.customerId);
       setFormValue("#boq-currency", record.currency || settings.defaultCurrency || "IDR");
       setFormValue("#boq-date", record.date);
@@ -144,10 +148,10 @@
   }
 
   function updateEditorHeader() {
-    const title = document.querySelector("#boq-title").value.trim();
+    const projectName = document.querySelector("#boq-project").value.trim();
     const number = document.querySelector("#boq-number").value.trim();
     const status = document.querySelector("#boq-status").value;
-    document.querySelector("[data-editor-title]").textContent = title ||
+    document.querySelector("[data-editor-title]").textContent = projectName ||
       "New BOQ";
     document.querySelector("[data-editor-number]").textContent = number ||
       "New";
@@ -294,17 +298,24 @@
   }
 
   function documentPayload() {
-    const projectSelect = document.querySelector("#boq-project");
+    const projectName = document.querySelector("#boq-project").value.trim();
+    const projectMatch = store.list("projects").find((project) =>
+      project.name?.trim().toLowerCase() === projectName.toLowerCase()
+    );
+    const existing = currentRecordId
+      ? store.get("boqs", currentRecordId)
+      : null;
+    const preserveProjectId = existing?.projectId &&
+      existing.projectName?.trim().toLowerCase() === projectName.toLowerCase();
     const customerSelect = document.querySelector("#boq-customer");
     const summary = calculateSummary(items, { commission });
     return {
       number: document.querySelector("#boq-number").value.trim(),
-      title: document.querySelector("#boq-title").value.trim(),
       status: document.querySelector("#boq-status").value,
-      projectId: projectSelect.value,
-      projectName: projectSelect.value
-        ? projectSelect.selectedOptions[0]?.text || ""
-        : "",
+      projectId: projectMatch?.id || (preserveProjectId
+        ? existing.projectId
+        : ""),
+      projectName: projectMatch?.name || projectName,
       customerId: customerSelect.value,
       customerName: customerSelect.value
         ? customerSelect.selectedOptions[0]?.text || ""
@@ -439,7 +450,7 @@
       ? `<img class="pdf-company-logo" src="${settings.companyLogo}" alt="">`
       : "";
     let rowIndex = 0;
-    host.innerHTML = `<div class="pdf-preview-content"><header class="pdf-preview-header"><div>${companyLogo}<strong class="pdf-company">${escapeHtml(settings.companyName || "Company information not configured")}</strong><p>${companyDetails}</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${escapeHtml(payload.number)}</strong><br>Date: ${escapeHtml(payload.date)}<br>Valid until: ${escapeHtml(payload.validUntil)}</p></div></header><div class="pdf-parties"><div><span>Prepared for</span><strong>${escapeHtml(payload.customerName || "—")}</strong></div><div><span>Project</span><strong>${escapeHtml(payload.projectName || "—")}</strong><small>${escapeHtml(payload.title)}</small></div></div><table class="pdf-preview-table"><thead><tr><th>#</th><th>Item & description</th><th class="align-right">Qty</th><th>Unit</th><th class="align-right">Unit price</th><th class="align-right">Total</th></tr></thead><tbody>${categories().map((category) => `<tr class="pdf-category"><td colspan="6"><strong>${escapeHtml(category)}</strong></td></tr>${items.filter((item) => item.category === category).map((item) => { const calc = calculateItem(item); return `<tr><td>${++rowIndex}</td><td><strong>${escapeHtml(item.item)}</strong><br><span>${escapeHtml(item.description)}</span></td><td class="align-right">${item.qty}</td><td>${escapeHtml(item.unit)}</td><td class="align-right">${formatCurrency(calc.unitSelling, currentCurrency())}</td><td class="align-right"><strong>${formatCurrency(calc.totalSelling, currentCurrency())}</strong></td></tr>`; }).join("")}`).join("")}</tbody></table><div class="pdf-preview-total"><div><span>Subtotal</span><strong>${formatCurrency(payload.totalSelling, currentCurrency())}</strong></div><div class="grand-total"><span>Grand total</span><strong>${formatCurrency(payload.totalSelling, currentCurrency())}</strong></div></div><div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div><footer class="pdf-footer">Generated by BOQ Manager · Pricing excludes applicable taxes unless stated otherwise.</footer></div>`;
+    host.innerHTML = `<div class="pdf-preview-content"><header class="pdf-preview-header"><div>${companyLogo}<strong class="pdf-company">${escapeHtml(settings.companyName || "Company information not configured")}</strong><p>${companyDetails}</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${escapeHtml(payload.number)}</strong><br>Date: ${escapeHtml(payload.date)}<br>Valid until: ${escapeHtml(payload.validUntil)}</p></div></header><div class="pdf-parties"><div><span>Prepared for</span><strong>${escapeHtml(payload.customerName || "—")}</strong></div><div><span>Project</span><strong>${escapeHtml(payload.projectName || "—")}</strong></div></div><table class="pdf-preview-table"><thead><tr><th>#</th><th>Item & description</th><th class="align-right">Qty</th><th>Unit</th><th class="align-right">Unit price</th><th class="align-right">Total</th></tr></thead><tbody>${categories().map((category) => `<tr class="pdf-category"><td colspan="6"><strong>${escapeHtml(category)}</strong></td></tr>${items.filter((item) => item.category === category).map((item) => { const calc = calculateItem(item); return `<tr><td>${++rowIndex}</td><td><strong>${escapeHtml(item.item)}</strong><br><span>${escapeHtml(item.description)}</span></td><td class="align-right">${item.qty}</td><td>${escapeHtml(item.unit)}</td><td class="align-right">${formatCurrency(calc.unitSelling, currentCurrency())}</td><td class="align-right"><strong>${formatCurrency(calc.totalSelling, currentCurrency())}</strong></td></tr>`; }).join("")}`).join("")}</tbody></table><div class="pdf-preview-total"><div><span>Subtotal</span><strong>${formatCurrency(payload.totalSelling, currentCurrency())}</strong></div><div class="grand-total"><span>Grand total</span><strong>${formatCurrency(payload.totalSelling, currentCurrency())}</strong></div></div><div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div><footer class="pdf-footer">Generated by BOQ Manager · Pricing excludes applicable taxes unless stated otherwise.</footer></div>`;
   }
 
   function updateCatalogHistory() {
@@ -467,6 +478,11 @@
   }
 
   function saveDocument() {
+    const informationForm = document.querySelector("#boq-info");
+    if (!informationForm.checkValidity()) {
+      informationForm.reportValidity();
+      return null;
+    }
     const existing = currentRecordId ? store.get("boqs", currentRecordId) : null;
     const record = store.save("boqs", {
       ...documentPayload(),
@@ -478,6 +494,7 @@
     updateCatalogHistory();
     history.replaceState(null, "", `boq-editor.html?id=${encodeURIComponent(record.id)}`);
     updateEditorHeader();
+    return record;
   }
 
   editor.addEventListener("input", (event) => {
@@ -611,7 +628,7 @@
     markDirty();
   });
   document.addEventListener("boq:saved", () => {
-    saveDocument();
+    if (!saveDocument()) return;
     dirty = false;
     document.querySelectorAll("[data-save-state]").forEach((element) =>
       element.textContent = "All changes saved"

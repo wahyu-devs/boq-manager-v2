@@ -56,14 +56,23 @@
     }));
   }
 
-  function normalizeBoq(record) {
+  function normalizeBoq(record, projectRecords = read("projects", [])) {
+    const { title: legacyTitle, ...value } = record || {};
+    const linkedProject = value.projectId && Array.isArray(projectRecords)
+      ? projectRecords.find((project) => project.id === value.projectId)
+      : null;
+    const projectName = String(value.projectName || "").trim() ||
+      String(linkedProject?.name || "").trim() ||
+      String(legacyTitle || "").trim();
     return {
-      ...record,
-      status: record.status === "Sent" ? "Sent" : "Draft",
-      items: Array.isArray(record.items) ? record.items : [],
-      commission: Number(record.commission || 0),
-      categoryOrder: Array.isArray(record.categoryOrder)
-        ? record.categoryOrder
+      ...value,
+      status: value.status === "Sent" ? "Sent" : "Draft",
+      projectId: value.projectId || "",
+      projectName,
+      items: Array.isArray(value.items) ? value.items : [],
+      commission: Number(value.commission || 0),
+      categoryOrder: Array.isArray(value.categoryOrder)
+        ? value.categoryOrder
         : [],
     };
   }
@@ -373,7 +382,6 @@
       boqRecords.push({
         id: stableId("boq", name),
         number: `BOQ-${String(index + 1).padStart(3, "0")}`,
-        title: name,
         status: "Draft",
         projectId,
         projectName: name,
@@ -397,7 +405,9 @@
     const working = Array.isArray(snapshot.working) ? snapshot.working : [];
     const currentName = String(snapshot.currentProjectName || "").trim();
     if (working.length && currentName) {
-      const current = boqRecords.find((record) => record.title === currentName);
+      const current = boqRecords.find((record) =>
+        record.projectName === currentName
+      );
       if (current) {
         current.items = working.map(legacyItemToBoqItem);
         current.commission = Number(snapshot.unsavedCommission ||
@@ -413,10 +423,9 @@
       boqRecords.unshift({
         id: stableId("boq", `working-${timestamp}`),
         number: `BOQ-${String(boqRecords.length + 1).padStart(3, "0")}`,
-        title: "Imported working BOQ",
         status: "Draft",
         projectId: "",
-        projectName: "",
+        projectName: "Imported Project",
         customerId: "",
         customerName: "",
         currency,
@@ -503,9 +512,14 @@
       : snapshot;
     if (!converted?.collections) throw new Error("Unsupported backup format");
     collections.forEach((collection) => {
-      const incoming = Array.isArray(converted.collections[collection])
+      let incoming = Array.isArray(converted.collections[collection])
         ? converted.collections[collection]
         : [];
+      if (collection === "boqs") {
+        incoming = incoming.map((record) =>
+          normalizeBoq(record, converted.collections.projects)
+        );
+      }
       const value = options.merge
         ? mergeRecords(list(collection), incoming)
         : incoming;
@@ -589,6 +603,7 @@
     if (nextUserId === "guest") localStorage.removeItem(sessionUserKey);
     else localStorage.setItem(sessionUserKey, nextUserId);
     migrateCurrentNamespace();
+    migrateBoqProjectNames();
     if (changed) document.dispatchEvent(new CustomEvent("boq:user-changed", {
       detail: { userId: nextUserId },
     }));
@@ -611,7 +626,23 @@
     return read("meta", {});
   }
 
+  function migrateBoqProjectNames() {
+    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (!Array.isArray(raw)) return;
+    const needsMigration = raw.some((record) =>
+      record && typeof record === "object" &&
+      (Object.hasOwn(record, "title") || !Object.hasOwn(record, "projectName"))
+    );
+    if (!needsMigration) return;
+    localStorage.setItem(
+      storageKey("boqs"),
+      JSON.stringify(raw.map(normalizeBoq)),
+    );
+    touch();
+  }
+
   migrateCurrentNamespace();
+  migrateBoqProjectNames();
   localStorage.removeItem(storageKey("workingDraft"));
 
   window.BOQStore = {

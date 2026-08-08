@@ -84,9 +84,7 @@
         encodeURIComponent(boq.id)
       }">${
         escapeHtml(boq.number || "Untitled")
-      }</a><span class="cell-secondary">${
-        escapeHtml(boq.title || "Untitled BOQ")
-      }</span></td><td>${
+      }</a></td><td>${
         escapeHtml(boq.projectName || "—")
       }</td><td><span class="status">${
         escapeHtml(boq.status || "Draft")
