@@ -2,7 +2,7 @@
   const appPrefix = "boq-manager-v2";
   const previousPrefix = "boq-manager-v1";
   const sessionUserKey = "boq-manager-session-user";
-  const collections = ["boqs", "projects", "products", "customers"];
+  const collections = ["boqs", "products", "customers"];
   let activeUserId = localStorage.getItem(sessionUserKey) || "guest";
 
   function namespace(userId = activeUserId) {
@@ -56,10 +56,14 @@
     }));
   }
 
-  function normalizeBoq(record, projectRecords = read("projects", [])) {
-    const { title: legacyTitle, ...value } = record || {};
-    const linkedProject = value.projectId && Array.isArray(projectRecords)
-      ? projectRecords.find((project) => project.id === value.projectId)
+  function normalizeBoq(record, legacyProjects = []) {
+    const {
+      title: legacyTitle,
+      projectId: legacyProjectId,
+      ...value
+    } = record || {};
+    const linkedProject = legacyProjectId && Array.isArray(legacyProjects)
+      ? legacyProjects.find((project) => project.id === legacyProjectId)
       : null;
     const projectName = String(value.projectName || "").trim() ||
       String(linkedProject?.name || "").trim() ||
@@ -67,7 +71,6 @@
     return {
       ...value,
       status: value.status === "Sent" ? "Sent" : "Draft",
-      projectId: value.projectId || "",
       projectName,
       items: Array.isArray(value.items) ? value.items : [],
       commission: Number(value.commission || 0),
@@ -329,7 +332,6 @@
       ? snapshot.projects
       : {};
     const legacyProducts = Array.isArray(snapshot.items) ? snapshot.items : [];
-    const projectRecords = [];
     const boqRecords = [];
     const now = new Date().toISOString();
     const currentSettings = getSettings();
@@ -363,27 +365,10 @@
         : [];
       const savedAt = timestampValue(source?.lastSaved) || legacyUpdatedAt;
       const timestamp = new Date(savedAt).toISOString();
-      const projectId = stableId("project", name);
-      projectRecords.push({
-        id: projectId,
-        name,
-        code: `PRJ-${String(index + 1).padStart(3, "0")}`,
-        customerId: "",
-        customerName: "",
-        owner: "",
-        status: "Active",
-        startDate: "",
-        estimatedValue: 0,
-        notes: "",
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        source: "imported",
-      });
       boqRecords.push({
         id: stableId("boq", name),
         number: `BOQ-${String(index + 1).padStart(3, "0")}`,
         status: "Draft",
-        projectId,
         projectName: name,
         customerId: "",
         customerName: "",
@@ -424,7 +409,6 @@
         id: stableId("boq", `working-${timestamp}`),
         number: `BOQ-${String(boqRecords.length + 1).padStart(3, "0")}`,
         status: "Draft",
-        projectId: "",
         projectName: "Imported Project",
         customerId: "",
         customerName: "",
@@ -470,7 +454,6 @@
     return {
       collections: {
         boqs: boqRecords,
-        projects: projectRecords,
         products: productRecords,
         customers: [],
       },
@@ -483,7 +466,7 @@
       },
       currentBoqId: currentName ? stableId("boq", currentName) : "",
       meta: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         clientUpdatedAt: legacyUpdatedAt,
         importedFromPreviousVersion: true,
       },
@@ -501,7 +484,7 @@
       currentBoqId: read("currentBoqId", ""),
       meta: {
         ...read("meta", {}),
-        schemaVersion: 2,
+        schemaVersion: 3,
       },
     };
   }
@@ -525,6 +508,7 @@
         : incoming;
       localStorage.setItem(storageKey(collection), JSON.stringify(value));
     });
+    localStorage.removeItem(storageKey("projects"));
     if (converted.settings && typeof converted.settings === "object") {
       const settings = options.merge
         ? { ...getSettings(), ...converted.settings }
@@ -544,7 +528,7 @@
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
       ...converted.meta,
-      schemaVersion: 2,
+      schemaVersion: 3,
       clientUpdatedAt: incomingTs,
     }));
     document.dispatchEvent(new CustomEvent("boq:store-ready"));
@@ -558,6 +542,9 @@
     const previousClaim = localStorage.getItem(previousClaimKey);
     const canClaimPrevious = activeUserId === "guest" || !previousClaim ||
       previousClaim === activeUserId;
+    const previousProjects = canClaimPrevious
+      ? parseJson(localStorage.getItem(`${previousPrefix}:projects`), [])
+      : [];
     const previousCollections = Object.fromEntries(collections.map((name) => [
       name,
       canClaimPrevious
@@ -574,7 +561,11 @@
       collections.forEach((name) =>
         localStorage.setItem(
           storageKey(name),
-          JSON.stringify(previousCollections[name]),
+          JSON.stringify(name === "boqs"
+            ? previousCollections[name].map((record) =>
+              normalizeBoq(record, previousProjects)
+            )
+            : previousCollections[name]),
         )
       );
       const previousSettings = parseJson(
@@ -603,7 +594,7 @@
     if (nextUserId === "guest") localStorage.removeItem(sessionUserKey);
     else localStorage.setItem(sessionUserKey, nextUserId);
     migrateCurrentNamespace();
-    migrateBoqProjectNames();
+    removeProjectCollection();
     if (changed) document.dispatchEvent(new CustomEvent("boq:user-changed", {
       detail: { userId: nextUserId },
     }));
@@ -626,23 +617,28 @@
     return read("meta", {});
   }
 
-  function migrateBoqProjectNames() {
+  function removeProjectCollection() {
     const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return;
-    const needsMigration = raw.some((record) =>
-      record && typeof record === "object" &&
-      (Object.hasOwn(record, "title") || !Object.hasOwn(record, "projectName"))
+    const legacyProjects = parseJson(
+      localStorage.getItem(storageKey("projects")),
+      [],
     );
-    if (!needsMigration) return;
-    localStorage.setItem(
-      storageKey("boqs"),
-      JSON.stringify(raw.map(normalizeBoq)),
+    const normalized = raw.map((record) =>
+      normalizeBoq(record, legacyProjects)
     );
-    touch();
+    const changed = JSON.stringify(normalized) !== JSON.stringify(raw);
+    const hadProjectCollection = localStorage.getItem(storageKey("projects")) !==
+      null;
+    if (changed) {
+      localStorage.setItem(storageKey("boqs"), JSON.stringify(normalized));
+    }
+    localStorage.removeItem(storageKey("projects"));
+    if (changed || hadProjectCollection) touch();
   }
 
   migrateCurrentNamespace();
-  migrateBoqProjectNames();
+  removeProjectCollection();
   localStorage.removeItem(storageKey("workingDraft"));
 
   window.BOQStore = {

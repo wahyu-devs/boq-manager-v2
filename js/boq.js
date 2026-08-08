@@ -91,8 +91,11 @@
   function populateRecordOptions() {
     const projectSuggestions = document.querySelector("#project-suggestions");
     const customerSelect = document.querySelector("#boq-customer");
-    projectSuggestions.innerHTML = store.list("projects").map((project) =>
-      `<option value="${escapeHtml(project.name)}"></option>`
+    const projectNames = [...new Set(store.list("boqs").map((record) =>
+      record.projectName?.trim()
+    ).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    projectSuggestions.innerHTML = projectNames.map((name) =>
+      `<option value="${escapeHtml(name)}"></option>`
     ).join("");
     customerSelect.innerHTML =
       '<option value="">No customer selected</option>' +
@@ -112,13 +115,7 @@
     if (record) {
       setFormValue("#boq-number", record.number);
       setFormValue("#boq-status", record.status === "Sent" ? "Sent" : "Draft");
-      const linkedProject = record.projectId
-        ? store.get("projects", record.projectId)
-        : null;
-      setFormValue(
-        "#boq-project",
-        record.projectName || linkedProject?.name || "",
-      );
+      setFormValue("#boq-project", record.projectName);
       setFormValue("#boq-customer", record.customerId);
       setFormValue("#boq-currency", record.currency || settings.defaultCurrency || "IDR");
       setFormValue("#boq-date", record.date);
@@ -299,23 +296,12 @@
 
   function documentPayload() {
     const projectName = document.querySelector("#boq-project").value.trim();
-    const projectMatch = store.list("projects").find((project) =>
-      project.name?.trim().toLowerCase() === projectName.toLowerCase()
-    );
-    const existing = currentRecordId
-      ? store.get("boqs", currentRecordId)
-      : null;
-    const preserveProjectId = existing?.projectId &&
-      existing.projectName?.trim().toLowerCase() === projectName.toLowerCase();
     const customerSelect = document.querySelector("#boq-customer");
     const summary = calculateSummary(items, { commission });
     return {
       number: document.querySelector("#boq-number").value.trim(),
       status: document.querySelector("#boq-status").value,
-      projectId: projectMatch?.id || (preserveProjectId
-        ? existing.projectId
-        : ""),
-      projectName: projectMatch?.name || projectName,
+      projectName,
       customerId: customerSelect.value,
       customerName: customerSelect.value
         ? customerSelect.selectedOptions[0]?.text || ""

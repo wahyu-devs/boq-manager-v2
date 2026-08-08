@@ -2,7 +2,6 @@
   const page = document.body.dataset.page;
   const collectionByPage = {
     boqs: "boqs",
-    projects: "projects",
     products: "products",
     customers: "customers",
   };
@@ -23,9 +22,6 @@
       Draft: "draft",
       Sent: "sent",
       Active: "active",
-      Planning: "review",
-      "On Hold": "draft",
-      Completed: "approved",
       Prospect: "review",
       Inactive: "inactive",
     };
@@ -129,67 +125,6 @@
     };
   }
 
-  function renderProject(record) {
-    const search = [record.name, record.code, record.customerName, record.owner]
-      .filter(Boolean).join(" ");
-    const relatedBoqs = list("boqs").filter((boq) =>
-      boq.projectId === record.id
-    );
-    const boqCount = relatedBoqs.length;
-    const estimatedValue = Number(record.estimatedValue || 0) ||
-      relatedBoqs.reduce((total, boq) =>
-        total + window.BOQCalculations.calculateSummary(boq.items || [], {
-          commission: boq.commission,
-        }).totalSelling, 0);
-    return {
-      row: `<tr data-table-row data-record-id="${record.id}" data-search="${
-        escapeHtml(search)
-      }" data-status="${
-        escapeHtml(
-          (record.status || "Planning").toLowerCase().replaceAll(" ", "-"),
-        )
-      }" data-owner="${escapeHtml(record.owner || "")}" data-project-name="${
-        escapeHtml(record.name || "")
-      }" data-value="${
-        estimatedValue
-      }" data-boqs="${boqCount}"><td><button class="link cell-primary" type="button" data-record-action="detail" data-record-id="${record.id}" data-open-modal="record-detail-modal">${
-        escapeHtml(record.name || "Untitled project")
-      }</button><span class="cell-secondary">${
-        escapeHtml(record.notes || "No notes")
-      }</span></td><td class="mono">${escapeHtml(record.code || "—")}</td><td>${
-        escapeHtml(record.customerName || "—")
-      }</td><td>${escapeHtml(record.owner || "—")}</td><td>${
-        statusHtml(record.status || "Planning")
-      }</td><td>${
-        dateText(record.startDate)
-      }</td><td class="align-right currency">${
-        formatCurrency(estimatedValue, defaultCurrency)
-      }</td><td class="align-right number">${boqCount}</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit project">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete this project?">×</button></div></td></tr>`,
-      card:
-        `<article class="record-card" data-record-card data-record-id="${record.id}" data-search="${
-          escapeHtml(search)
-        }" data-status="${
-          escapeHtml(
-            (record.status || "Planning").toLowerCase().replaceAll(" ", "-"),
-          )
-        }" data-owner="${
-          escapeHtml(record.owner || "")
-        }"><div class="record-card-header"><div><button class="link cell-primary" type="button" data-record-action="detail" data-record-id="${record.id}" data-open-modal="record-detail-modal">${
-          escapeHtml(record.name || "Untitled project")
-        }</button><div class="muted text-sm mono">${
-          escapeHtml(record.code || "—")
-        }</div></div>${
-          statusHtml(record.status || "Planning")
-        }</div><dl class="record-card-grid"><div><dt>Customer</dt><dd>${
-          escapeHtml(record.customerName || "—")
-        }</dd></div><div><dt>Owner</dt><dd>${
-          escapeHtml(record.owner || "—")
-        }</dd></div><div><dt>Est. value</dt><dd>${
-          formatCurrency(estimatedValue, defaultCurrency)
-        }</dd></div><div><dt>BOQs</dt><dd>${boqCount}</dd></div></dl></article>`,
-    };
-  }
-
   function renderProduct(record) {
     const margin = Math.max(
       0,
@@ -263,11 +198,13 @@
       record.email,
       record.phone,
     ].filter(Boolean).join(" ");
-    const projectCount =
-      list("projects").filter((project) => project.customerId === record.id)
-        .length;
-    const boqCount =
-      list("boqs").filter((boq) => boq.customerId === record.id).length;
+    const customerBoqs = list("boqs").filter((boq) =>
+      boq.customerId === record.id
+    );
+    const projectCount = new Set(customerBoqs.map((boq) =>
+      boq.projectName?.trim().toLowerCase()
+    ).filter(Boolean)).size;
+    const boqCount = customerBoqs.length;
     return {
       row: `<tr data-table-row data-record-id="${record.id}" data-search="${
         escapeHtml(search)
@@ -301,13 +238,12 @@
           escapeHtml(record.email || "—")
         }</dd></div><div><dt>Phone</dt><dd>${
           escapeHtml(record.phone || "—")
-        }</dd></div><div><dt>Projects</dt><dd>${projectCount}</dd></div><div><dt>BOQs</dt><dd>${boqCount}</dd></div></dl></article>`,
+        }</dd></div><div><dt>BOQ projects</dt><dd>${projectCount}</dd></div><div><dt>BOQs</dt><dd>${boqCount}</dd></div></dl></article>`,
     };
   }
 
   const renderer = {
     boqs: renderBoq,
-    projects: renderProject,
     products: renderProduct,
     customers: renderCustomer,
   }[collection];
@@ -329,27 +265,12 @@
   }
 
   function updateDynamicOptions() {
-    const ownerFilter = document.querySelector("[data-owner-filter]");
-    if (ownerFilter) {
-      const current = ownerFilter.value;
-      const owners = [
-        ...new Set(
-          list("projects").map((record) => record.owner).filter(Boolean),
-        ),
-      ].sort();
-      ownerFilter.innerHTML = '<option value="">All owners</option>' +
-        owners.map((owner) =>
-          `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`
-        ).join("");
-      ownerFilter.value = current;
-    }
     const projectFilter = document.querySelector("[data-project-filter]");
     if (projectFilter) {
       const current = projectFilter.value;
-      const projectNames = [...new Set([
-        ...list("projects").map((record) => record.name),
-        ...list("boqs").map((record) => record.projectName),
-      ].filter(Boolean))].sort((a, b) => a.localeCompare(b));
+      const projectNames = [...new Set(list("boqs").map((record) =>
+        record.projectName
+      ).filter(Boolean))].sort((a, b) => a.localeCompare(b));
       projectFilter.innerHTML = '<option value="">All projects</option>' +
         projectNames.map((name) =>
           `<option value="${escapeHtml(name.toLowerCase())}">${escapeHtml(name)}</option>`
@@ -368,18 +289,6 @@
         ).join("");
       categoryFilter.value = current;
     }
-    const customerSelect = document.querySelector('[name="customerId"]');
-    if (customerSelect) {
-      const current = customerSelect.value;
-      customerSelect.innerHTML =
-        '<option value="">No customer selected</option>' +
-        list("customers").map((record) =>
-          `<option value="${record.id}">${
-            escapeHtml(record.companyName)
-          }</option>`
-        ).join("");
-      customerSelect.value = current;
-    }
   }
 
   function populateForm(record) {
@@ -395,9 +304,6 @@
       ? `Edit ${singular(collection)}`
       : `Add ${singular(collection)}`;
     if (!record) {
-      if (collection === "projects") {
-        form.elements.code.value = nextNumber("projects", "PRJ");
-      }
       updateCalculatedProductPrice();
       return;
     }
@@ -426,18 +332,11 @@
       ? "customer"
       : value === "products"
       ? "product"
-      : value === "projects"
-      ? "project"
       : "BOQ";
   }
 
   function formRecord(form) {
     const values = Object.fromEntries(new FormData(form));
-    if (collection === "projects") {
-      const customer = get("customers", values.customerId);
-      values.customerName = customer?.companyName || "";
-      values.estimatedValue = Number(values.estimatedValue || 0);
-    }
     if (collection === "products") {
       values.defaultCogs = Number(values.defaultCogs || 0);
       values.defaultMargin = Number(values.defaultMargin || 0);
@@ -470,40 +369,18 @@
         }</dd></div><div class="cluster space-between"><dt class="muted">Total selling</dt><dd class="text-medium">${
           formatCurrency(summary.totalSelling, record.currency || defaultCurrency)
         }</dd></div></dl></div>`;
-    } else if (collection === "projects") {
-      const related = list("boqs").filter((boq) => boq.projectId === record.id);
-      const relatedList = related.length
-        ? `<div class="related-records"><strong>Related BOQs</strong>${related.map((boq) =>
-          `<a href="boq-editor.html?id=${encodeURIComponent(boq.id)}"><span>${escapeHtml(boq.number || "BOQ")}</span><small>${escapeHtml(boq.status || "Draft")}</small></a>`
-        ).join("")}</div>`
-        : '<p class="muted text-sm">No related BOQs yet.</p>';
-      host.innerHTML =
-        `<div class="stack-lg"><div><span class="muted text-sm mono">${
-          escapeHtml(record.code || "No code")
-        }</span><h2>${
-          escapeHtml(record.name || "Untitled project")
-        }</h2></div><dl class="stack-sm"><div class="cluster space-between"><dt class="muted">Customer</dt><dd>${
-          escapeHtml(record.customerName || "—")
-        }</dd></div><div class="cluster space-between"><dt class="muted">Owner</dt><dd>${
-          escapeHtml(record.owner || "—")
-        }</dd></div><div class="cluster space-between"><dt class="muted">Status</dt><dd>${
-          statusHtml(record.status || "Planning")
-        }</dd></div><div class="cluster space-between"><dt class="muted">Related BOQs</dt><dd>${related.length}</dd></div></dl>${relatedList}</div>`;
     } else if (collection === "customers") {
-      const relatedProjects = list("projects").filter((project) =>
-        project.customerId === record.id
-      );
       const relatedBoqs = list("boqs").filter((boq) =>
         boq.customerId === record.id
       );
-      const relationships = [...relatedProjects.map((project) => ({
-        label: project.code || "Project",
-        title: project.name,
-      })), ...relatedBoqs.map((boq) => ({
+      const projectCount = new Set(relatedBoqs.map((boq) =>
+        boq.projectName?.trim().toLowerCase()
+      ).filter(Boolean)).size;
+      const relationships = relatedBoqs.map((boq) => ({
         label: boq.number || "BOQ",
         title: boq.projectName,
         href: `boq-editor.html?id=${encodeURIComponent(boq.id)}`,
-      }))];
+      }));
       const relatedList = relationships.length
         ? `<div class="related-records"><strong>Related records</strong>${relationships.map((entry) =>
           entry.href
@@ -519,7 +396,7 @@
         escapeHtml(record.email || "—")
       }</dd></div><div class="cluster space-between"><dt class="muted">Phone</dt><dd>${
         escapeHtml(record.phone || "—")
-      }</dd></div><div class="cluster space-between"><dt class="muted">Projects</dt><dd>${relatedProjects.length}</dd></div><div class="cluster space-between"><dt class="muted">BOQs</dt><dd>${relatedBoqs.length}</dd></div></dl>${relatedList}</div>`;
+      }</dd></div><div class="cluster space-between"><dt class="muted">BOQ projects</dt><dd>${projectCount}</dd></div><div class="cluster space-between"><dt class="muted">BOQs</dt><dd>${relatedBoqs.length}</dd></div></dl>${relatedList}</div>`;
     }
   }
 

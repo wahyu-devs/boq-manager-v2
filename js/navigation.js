@@ -4,7 +4,6 @@
     dashboard: "Dashboard",
     boqs: "BOQs",
     "boq-editor": "BOQ Editor",
-    projects: "Projects",
     products: "Products",
     customers: "Customers",
     settings: "Settings",

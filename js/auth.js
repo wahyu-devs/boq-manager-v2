@@ -122,7 +122,7 @@
         user_id: currentSession.user.id,
         state,
         client_updated_at: new Date(clientUpdatedAt).toISOString(),
-        app_version: "snapshot-v2",
+        app_version: "snapshot-v3",
       }, { onConflict: "user_id" });
       if (error) throw error;
       const meta = store.getMeta();

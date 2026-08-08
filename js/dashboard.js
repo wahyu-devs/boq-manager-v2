@@ -8,8 +8,10 @@
       commission: boq.commission,
     }),
   }));
-  const projects = list("projects");
   const customers = list("customers");
+  const projectNames = new Set(boqs.map((boq) =>
+    boq.projectName?.trim().toLowerCase()
+  ).filter(Boolean));
   const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
   const totalCogs = boqs.reduce(
     (sum, boq) => sum + Number(boq.totalCogs || 0),
@@ -29,9 +31,7 @@
     margin: formatPercent(averageMargin),
     sentRate: `${sentRate.toFixed(0)}%`,
     boqCount: String(boqs.length),
-    activeProjects: String(
-      projects.filter((project) => project.status === "Active").length,
-    ),
+    activeProjects: String(projectNames.size),
     draftCount: String(boqs.filter((boq) => boq.status === "Draft").length),
     customerCount: String(customers.length),
   };
@@ -96,22 +96,30 @@
     ).join("");
   }
 
-  const recentProjects = [...projects].sort((a, b) =>
+  const seenProjects = new Set();
+  const recentProjects = [...boqs].sort((a, b) =>
     new Date(b.updatedAt) - new Date(a.updatedAt)
-  ).slice(0, 4);
+  ).filter((boq) => {
+    const name = boq.projectName?.trim().toLowerCase();
+    if (!name || seenProjects.has(name)) return false;
+    seenProjects.add(name);
+    return true;
+  }).slice(0, 4);
   const projectHost = document.querySelector("[data-recent-projects]");
   const projectEmpty = document.querySelector("[data-recent-projects-empty]");
   if (recentProjects.length) {
     projectEmpty.hidden = true;
-    projectHost.innerHTML = recentProjects.map((project) =>
+    projectHost.innerHTML = recentProjects.map((boq) =>
       `<li class="activity-item"><span class="avatar">${
-        initials(project.name)
-      }</span><p><strong>${escapeHtml(project.name)}</strong><br>${
-        escapeHtml(project.code || "No code")
+        initials(boq.projectName)
+      }</span><p><a class="cell-primary" href="boq-editor.html?id=${
+        encodeURIComponent(boq.id)
+      }">${escapeHtml(boq.projectName)}</a><br>${
+        escapeHtml(boq.number || "BOQ")
       } · ${
-        escapeHtml(project.status || "Planning")
+        escapeHtml(boq.status || "Draft")
       }<span class="activity-time">${
-        formatDateTime(project.updatedAt)
+        formatDateTime(boq.updatedAt)
       }</span></p></li>`
     ).join("");
   }

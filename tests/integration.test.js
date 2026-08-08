@@ -74,14 +74,14 @@ function equal(actual, expected, message) {
 Deno.test("migrates previous data and preserves pricing behavior", () => {
   const store = window.BOQStore;
   const calculations = window.BOQCalculations;
-  const projects = store.list("projects");
   const boqs = store.list("boqs");
   const products = store.list("products");
 
-  equal(projects.length, 1, "project count");
+  equal(store.list("projects").length, 0, "project collection removed");
   equal(boqs.length, 1, "BOQ count");
   equal(products.length, 1, "product count");
   equal(boqs[0].projectName, "Office Upgrade", "BOQ project name");
+  equal(boqs[0].projectId, undefined, "BOQ project id removed");
   equal(boqs[0].title, undefined, "BOQ title removed");
   equal(boqs[0].items[0].sellingOverride, 125, "stored selling price");
   equal(boqs[0].commission, 10, "commission");
@@ -124,7 +124,12 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
 
   const backup = store.exportState();
   equal(backup.application, "BOQ Manager", "backup application metadata");
-  equal(backup.meta.schemaVersion, 2, "backup schema version");
+  equal(backup.meta.schemaVersion, 3, "backup schema version");
+  equal(
+    backup.collections.projects,
+    undefined,
+    "project collection excluded from backup",
+  );
 
   equal(
     store.formatDocumentNumber(
@@ -172,6 +177,34 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1 234,50", "space number format");
 
   store.applyState({
+    collections: {
+      boqs: [{
+        id: "linked-boq",
+        number: "OLD-001",
+        projectId: "legacy-project",
+        projectName: "",
+        status: "Draft",
+        items: [],
+      }],
+      projects: [{ id: "legacy-project", name: "Linked Project" }],
+      products: [],
+      customers: [],
+    },
+    meta: { clientUpdatedAt: 1735689600000 },
+  }, { silent: true });
+  equal(
+    store.list("boqs")[0].projectName,
+    "Linked Project",
+    "linked project name migrated into BOQ",
+  );
+  equal(
+    store.list("boqs")[0].projectId,
+    undefined,
+    "linked project id removed",
+  );
+  equal(store.list("projects").length, 0, "linked project collection removed");
+
+  store.applyState({
     project: "Single Project Backup",
     data: [{
       name: "Installation",
@@ -184,7 +217,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     commission: 2000,
     categoryOrder: ["Services"],
   }, { silent: true });
-  equal(store.list("projects").length, 1, "single-project restore count");
+  equal(store.list("projects").length, 0, "single-project has no project record");
   equal(
     store.list("boqs")[0].projectName,
     "Single Project Backup",
