@@ -14,7 +14,6 @@
     dashboard:
       '<path d="M4 13h6V4H4v9Zm10 7h6V11h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z"/>',
     boqs: '<path d="M6 3h9l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h7M9 16h7"/>',
-    projects: '<path d="M3 7h7l2 2h9v10H3V7Z"/><path d="M3 7V5h7l2 2"/>',
     products:
       '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
     customers:
@@ -51,9 +50,6 @@
             <li><a class="nav-link" href="boqs.html"${current("boqs")}>${
       icon("boqs")
     }<span>BOQs</span></a></li>
-            <li><a class="nav-link" href="projects.html"${
-      current("projects")
-    }>${icon("projects")}<span>Projects</span></a></li>
             <li><a class="nav-link" href="products.html"${
       current("products")
     }>${icon("products")}<span>Products</span></a></li>
