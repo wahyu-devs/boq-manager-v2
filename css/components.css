@@ -448,7 +448,7 @@
 
 .record-metric-overview {
   display: grid;
-  grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .dashboard-metrics {
@@ -475,14 +475,10 @@
 .record-metric-value {
   margin-top: 10px;
   color: var(--color-text);
-  font-size: 27px;
+  font-size: 30px;
   font-weight: 680;
   letter-spacing: -0.035em;
   line-height: 1;
-}
-
-.record-metric-primary .record-metric-value {
-  font-size: 34px;
 }
 
 .record-metric-detail {
