@@ -429,6 +429,8 @@
       const duplicate = {
         ...record,
         id: undefined,
+        createdAt: undefined,
+        updatedAt: undefined,
         number: nextNumber("boqs", "BOQ"),
         status: "Draft",
       };

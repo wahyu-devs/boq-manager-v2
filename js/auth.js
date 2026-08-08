@@ -105,7 +105,7 @@
 
   async function fetchCloudState(userId) {
     const { data, error } = await client.from(stateTable)
-      .select("state, client_updated_at, updated_at")
+      .select("*")
       .eq("user_id", userId).maybeSingle();
     if (error) throw error;
     return data || null;
@@ -122,7 +122,7 @@
         user_id: currentSession.user.id,
         state,
         client_updated_at: new Date(clientUpdatedAt).toISOString(),
-        app_version: "snapshot-v3",
+        app_version: "snapshot-v4",
       }, { onConflict: "user_id" });
       if (error) throw error;
       const meta = store.getMeta();
@@ -156,12 +156,27 @@
     const local = store.exportState();
     const localTimestamp = Number(local.meta.clientUpdatedAt || 0);
     const remoteTimestamp = cloudTimestamp(cloud);
+    let changed = false;
+    let shouldPush = !cloud?.state || localTimestamp > remoteTimestamp;
     if (cloud?.state && remoteTimestamp > localTimestamp) {
-      store.applyState(cloud.state, { silent: true });
-      return true;
+      store.applyState(cloud.state, {
+        silent: true,
+        cloudCreatedAt: cloud.created_at,
+        cloudUpdatedAt: cloud.updated_at,
+      });
+      changed = true;
     }
-    if (!cloud?.state || localTimestamp > remoteTimestamp) await pushCloudState();
-    return false;
+    const migrated = store.migrateExistingBoqs({
+      silent: true,
+      cloudCreatedAt: cloud?.created_at,
+      cloudUpdatedAt: cloud?.updated_at,
+    });
+    if (migrated) {
+      changed = true;
+      shouldPush = true;
+    }
+    if (shouldPush) await pushCloudState();
+    return changed;
   }
 
   async function enterApplication(session, options = {}) {

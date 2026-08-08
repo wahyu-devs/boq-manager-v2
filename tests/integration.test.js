@@ -85,7 +85,17 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(boqs[0].title, undefined, "BOQ title removed");
   equal(boqs[0].items[0].sellingOverride, 125, "stored selling price");
   equal(boqs[0].commission, 10, "commission");
-  equal(boqs[0].status, "Draft", "migrated BOQ status");
+  equal(boqs[0].status, "Sent", "migrated BOQ status");
+  equal(
+    boqs[0].createdAt,
+    "2025-01-01T00:00:00.000Z",
+    "legacy BOQ created timestamp",
+  );
+  equal(
+    boqs[0].updatedAt,
+    "2025-01-01T00:00:00.000Z",
+    "legacy BOQ updated timestamp",
+  );
   equal(store.getSettings().showTablePrices, false, "price visibility preference");
   equal(store.getSettings().showCategorySubtotals, true, "subtotal preference");
 
@@ -124,7 +134,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
 
   const backup = store.exportState();
   equal(backup.application, "BOQ Manager", "backup application metadata");
-  equal(backup.meta.schemaVersion, 3, "backup schema version");
+  equal(backup.meta.schemaVersion, 4, "backup schema version");
   equal(
     backup.collections.projects,
     undefined,
@@ -224,4 +234,56 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "single-project restore project",
   );
   equal(store.list("boqs")[0].commission, 2000, "single-project restore commission");
+
+  store.setUser("migration-user");
+  localStorage.setItem(
+    "boq-manager-v2:migration-user:boqs",
+    JSON.stringify([{
+      id: "existing-boq",
+      number: "OLD-002",
+      projectName: "Cloud Project",
+      status: "Draft",
+      items: [],
+      source: "imported",
+      updatedAt: "2025-02-15T00:00:00.000Z",
+      createdAt: "2025-02-15T00:00:00.000Z",
+    }]),
+  );
+  const migrated = store.migrateExistingBoqs({
+    silent: true,
+    cloudCreatedAt: "2024-12-01T08:30:00.000Z",
+    cloudUpdatedAt: "2025-03-01T10:00:00.000Z",
+  });
+  const migratedBoq = store.list("boqs")[0];
+  equal(migrated, true, "existing BOQ migration applied");
+  equal(migratedBoq.status, "Sent", "existing BOQ marked sent");
+  equal(
+    migratedBoq.createdAt,
+    "2024-12-01T08:30:00.000Z",
+    "imported BOQ uses cloud creation timestamp",
+  );
+  equal(
+    migratedBoq.updatedAt,
+    "2025-02-15T00:00:00.000Z",
+    "BOQ update timestamp preserved",
+  );
+  equal(
+    store.getMeta().existingBoqMigrationVersion,
+    1,
+    "existing BOQ migration version stored",
+  );
+  equal(
+    store.migrateExistingBoqs({ silent: true }),
+    false,
+    "existing BOQ migration only runs once",
+  );
+  const updatedBoq = store.save("boqs", {
+    ...migratedBoq,
+    projectName: "Cloud Project Updated",
+  });
+  equal(
+    updatedBoq.createdAt,
+    "2024-12-01T08:30:00.000Z",
+    "BOQ creation timestamp preserved on update",
+  );
 });

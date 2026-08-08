@@ -56,10 +56,12 @@
     }));
   }
 
-  function normalizeBoq(record, legacyProjects = []) {
+  function normalizeBoq(record, legacyProjects = [], timestampFallbacks = {}) {
     const {
       title: legacyTitle,
       projectId: legacyProjectId,
+      createdAt: rawCreatedAt,
+      updatedAt: rawUpdatedAt,
       ...value
     } = record || {};
     const linkedProject = legacyProjectId && Array.isArray(legacyProjects)
@@ -68,10 +70,20 @@
     const projectName = String(value.projectName || "").trim() ||
       String(linkedProject?.name || "").trim() ||
       String(legacyTitle || "").trim();
+    const createdAt = isoTimestamp(rawCreatedAt) ||
+      isoTimestamp(linkedProject?.createdAt) ||
+      isoTimestamp(timestampFallbacks.createdAt);
+    const updatedAt = isoTimestamp(rawUpdatedAt) ||
+      isoTimestamp(linkedProject?.updatedAt) ||
+      isoTimestamp(linkedProject?.lastSaved) ||
+      isoTimestamp(timestampFallbacks.updatedAt) ||
+      isoTimestamp(timestampFallbacks.clientUpdatedAt) || createdAt;
     return {
       ...value,
       status: value.status === "Sent" ? "Sent" : "Draft",
       projectName,
+      ...(createdAt ? { createdAt } : {}),
+      ...(updatedAt ? { updatedAt } : {}),
       items: Array.isArray(value.items) ? value.items : [],
       commission: Number(value.commission || 0),
       categoryOrder: Array.isArray(value.categoryOrder)
@@ -95,12 +107,14 @@
     if (!collections.includes(collection)) return null;
     const records = list(collection);
     const now = new Date().toISOString();
+    const id = record.id || createId();
+    const existing = records.find((entry) => entry.id === id);
     const value = {
       ...record,
-      id: record.id || createId(),
-      createdAt: record.createdAt || now,
-      updatedAt: options.preserveUpdatedAt && record.updatedAt
-        ? record.updatedAt
+      id,
+      createdAt: isoTimestamp(record.createdAt) || existing?.createdAt || now,
+      updatedAt: options.preserveUpdatedAt
+        ? isoTimestamp(record.updatedAt) || existing?.updatedAt || now
         : now,
     };
     const normalized = collection === "boqs" ? normalizeBoq(value) : value;
@@ -245,6 +259,11 @@
     return Number.isNaN(parsed) ? 0 : parsed;
   }
 
+  function isoTimestamp(value) {
+    const timestamp = timestampValue(value);
+    return timestamp ? new Date(timestamp).toISOString() : "";
+  }
+
   function buildLegacySnapshot() {
     return {
       projects: legacyScopedValue("projects", {}),
@@ -325,7 +344,7 @@
     return [...map.values()];
   }
 
-  function convertLegacySnapshot(snapshot) {
+  function convertLegacySnapshot(snapshot, cloudTimestamps = {}) {
     snapshot = normalizeLegacySnapshot(snapshot);
     const sourceProjects = snapshot.projects &&
         typeof snapshot.projects === "object"
@@ -333,7 +352,6 @@
       : {};
     const legacyProducts = Array.isArray(snapshot.items) ? snapshot.items : [];
     const boqRecords = [];
-    const now = new Date().toISOString();
     const currentSettings = getSettings();
     const currency = currentSettings.defaultCurrency || "IDR";
     const savedPricePreference = localStorage.getItem("boq_show_table_prices");
@@ -348,8 +366,12 @@
       ? true
       : savedSubtotalPreference === "true";
     const projectNames = Object.keys(sourceProjects);
+    const cloudCreatedAt = timestampValue(cloudTimestamps.createdAt);
+    const cloudUpdatedAt = timestampValue(cloudTimestamps.updatedAt) ||
+      timestampValue(cloudTimestamps.clientUpdatedAt);
     const legacyUpdatedAt = Math.max(
       timestampValue(snapshot.meta?.clientUpdatedAt),
+      cloudUpdatedAt,
       ...Object.values(sourceProjects).map((project) =>
         timestampValue(project?.lastSaved)
       ),
@@ -364,16 +386,19 @@
         ? source.data
         : [];
       const savedAt = timestampValue(source?.lastSaved) || legacyUpdatedAt;
-      const timestamp = new Date(savedAt).toISOString();
+      const updatedAt = new Date(savedAt).toISOString();
+      const createdAt = new Date(
+        timestampValue(source?.createdAt) || cloudCreatedAt || savedAt,
+      ).toISOString();
       boqRecords.push({
         id: stableId("boq", name),
         number: `BOQ-${String(index + 1).padStart(3, "0")}`,
-        status: "Draft",
+        status: "Sent",
         projectName: name,
         customerId: "",
         customerName: "",
         currency,
-        date: timestamp.slice(0, 10),
+        date: updatedAt.slice(0, 10),
         validUntil: "",
         notes: "",
         items: data.map(legacyItemToBoqItem),
@@ -381,8 +406,8 @@
         categoryOrder: Array.isArray(source?.categoryOrder)
           ? source.categoryOrder
           : [],
-        createdAt: timestamp,
-        updatedAt: timestamp,
+        createdAt,
+        updatedAt,
         source: "imported",
       });
     });
@@ -402,18 +427,18 @@
           : current.categoryOrder;
       }
     } else if (working.length) {
-      const timestamp = new Date(
-        legacyUpdatedAt,
-      ).toISOString();
+      const updatedAt = new Date(legacyUpdatedAt).toISOString();
+      const createdAt = new Date(cloudCreatedAt || legacyUpdatedAt)
+        .toISOString();
       boqRecords.unshift({
-        id: stableId("boq", `working-${timestamp}`),
+        id: stableId("boq", `working-${updatedAt}`),
         number: `BOQ-${String(boqRecords.length + 1).padStart(3, "0")}`,
-        status: "Draft",
+        status: "Sent",
         projectName: "Imported Project",
         customerId: "",
         customerName: "",
         currency,
-        date: timestamp.slice(0, 10),
+        date: updatedAt.slice(0, 10),
         validUntil: "",
         notes: "Imported from the previous working document.",
         items: working.map(legacyItemToBoqItem),
@@ -421,8 +446,8 @@
         categoryOrder: Array.isArray(snapshot.categoryOrder)
           ? snapshot.categoryOrder
           : [],
-        createdAt: timestamp,
-        updatedAt: timestamp,
+        createdAt,
+        updatedAt,
         source: "imported",
       });
     }
@@ -466,7 +491,7 @@
       },
       currentBoqId: currentName ? stableId("boq", currentName) : "",
       meta: {
-        schemaVersion: 3,
+        schemaVersion: 4,
         clientUpdatedAt: legacyUpdatedAt,
         importedFromPreviousVersion: true,
       },
@@ -484,14 +509,19 @@
       currentBoqId: read("currentBoqId", ""),
       meta: {
         ...read("meta", {}),
-        schemaVersion: 3,
+        schemaVersion: 4,
       },
     };
   }
 
   function applyState(snapshot, options = {}) {
+    const cloudTimestamps = {
+      createdAt: options.cloudCreatedAt,
+      updatedAt: options.cloudUpdatedAt,
+      clientUpdatedAt: snapshot?.meta?.clientUpdatedAt,
+    };
     const converted = isLegacySnapshot(snapshot)
-      ? convertLegacySnapshot(snapshot)
+      ? convertLegacySnapshot(snapshot, cloudTimestamps)
       : snapshot;
     if (!converted?.collections) throw new Error("Unsupported backup format");
     collections.forEach((collection) => {
@@ -500,7 +530,11 @@
         : [];
       if (collection === "boqs") {
         incoming = incoming.map((record) =>
-          normalizeBoq(record, converted.collections.projects)
+          normalizeBoq(
+            record,
+            converted.collections.projects,
+            cloudTimestamps,
+          )
         );
       }
       const value = options.merge
@@ -528,7 +562,7 @@
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
       ...converted.meta,
-      schemaVersion: 3,
+      schemaVersion: 4,
       clientUpdatedAt: incomingTs,
     }));
     document.dispatchEvent(new CustomEvent("boq:store-ready"));
@@ -617,6 +651,47 @@
     return read("meta", {});
   }
 
+  function migrateExistingBoqs(options = {}) {
+    const migrationVersion = 1;
+    const meta = read("meta", {});
+    if (Number(meta.existingBoqMigrationVersion || 0) >= migrationVersion) {
+      return false;
+    }
+    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (!Array.isArray(raw)) return false;
+    const timestampFallbacks = {
+      createdAt: options.cloudCreatedAt,
+      updatedAt: options.cloudUpdatedAt,
+      clientUpdatedAt: meta.clientUpdatedAt,
+    };
+    const migrated = raw.map((record) => {
+      const importedWithoutDistinctCreation = record?.source === "imported" &&
+        (!isoTimestamp(record.createdAt) ||
+          isoTimestamp(record.createdAt) === isoTimestamp(record.updatedAt));
+      const source = importedWithoutDistinctCreation && options.cloudCreatedAt
+        ? { ...record, createdAt: options.cloudCreatedAt }
+        : record;
+      return {
+        ...normalizeBoq(source, [], timestampFallbacks),
+        status: "Sent",
+      };
+    });
+    localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...meta,
+      schemaVersion: 4,
+      existingBoqMigrationVersion: migrationVersion,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
   function removeProjectCollection() {
     const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return;
@@ -634,7 +709,12 @@
       localStorage.setItem(storageKey("boqs"), JSON.stringify(normalized));
     }
     localStorage.removeItem(storageKey("projects"));
-    if (changed || hadProjectCollection) touch();
+    if (changed || hadProjectCollection) {
+      localStorage.setItem(storageKey("meta"), JSON.stringify({
+        ...read("meta", {}),
+        schemaVersion: 4,
+      }));
+    }
   }
 
   migrateCurrentNamespace();
@@ -655,6 +735,7 @@
     setUser,
     getUserId,
     getMeta,
+    migrateExistingBoqs,
     exportState,
     applyState,
     convertLegacySnapshot,
