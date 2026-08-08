@@ -4,7 +4,9 @@
   const boqs = list("boqs").map((boq) => ({
     ...boq,
     status: boq.status === "Sent" ? "Sent" : "Draft",
-    ...window.BOQCalculations.calculateSummary(boq.items || []),
+    ...window.BOQCalculations.calculateSummary(boq.items || [], {
+      commission: boq.commission,
+    }),
   }));
   const projects = list("projects");
   const customers = list("customers");

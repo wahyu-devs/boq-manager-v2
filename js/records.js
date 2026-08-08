@@ -52,7 +52,9 @@
     record = {
       ...record,
       status: record.status === "Sent" ? "Sent" : "Draft",
-      ...window.BOQCalculations.calculateSummary(record.items || []),
+      ...window.BOQCalculations.calculateSummary(record.items || [], {
+        commission: record.commission,
+      }),
     };
     const search = [
       record.number,
@@ -96,7 +98,7 @@
         encodeURIComponent(record.id)
       }" aria-label="Edit ${
         escapeHtml(record.number || "BOQ")
-      }">✎</a><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-record-action="preview" data-record-id="${record.id}" data-open-modal="record-detail-modal">Preview</button><button class="menu-item" type="button" data-record-action="duplicate" data-record-id="${record.id}">Duplicate</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete ${
+      }">✎</a><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-record-action="preview" data-record-id="${record.id}" data-open-modal="record-detail-modal">Preview</button><button class="menu-item" type="button" data-record-action="duplicate" data-record-id="${record.id}">Duplicate</button><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=excel">Export Excel</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=pdf">Download PDF</a><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete ${
         escapeHtml(record.number || "this BOQ")
       }?" data-confirm-message="This BOQ and its line items will be permanently removed.">Delete</button></div></div></div></td></tr>`,
       card:
@@ -133,8 +135,15 @@
   function renderProject(record) {
     const search = [record.name, record.code, record.customerName, record.owner]
       .filter(Boolean).join(" ");
-    const boqCount =
-      list("boqs").filter((boq) => boq.projectId === record.id).length;
+    const relatedBoqs = list("boqs").filter((boq) =>
+      boq.projectId === record.id
+    );
+    const boqCount = relatedBoqs.length;
+    const estimatedValue = Number(record.estimatedValue || 0) ||
+      relatedBoqs.reduce((total, boq) =>
+        total + window.BOQCalculations.calculateSummary(boq.items || [], {
+          commission: boq.commission,
+        }).totalSelling, 0);
     return {
       row: `<tr data-table-row data-record-id="${record.id}" data-search="${
         escapeHtml(search)
@@ -145,7 +154,7 @@
       }" data-owner="${escapeHtml(record.owner || "")}" data-project-name="${
         escapeHtml(record.name || "")
       }" data-value="${
-        Number(record.estimatedValue || 0)
+        estimatedValue
       }" data-boqs="${boqCount}"><td><button class="link cell-primary" type="button" data-record-action="detail" data-record-id="${record.id}" data-open-modal="record-detail-modal">${
         escapeHtml(record.name || "Untitled project")
       }</button><span class="cell-secondary">${
@@ -157,7 +166,7 @@
       }</td><td>${
         dateText(record.startDate)
       }</td><td class="align-right currency">${
-        formatCurrency(record.estimatedValue || 0, defaultCurrency)
+        formatCurrency(estimatedValue, defaultCurrency)
       }</td><td class="align-right number">${boqCount}</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit project">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete this project?">×</button></div></td></tr>`,
       card:
         `<article class="record-card" data-record-card data-record-id="${record.id}" data-search="${
@@ -179,7 +188,7 @@
         }</dd></div><div><dt>Owner</dt><dd>${
           escapeHtml(record.owner || "—")
         }</dd></div><div><dt>Est. value</dt><dd>${
-          formatCurrency(record.estimatedValue || 0, defaultCurrency)
+          formatCurrency(estimatedValue, defaultCurrency)
         }</dd></div><div><dt>BOQs</dt><dd>${boqCount}</dd></div></dl></article>`,
     };
   }
@@ -189,7 +198,12 @@
       0,
       Math.min(Number(record.defaultMargin || 0), 99.99),
     );
-    const selling = Number(record.defaultCogs || 0) / (1 - margin / 100);
+    const selling = window.BOQCalculations.calculateItem({
+      qty: 1,
+      unitCogs: record.defaultCogs,
+      margin,
+      sellingOverride: record.defaultSellingPrice,
+    }).unitSelling;
     const search = [record.sku, record.name, record.description].filter(Boolean)
       .join(" ");
     return {
@@ -341,6 +355,18 @@
         ).join("");
       projectFilter.value = current;
     }
+    const categoryFilter = document.querySelector("[data-category-filter]");
+    if (categoryFilter) {
+      const current = categoryFilter.value;
+      const values = [...new Set(list("products").map((record) =>
+        record.category
+      ).filter(Boolean))].sort();
+      categoryFilter.innerHTML = '<option value="">All categories</option>' +
+        values.map((value) =>
+          `<option value="${escapeHtml(value.toLowerCase())}">${escapeHtml(value)}</option>`
+        ).join("");
+      categoryFilter.value = current;
+    }
     const customerSelect = document.querySelector('[name="customerId"]');
     if (customerSelect) {
       const current = customerSelect.value;
@@ -359,6 +385,10 @@
     const form = document.querySelector("[data-record-form]");
     if (!form) return;
     form.reset();
+    form.querySelector("[data-selling-price]")?.setAttribute(
+      "data-manual",
+      "false",
+    );
     form.dataset.recordId = record?.id || "";
     document.querySelector("[data-record-form-title]").textContent = record
       ? `Edit ${singular(collection)}`
@@ -367,12 +397,26 @@
       if (collection === "projects") {
         form.elements.code.value = nextNumber("projects", "PRJ");
       }
+      updateCalculatedProductPrice();
       return;
     }
     Object.entries(record).forEach(([key, value]) => {
       const control = form.elements.namedItem(key);
-      if (control) control.value = value ?? "";
+      if (!control) return;
+      if (control instanceof HTMLSelectElement && value &&
+          ![...control.options].some((option) =>
+            option.value === String(value)
+          )) {
+        control.add(new Option(String(value), String(value)));
+      }
+      control.value = value ?? "";
     });
+    if (collection === "products" &&
+        record.defaultSellingPrice !== null &&
+        record.defaultSellingPrice !== undefined &&
+        record.defaultSellingPrice !== "") {
+      form.querySelector("[data-selling-price]").dataset.manual = "true";
+    }
     updateCalculatedProductPrice();
   }
 
@@ -396,6 +440,9 @@
     if (collection === "products") {
       values.defaultCogs = Number(values.defaultCogs || 0);
       values.defaultMargin = Number(values.defaultMargin || 0);
+      values.defaultSellingPrice = values.defaultSellingPrice === ""
+        ? null
+        : Number(values.defaultSellingPrice || 0);
     }
     return values;
   }
@@ -404,6 +451,10 @@
     const host = document.querySelector("[data-record-detail]");
     if (!host || !record) return;
     if (collection === "boqs") {
+      const summary = window.BOQCalculations.calculateSummary(
+        record.items || [],
+        { commission: record.commission },
+      );
       host.innerHTML =
         `<div class="stack-md"><div><span class="muted text-sm">${
           escapeHtml(record.number || "Untitled")
@@ -418,10 +469,15 @@
         }</dd></div><div class="cluster space-between"><dt class="muted">Items</dt><dd>${
           record.items?.length || 0
         }</dd></div><div class="cluster space-between"><dt class="muted">Total selling</dt><dd class="text-medium">${
-          formatCurrency(record.totalSelling || 0, record.currency || "USD")
+          formatCurrency(summary.totalSelling, record.currency || defaultCurrency)
         }</dd></div></dl></div>`;
     } else if (collection === "projects") {
       const related = list("boqs").filter((boq) => boq.projectId === record.id);
+      const relatedList = related.length
+        ? `<div class="related-records"><strong>Related BOQs</strong>${related.map((boq) =>
+          `<a href="boq-editor.html?id=${encodeURIComponent(boq.id)}"><span>${escapeHtml(boq.number || "BOQ")}</span><small>${escapeHtml(boq.title || "Untitled BOQ")}</small></a>`
+        ).join("")}</div>`
+        : '<p class="muted text-sm">No related BOQs yet.</p>';
       host.innerHTML =
         `<div class="stack-lg"><div><span class="muted text-sm mono">${
           escapeHtml(record.code || "No code")
@@ -433,7 +489,7 @@
           escapeHtml(record.owner || "—")
         }</dd></div><div class="cluster space-between"><dt class="muted">Status</dt><dd>${
           statusHtml(record.status || "Planning")
-        }</dd></div><div class="cluster space-between"><dt class="muted">Related BOQs</dt><dd>${related.length}</dd></div></dl></div>`;
+        }</dd></div><div class="cluster space-between"><dt class="muted">Related BOQs</dt><dd>${related.length}</dd></div></dl>${relatedList}</div>`;
     } else if (collection === "customers") {
       const relatedProjects = list("projects").filter((project) =>
         project.customerId === record.id
@@ -441,6 +497,21 @@
       const relatedBoqs = list("boqs").filter((boq) =>
         boq.customerId === record.id
       );
+      const relationships = [...relatedProjects.map((project) => ({
+        label: project.code || "Project",
+        title: project.name,
+      })), ...relatedBoqs.map((boq) => ({
+        label: boq.number || "BOQ",
+        title: boq.title,
+        href: `boq-editor.html?id=${encodeURIComponent(boq.id)}`,
+      }))];
+      const relatedList = relationships.length
+        ? `<div class="related-records"><strong>Related records</strong>${relationships.map((entry) =>
+          entry.href
+            ? `<a href="${entry.href}"><span>${escapeHtml(entry.label)}</span><small>${escapeHtml(entry.title || "Untitled")}</small></a>`
+            : `<div><span>${escapeHtml(entry.label)}</span><small>${escapeHtml(entry.title || "Untitled")}</small></div>`
+        ).join("")}</div>`
+        : "";
       host.innerHTML = `<div class="stack-lg"><h2>${
         escapeHtml(record.companyName || "Untitled company")
       }</h2><dl class="stack-sm"><div class="cluster space-between"><dt class="muted">Contact</dt><dd>${
@@ -449,7 +520,7 @@
         escapeHtml(record.email || "—")
       }</dd></div><div class="cluster space-between"><dt class="muted">Phone</dt><dd>${
         escapeHtml(record.phone || "—")
-      }</dd></div><div class="cluster space-between"><dt class="muted">Projects</dt><dd>${relatedProjects.length}</dd></div><div class="cluster space-between"><dt class="muted">BOQs</dt><dd>${relatedBoqs.length}</dd></div></dl></div>`;
+      }</dd></div><div class="cluster space-between"><dt class="muted">Projects</dt><dd>${relatedProjects.length}</dd></div><div class="cluster space-between"><dt class="muted">BOQs</dt><dd>${relatedBoqs.length}</dd></div></dl>${relatedList}</div>`;
     }
   }
 
@@ -460,10 +531,12 @@
     if (!form || !output) return;
     const cogs = Number(form.elements.defaultCogs.value || 0);
     const margin = Number(form.elements.defaultMargin.value || 0);
-    output.value = formatCurrency(
-      cogs / (1 - Math.max(0, Math.min(margin, 99.99)) / 100),
-      defaultCurrency,
-    );
+    if (output.dataset.manual === "true") return;
+    output.value = window.BOQCalculations.calculateItem({
+      qty: 1,
+      unitCogs: cogs,
+      margin,
+    }).unitSelling;
   }
 
   document.addEventListener("click", (event) => {
@@ -517,7 +590,16 @@
 
   document.querySelector("[data-record-form]")?.addEventListener(
     "input",
-    updateCalculatedProductPrice,
+    (event) => {
+      if (collection === "products" &&
+          event.target.matches("[data-selling-price]")) {
+        event.target.dataset.manual = event.target.value === ""
+          ? "false"
+          : "true";
+        return;
+      }
+      updateCalculatedProductPrice();
+    },
   );
   render();
 })();

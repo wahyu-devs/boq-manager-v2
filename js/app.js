@@ -296,7 +296,7 @@
   initializeFiltering();
   initializeSorting();
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     if (event.target.closest("[data-nav-open]")) setNavigation(true);
     if (event.target.closest("[data-nav-close]")) setNavigation(false);
 
@@ -329,12 +329,20 @@
       refreshButton.disabled = true;
       refreshButton.innerHTML =
         '<svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"/></svg><span>Refreshing…</span>';
-      window.setTimeout(() => {
+      try {
+        const changed = await window.BOQAuth?.refresh?.();
+        if (changed) {
+          location.reload();
+          return;
+        }
+        showToast("Dashboard data is up to date.");
+      } catch (_error) {
+        showToast("Unable to refresh cloud data.", "error");
+      } finally {
         refreshButton.classList.remove("is-loading");
         refreshButton.disabled = false;
         refreshButton.innerHTML = original;
-        showToast("Dashboard data is up to date.");
-      }, 720);
+      }
     }
   });
 

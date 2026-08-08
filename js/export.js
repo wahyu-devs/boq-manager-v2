@@ -336,4 +336,11 @@
     }
     if (event.target.closest("[data-download-pdf]")) exportPdf();
   });
+
+  const requestedExport = new URLSearchParams(location.search).get("export");
+  if (requestedExport === "excel") {
+    window.setTimeout(() => window.BOQModal.open("excel-modal"), 0);
+  } else if (requestedExport === "pdf") {
+    window.setTimeout(exportPdf, 0);
+  }
 })();
