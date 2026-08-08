@@ -110,34 +110,24 @@
   function initializeDocument() {
     populateRecordOptions();
     const record = currentRecordId ? store.get("boqs", currentRecordId) : null;
-    const draft = store.getWorkingDraft();
-    const working = draft &&
-        ((!record && !draft.recordId) ||
-          (record && draft.recordId === record.id &&
-            new Date(draft.savedAt || 0) > new Date(record.updatedAt || 0)))
-      ? draft
-      : null;
-    const source = working || record;
-    if (source) {
-      setFormValue("#boq-number", source.number);
-      setFormValue("#boq-title", source.title);
-      setFormValue("#boq-status", source.status === "Sent" ? "Sent" : "Draft");
-      setFormValue("#boq-project", source.projectId);
-      setFormValue("#boq-customer", source.customerId);
-      setFormValue("#boq-currency", source.currency || settings.defaultCurrency || "IDR");
-      setFormValue("#boq-date", source.date);
-      setFormValue("#boq-valid-until", source.validUntil);
-      setFormValue("#boq-notes", source.notes);
-      items = (source.items || []).map(normalizeItem);
-      commission = Number(source.commission || 0);
-      categoryOrder = Array.isArray(source.categoryOrder)
-        ? source.categoryOrder.slice()
+    if (record) {
+      setFormValue("#boq-number", record.number);
+      setFormValue("#boq-title", record.title);
+      setFormValue("#boq-status", record.status === "Sent" ? "Sent" : "Draft");
+      setFormValue("#boq-project", record.projectId);
+      setFormValue("#boq-customer", record.customerId);
+      setFormValue("#boq-currency", record.currency || settings.defaultCurrency || "IDR");
+      setFormValue("#boq-date", record.date);
+      setFormValue("#boq-valid-until", record.validUntil);
+      setFormValue("#boq-notes", record.notes);
+      items = (record.items || []).map(normalizeItem);
+      commission = Number(record.commission || 0);
+      categoryOrder = Array.isArray(record.categoryOrder)
+        ? record.categoryOrder.slice()
         : [];
       if (commissionInput) commissionInput.value = commission || "";
-      document.querySelector("[data-save-state]").textContent = working
-        ? "Recovered unsaved draft"
-        : "All changes saved";
-      dirty = Boolean(working);
+      document.querySelector("[data-save-state]").textContent =
+        "All changes saved";
     } else {
       currentRecordId = null;
       const today = new Date();
@@ -330,21 +320,11 @@
     };
   }
 
-  function persistWorkingDraft() {
-    if (!dirty) return;
-    store.saveWorkingDraft({
-      ...documentPayload(),
-      recordId: currentRecordId || "",
-      savedAt: new Date().toISOString(),
-    });
-  }
-
   function markDirty() {
     dirty = true;
     document.querySelectorAll("[data-save-state]").forEach((element) =>
       element.textContent = "Unsaved changes"
     );
-    persistWorkingDraft();
   }
 
   function addItem(source = {}) {
@@ -496,7 +476,6 @@
     currentRecordId = record.id;
     store.setCurrentBoqId(record.id);
     updateCatalogHistory();
-    store.clearWorkingDraft();
     history.replaceState(null, "", `boq-editor.html?id=${encodeURIComponent(record.id)}`);
     updateEditorHeader();
   }

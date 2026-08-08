@@ -413,7 +413,7 @@
       boqRecords.unshift({
         id: stableId("boq", `working-${timestamp}`),
         number: `BOQ-${String(boqRecords.length + 1).padStart(3, "0")}`,
-        title: "Recovered working BOQ",
+        title: "Imported working BOQ",
         status: "Draft",
         projectId: "",
         projectName: "",
@@ -422,7 +422,7 @@
         currency,
         date: timestamp.slice(0, 10),
         validUntil: "",
-        notes: "Recovered from the previous working document.",
+        notes: "Imported from the previous working document.",
         items: working.map(legacyItemToBoqItem),
         commission: Number(snapshot.unsavedCommission || 0),
         categoryOrder: Array.isArray(snapshot.categoryOrder)
@@ -490,7 +490,6 @@
       ),
       settings: getSettings(),
       currentBoqId: read("currentBoqId", ""),
-      workingDraft: read("workingDraft", null),
       meta: {
         ...read("meta", {}),
         schemaVersion: 2,
@@ -526,14 +525,7 @@
     } else if (!options.merge) {
       localStorage.removeItem(storageKey("currentBoqId"));
     }
-    if (converted.workingDraft) {
-      localStorage.setItem(
-        storageKey("workingDraft"),
-        JSON.stringify(converted.workingDraft),
-      );
-    } else if (!options.merge) {
-      localStorage.removeItem(storageKey("workingDraft"));
-    }
+    localStorage.removeItem(storageKey("workingDraft"));
     const incomingTs = Number(converted.meta?.clientUpdatedAt || Date.now());
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
@@ -619,19 +611,8 @@
     return read("meta", {});
   }
 
-  function saveWorkingDraft(draft) {
-    return write("workingDraft", draft);
-  }
-
-  function getWorkingDraft() {
-    return read("workingDraft", null);
-  }
-
-  function clearWorkingDraft() {
-    localStorage.removeItem(storageKey("workingDraft"));
-  }
-
   migrateCurrentNamespace();
+  localStorage.removeItem(storageKey("workingDraft"));
 
   window.BOQStore = {
     list,
@@ -654,8 +635,5 @@
     isLegacySnapshot,
     setCurrentBoqId,
     getCurrentBoqId,
-    saveWorkingDraft,
-    getWorkingDraft,
-    clearWorkingDraft,
   };
 })();
