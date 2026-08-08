@@ -84,9 +84,16 @@
     const user = session?.user;
     if (!user) return;
     let displayName = user.email?.split("@")[0] || "User";
-    const { data } = await client.from(profileTable).select("username")
+    applyUserInterface(user, displayName);
+    const { data, error } = await client.from(profileTable).select("username")
       .eq("user_id", user.id).maybeSingle();
-    if (data?.username?.trim()) displayName = data.username.trim();
+    if (error) throw error;
+    if (!data?.username?.trim()) return;
+    displayName = data.username.trim();
+    applyUserInterface(user, displayName);
+  }
+
+  function applyUserInterface(user, displayName) {
     document.querySelectorAll("[data-user-name]").forEach((node) =>
       node.textContent = displayName
     );
@@ -164,26 +171,38 @@
     return false;
   }
 
-  async function enterApplication(session, options = {}) {
-    currentSession = session;
-    const changedUser = store.setUser(session.user.id);
-    await updateUserInterface(session);
+  async function refreshApplication(session, options, profileUpdate) {
+    const profileReady = profileUpdate.catch((error) => {
+      console.error("Unable to refresh user profile:", error);
+    });
     let cloudChanged = false;
     try {
       cloudChanged = await reconcileCloud(session);
     } catch (error) {
       console.error("Unable to refresh cloud data:", error);
     }
-    if ((changedUser || cloudChanged) && !options.afterReload) {
+    await profileReady;
+    if (cloudChanged && !options.afterReload) {
+      sessionStorage.setItem("boq-manager-session-refresh", session.user.id);
+      location.reload();
+    }
+  }
+
+  function enterApplication(session, options = {}) {
+    currentSession = session;
+    const changedUser = store.setUser(session.user.id);
+    if (changedUser && !options.afterReload) {
       sessionStorage.setItem("boq-manager-session-refresh", session.user.id);
       location.reload();
       return;
     }
+    const profileUpdate = updateUserInterface(session);
     sessionStorage.removeItem("boq-manager-session-refresh");
     showApplication();
     document.dispatchEvent(new CustomEvent("boq:auth-ready", {
       detail: { user: session.user },
     }));
+    void refreshApplication(session, options, profileUpdate);
   }
 
   async function initialize() {
@@ -286,7 +305,7 @@
   window.BOQAuth = {
     client: null,
     push: pushCloudState,
-    refresh: async () => {
+    refresh: () => {
       if (!currentSession?.user) return false;
       return reconcileCloud(currentSession);
     },
