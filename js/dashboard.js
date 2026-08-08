@@ -1,12 +1,16 @@
 (function renderDashboard() {
   const { list } = window.BOQStore;
-  const { escapeHtml } = window.BOQUtils;
+  const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
   const boqs = list("boqs").map((boq) => ({
     ...boq,
     status: boq.status === "Sent" ? "Sent" : "Draft",
+    ...window.BOQCalculations.calculateSummary(boq.items || [], {
+      commission: boq.commission,
+    }),
   }));
   const products = list("products");
   const customers = list("customers");
+  const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
   const sentCount = boqs.filter((boq) => boq.status === "Sent").length;
 
   const metrics = {
@@ -21,33 +25,6 @@
       node.textContent = value
     );
   });
-  document.querySelector("[data-dashboard-date]").textContent = new Intl
-    .DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date());
-
-  const statuses = ["Draft", "Sent"];
-  const statusHost = document.querySelector("[data-status-overview]");
-  const maximum = Math.max(
-    1,
-    ...statuses.map((status) =>
-      boqs.filter((boq) => boq.status === status).length
-    ),
-  );
-  statusHost.innerHTML = statuses.map((status) => {
-    const count = boqs.filter((boq) => boq.status === status).length;
-    return `<div class="status-row"><span>${
-      escapeHtml(status)
-    }</span><div class="progress-track"><div class="progress-bar" data-progress="${
-      count / maximum * 100
-    }"></div></div><strong>${count}</strong></div>`;
-  }).join("");
-  statusHost.querySelectorAll("[data-progress]").forEach((bar) =>
-    bar.style.width = `${bar.dataset.progress}%`
-  );
-
   const recentBoqs = [...boqs].sort((a, b) =>
     new Date(b.updatedAt) - new Date(a.updatedAt)
   ).slice(0, 5);
@@ -67,7 +44,11 @@
         escapeHtml(boq.projectName || "—")
       }</td><td><span class="status">${
         escapeHtml(boq.status || "Draft")
-      }</span></td><td>${formatDateTime(boq.updatedAt)}</td></tr>`
+      }</span></td><td class="align-right currency">${
+        formatCurrency(boq.totalSelling || 0, boq.currency || currency)
+      }</td><td class="align-right number">${
+        formatPercent(boq.marginPercent || 0)
+      }</td><td>${formatDateTime(boq.updatedAt)}</td></tr>`
     ).join("");
   }
 

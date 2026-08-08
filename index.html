@@ -51,29 +51,34 @@
 
           <div class="content-grid dashboard-grid">
             <div class="stack-lg">
-              <section class="panel" aria-labelledby="boq-overview-heading">
-                <div class="panel-header">
-                  <div>
-                    <h2 id="boq-overview-heading">BOQ overview</h2>
-                    <p>Current document status across your workspace.</p>
+              <section class="panel" aria-label="Workspace records">
+                <div class="record-metric-overview">
+                  <div class="record-metric record-metric-primary">
+                    <div class="record-metric-label">Total BOQs</div>
+                    <div class="record-metric-value" data-metric="boqCount">
+                      0
+                    </div>
+                    <div class="record-metric-detail">Saved documents</div>
                   </div>
-                  <span class="badge" data-dashboard-date></span>
-                </div>
-                <div class="panel-body">
-                  <div class="cluster space-between">
-                    <div>
-                      <strong>BOQ status overview</strong><div
-                        class="muted text-sm"
-                      >
-                        <span data-metric="boqCount">0</span> BOQs
-                      </div>
-                    </div><a class="link text-sm" href="boqs.html"
-                    >View all BOQs</a>
+                  <div class="record-metric">
+                    <div class="record-metric-label">Products</div>
+                    <div
+                      class="record-metric-value"
+                      data-metric="productCount"
+                    >
+                      0
+                    </div>
+                    <div class="record-metric-detail">Catalog records</div>
                   </div>
-                  <div
-                    class="status-overview status-overview-spaced"
-                    data-status-overview
-                  >
+                  <div class="record-metric">
+                    <div class="record-metric-label">Customers</div>
+                    <div
+                      class="record-metric-value"
+                      data-metric="customerCount"
+                    >
+                      0
+                    </div>
+                    <div class="record-metric-detail">Customer records</div>
                   </div>
                 </div>
               </section>
@@ -93,6 +98,8 @@
                         <th>BOQ</th>
                         <th>Project</th>
                         <th>Status</th>
+                        <th class="align-right">Value</th>
+                        <th class="align-right">Gross margin</th>
                         <th>Updated</th>
                       </tr>
                     </thead>
@@ -123,12 +130,6 @@
                 <div class="panel-body">
                   <dl class="stack-md">
                     <div class="cluster space-between">
-                      <dt class="muted">Total BOQs</dt>
-                      <dd class="text-medium number" data-metric="boqCount">
-                        0
-                      </dd>
-                    </div>
-                    <div class="cluster space-between">
                       <dt class="muted">Draft BOQs</dt>
                       <dd class="text-medium number" data-metric="draftCount">
                         0
@@ -137,21 +138,6 @@
                     <div class="cluster space-between">
                       <dt class="muted">Sent BOQs</dt>
                       <dd class="text-medium number" data-metric="sentCount">
-                        0
-                      </dd>
-                    </div>
-                    <div class="cluster space-between">
-                      <dt class="muted">Products</dt>
-                      <dd class="text-medium number" data-metric="productCount">
-                        0
-                      </dd>
-                    </div>
-                    <div class="cluster space-between">
-                      <dt class="muted">Customers</dt>
-                      <dd
-                        class="text-medium number"
-                        data-metric="customerCount"
-                      >
                         0
                       </dd>
                     </div>
