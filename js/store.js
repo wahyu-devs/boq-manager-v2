@@ -412,14 +412,23 @@
 
   function migrateCurrentNamespace() {
     if (read("migrationComplete", false)) return;
+    const previousClaimKey = "boq-manager-v1-claimed-by";
+    const previousClaim = localStorage.getItem(previousClaimKey);
+    const canClaimPrevious = activeUserId === "guest" || !previousClaim ||
+      previousClaim === activeUserId;
     const previousCollections = Object.fromEntries(collections.map((name) => [
       name,
-      parseJson(localStorage.getItem(`${previousPrefix}:${name}`), []),
+      canClaimPrevious
+        ? parseJson(localStorage.getItem(`${previousPrefix}:${name}`), [])
+        : [],
     ]));
     const hasPreviousData = collections.some((name) =>
       previousCollections[name].length
     );
     if (hasPreviousData) {
+      if (activeUserId !== "guest" && !previousClaim) {
+        localStorage.setItem(previousClaimKey, activeUserId);
+      }
       collections.forEach((name) =>
         localStorage.setItem(
           storageKey(name),

@@ -1512,6 +1512,27 @@
   max-width: 340px;
 }
 
+.data-management-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-management-row:last-child {
+  padding-bottom: 4px;
+  border-bottom: 0;
+}
+
+.data-management-row p {
+  max-width: 620px;
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
 .pdf-preview {
   padding: 34px;
   background: #fff;

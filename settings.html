@@ -54,7 +54,7 @@
                 href="#tax"
               >Tax settings</a><a href="#preferences">User preferences</a><a
                 href="#appearance"
-              >Appearance</a>
+              >Appearance</a><a href="#data-management">Data management</a>
             </nav>
             <form id="settings-form">
               <section
@@ -362,6 +362,42 @@
                     </select><span class="field-hint"
                     >The header theme switch remains available on every
                       page.</span></label>
+                </div>
+              </section>
+
+              <section
+                class="panel settings-section"
+                id="data-management"
+                aria-labelledby="data-management-heading"
+              >
+                <div class="panel-header">
+                  <div>
+                    <h2 id="data-management-heading">Data management</h2>
+                    <p>Back up, restore, or manually synchronize your workspace.</p>
+                  </div>
+                </div>
+                <div class="panel-body stack-md">
+                  <div class="data-management-row">
+                    <div>
+                      <strong>Local backup</strong>
+                      <p>Download all projects, BOQs, products, customers, settings, and the current draft.</p>
+                    </div>
+                    <div class="toolbar-group">
+                      <button class="button button-secondary" type="button" data-backup-download>Download backup</button>
+                      <button class="button button-secondary" type="button" data-restore-trigger>Restore backup</button>
+                      <input type="file" accept="application/json,.json" data-restore-input hidden>
+                    </div>
+                  </div>
+                  <div class="data-management-row">
+                    <div>
+                      <strong>Cloud synchronization</strong>
+                      <p>Last synchronized: <span data-last-synced>Not yet</span></p>
+                    </div>
+                    <div class="toolbar-group">
+                      <button class="button button-secondary" type="button" data-sync-pull>Refresh from cloud</button>
+                      <button class="button button-secondary" type="button" data-sync-push>Save to cloud</button>
+                    </div>
+                  </div>
                 </div>
               </section>
             </form>
