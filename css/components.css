@@ -448,7 +448,11 @@
 
 .record-metric-overview {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 1fr;
+  grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
+}
+
+.dashboard-metrics {
+  margin-bottom: 20px;
 }
 
 .record-metric {
@@ -485,62 +489,6 @@
   margin-top: 10px;
   color: var(--color-text-muted);
   font-size: 12px;
-}
-
-.status-overview {
-  display: grid;
-  gap: 15px;
-}
-
-.status-row {
-  display: grid;
-  grid-template-columns: 74px minmax(80px, 1fr) 28px;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
-.progress-track {
-  height: 7px;
-  overflow: hidden;
-  border-radius: 99px;
-  background: var(--color-surface-secondary);
-}
-
-.progress-bar {
-  height: 100%;
-  border-radius: inherit;
-  background: var(--color-primary);
-}
-
-.progress-bar.warning {
-  background: var(--color-warning);
-}
-.progress-bar.info {
-  background: var(--color-info);
-}
-.progress-bar.muted {
-  background: var(--color-text-subtle);
-}
-
-.status-overview-spaced {
-  margin-top: 18px;
-}
-.progress-25 {
-  width: 25%;
-}
-.progress-29 {
-  width: 29%;
-}
-.progress-33 {
-  width: 33%;
-}
-.progress-42 {
-  width: 42%;
-}
-.progress-54 {
-  width: 54%;
 }
 
 .table-dashboard {

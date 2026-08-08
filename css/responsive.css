@@ -187,19 +187,9 @@
     padding-inline: 14px;
   }
 
-  .record-metric-overview {
-    grid-template-columns: 1.25fr 1fr;
-  }
-
   .record-metric {
     min-height: 110px;
     padding: 16px;
-  }
-
-  .record-metric:last-child {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--color-border);
-    border-left: 0;
   }
 
   .record-metric-primary .record-metric-value {
@@ -208,6 +198,22 @@
 
   .record-metric-value {
     font-size: 23px;
+  }
+
+  .record-metric-overview {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .record-metric-primary {
+    grid-column: 1 / -1;
+  }
+
+  .record-metric:not(.record-metric-primary) {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .record-metric:nth-child(even) {
+    border-left: 0;
   }
 
   .toolbar {
@@ -394,24 +400,6 @@
   .col-8,
   .col-12 {
     grid-column: 1;
-  }
-
-  .record-metric-overview {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .record-metric-primary {
-    grid-column: 1 / -1;
-  }
-
-  .record-metric:nth-child(2) {
-    border-top: 1px solid var(--color-border);
-    border-left: 0;
-  }
-
-  .record-metric:last-child {
-    grid-column: auto;
-    border-left: 1px solid var(--color-border);
   }
 
   .mobile-item-body {

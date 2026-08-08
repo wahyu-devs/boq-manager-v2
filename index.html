@@ -49,40 +49,57 @@
             </div>
           </header>
 
+          <section
+            class="panel dashboard-metrics"
+            aria-label="Workspace records"
+          >
+            <div class="record-metric-overview">
+              <div class="record-metric record-metric-primary">
+                <div class="record-metric-label">Total BOQs</div>
+                <div class="record-metric-value" data-metric="boqCount">
+                  0
+                </div>
+                <div class="record-metric-detail">Saved documents</div>
+              </div>
+              <div class="record-metric">
+                <div class="record-metric-label">Draft BOQs</div>
+                <div class="record-metric-value" data-metric="draftCount">
+                  0
+                </div>
+                <div class="record-metric-detail">Work in progress</div>
+              </div>
+              <div class="record-metric">
+                <div class="record-metric-label">Sent BOQs</div>
+                <div class="record-metric-value" data-metric="sentCount">
+                  0
+                </div>
+                <div class="record-metric-detail">Issued documents</div>
+              </div>
+              <div class="record-metric">
+                <div class="record-metric-label">Products</div>
+                <div
+                  class="record-metric-value"
+                  data-metric="productCount"
+                >
+                  0
+                </div>
+                <div class="record-metric-detail">Catalog records</div>
+              </div>
+              <div class="record-metric">
+                <div class="record-metric-label">Customers</div>
+                <div
+                  class="record-metric-value"
+                  data-metric="customerCount"
+                >
+                  0
+                </div>
+                <div class="record-metric-detail">Customer records</div>
+              </div>
+            </div>
+          </section>
+
           <div class="content-grid dashboard-grid">
             <div class="stack-lg">
-              <section class="panel" aria-label="Workspace records">
-                <div class="record-metric-overview">
-                  <div class="record-metric record-metric-primary">
-                    <div class="record-metric-label">Total BOQs</div>
-                    <div class="record-metric-value" data-metric="boqCount">
-                      0
-                    </div>
-                    <div class="record-metric-detail">Saved documents</div>
-                  </div>
-                  <div class="record-metric">
-                    <div class="record-metric-label">Products</div>
-                    <div
-                      class="record-metric-value"
-                      data-metric="productCount"
-                    >
-                      0
-                    </div>
-                    <div class="record-metric-detail">Catalog records</div>
-                  </div>
-                  <div class="record-metric">
-                    <div class="record-metric-label">Customers</div>
-                    <div
-                      class="record-metric-value"
-                      data-metric="customerCount"
-                    >
-                      0
-                    </div>
-                    <div class="record-metric-detail">Customer records</div>
-                  </div>
-                </div>
-              </section>
-
               <section class="panel" aria-labelledby="recent-boqs-heading">
                 <div class="panel-header">
                   <div>
@@ -120,31 +137,6 @@
             </div>
 
             <aside class="stack-lg" aria-label="Operational details">
-              <section class="panel">
-                <div class="panel-header">
-                  <div>
-                    <h2>Operating snapshot</h2>
-                    <p>Current saved records</p>
-                  </div>
-                </div>
-                <div class="panel-body">
-                  <dl class="stack-md">
-                    <div class="cluster space-between">
-                      <dt class="muted">Draft BOQs</dt>
-                      <dd class="text-medium number" data-metric="draftCount">
-                        0
-                      </dd>
-                    </div>
-                    <div class="cluster space-between">
-                      <dt class="muted">Sent BOQs</dt>
-                      <dd class="text-medium number" data-metric="sentCount">
-                        0
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </section>
-
               <section class="panel">
                 <div class="panel-header">
                   <div>
