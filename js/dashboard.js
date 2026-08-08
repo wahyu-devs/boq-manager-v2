@@ -9,9 +9,6 @@
     }),
   }));
   const customers = list("customers");
-  const projectNames = new Set(boqs.map((boq) =>
-    boq.projectName?.trim().toLowerCase()
-  ).filter(Boolean));
   const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
   const totalCogs = boqs.reduce(
     (sum, boq) => sum + Number(boq.totalCogs || 0),
@@ -31,7 +28,6 @@
     margin: formatPercent(averageMargin),
     sentRate: `${sentRate.toFixed(0)}%`,
     boqCount: String(boqs.length),
-    activeProjects: String(projectNames.size),
     draftCount: String(boqs.filter((boq) => boq.status === "Draft").length),
     customerCount: String(customers.length),
   };
@@ -84,43 +80,13 @@
         encodeURIComponent(boq.id)
       }">${
         escapeHtml(boq.number || "Untitled")
-      }</a></td><td>${
-        escapeHtml(boq.projectName || "—")
-      }</td><td><span class="status">${
+      }</a></td><td><span class="status">${
         escapeHtml(boq.status || "Draft")
       }</span></td><td class="align-right currency">${
         formatCurrency(boq.totalSelling || 0, boq.currency || currency)
       }</td><td class="align-right number">${
         formatPercent(boq.marginPercent || 0)
       }</td><td>${formatDateTime(boq.updatedAt)}</td></tr>`
-    ).join("");
-  }
-
-  const seenProjects = new Set();
-  const recentProjects = [...boqs].sort((a, b) =>
-    new Date(b.updatedAt) - new Date(a.updatedAt)
-  ).filter((boq) => {
-    const name = boq.projectName?.trim().toLowerCase();
-    if (!name || seenProjects.has(name)) return false;
-    seenProjects.add(name);
-    return true;
-  }).slice(0, 4);
-  const projectHost = document.querySelector("[data-recent-projects]");
-  const projectEmpty = document.querySelector("[data-recent-projects-empty]");
-  if (recentProjects.length) {
-    projectEmpty.hidden = true;
-    projectHost.innerHTML = recentProjects.map((boq) =>
-      `<li class="activity-item"><span class="avatar">${
-        initials(boq.projectName)
-      }</span><p><a class="cell-primary" href="boq-editor.html?id=${
-        encodeURIComponent(boq.id)
-      }">${escapeHtml(boq.projectName)}</a><br>${
-        escapeHtml(boq.number || "BOQ")
-      } · ${
-        escapeHtml(boq.status || "Draft")
-      }<span class="activity-time">${
-        formatDateTime(boq.updatedAt)
-      }</span></p></li>`
     ).join("");
   }
 
@@ -136,12 +102,6 @@
       `<li class="insight-item"><span class="insight-icon">!</span><p><strong>${expiring.length} BOQ${
         expiring.length === 1 ? "" : "s"
       } expire within seven days.</strong><br>Review pricing validity before following up.</p></li>`;
-  }
-
-  function initials(value) {
-    return String(value || "").split(/\s+/).filter(Boolean).slice(0, 2).map((
-      word,
-    ) => word[0]).join("").toUpperCase() || "—";
   }
 
   function formatDateTime(value) {

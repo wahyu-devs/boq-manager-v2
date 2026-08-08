@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="BOQ Manager operational dashboard for project estimation and pricing."
+      content="BOQ Manager operational dashboard for BOQ pricing and workload."
     >
     <title>Dashboard — BOQ Manager</title>
     <script src="js/theme-init.js"></script>
@@ -27,7 +27,7 @@
           <header class="page-header">
             <div class="page-header-copy">
               <h1>Dashboard</h1>
-              <p>Your project pricing activity and current workload.</p>
+              <p>Your BOQ pricing activity and current workload.</p>
             </div>
             <div class="page-actions">
               <button
@@ -110,7 +110,6 @@
                     <thead>
                       <tr>
                         <th>BOQ</th>
-                        <th>Project</th>
                         <th>Status</th>
                         <th class="align-right">Value</th>
                         <th class="align-right">Gross margin</th>
@@ -143,15 +142,6 @@
                 </div>
                 <div class="panel-body">
                   <dl class="stack-md">
-                    <div class="cluster space-between">
-                      <dt class="muted">Projects in BOQs</dt>
-                      <dd
-                        class="text-medium number"
-                        data-metric="activeProjects"
-                      >
-                        0
-                      </dd>
-                    </div>
                     <div class="cluster space-between">
                       <dt class="muted">Total BOQs</dt>
                       <dd class="text-medium number" data-metric="boqCount">
@@ -190,31 +180,6 @@
                     <div class="empty-state-content">
                       <h3>Nothing needs attention</h3>
                       <p>Alerts will appear as you add and update BOQs.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section class="panel">
-                <div class="panel-header">
-                  <div>
-                    <h2>Recent BOQ projects</h2>
-                    <p>Latest project names used in BOQs</p>
-                  </div><a class="link text-sm" href="boqs.html"
-                  >Open BOQs</a>
-                </div>
-                <div class="panel-body panel-body-compact-y">
-                  <ul class="activity-list" data-recent-projects></ul>
-                  <div
-                    class="empty-state compact-empty"
-                    data-recent-projects-empty
-                  >
-                    <div class="empty-state-content">
-                      <h3>No BOQ projects yet</h3>
-                      <p>Project names appear after you create a BOQ.</p><a
-                        class="button button-secondary button-sm"
-                        href="boq-editor.html"
-                      >Create BOQ</a>
                     </div>
                   </div>
                 </div>
