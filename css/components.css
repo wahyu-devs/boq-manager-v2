@@ -750,6 +750,10 @@
   text-align: center;
 }
 
+.reorder-mode .editor-category-row td {
+  padding-left: 5px;
+}
+
 .reorder-mode .item-index {
   display: none;
 }
