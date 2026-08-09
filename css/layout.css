@@ -264,6 +264,10 @@
   grid-area: recent;
 }
 
+.dashboard-recent > .panel {
+  overflow: hidden;
+}
+
 .dashboard-attention {
   grid-area: attention;
 }
