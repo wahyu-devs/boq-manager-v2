@@ -30,7 +30,7 @@
 
   function catalogItem(product) {
     return {
-      sku: product.sku || "CUSTOM",
+      sku: product.sku || "",
       item: product.name || "",
       description: product.description || "",
       qty: 1,
@@ -62,7 +62,7 @@
   function normalizeItem(item) {
     return {
       id: item.id || itemId(),
-      sku: item.sku || "CUSTOM",
+      sku: item.sku || "",
       item: item.item || item.name || "",
       description: item.description || "",
       qty: Number(item.qty || 0),
@@ -182,7 +182,7 @@
     const autoSelling = formatCurrency(calc.unitSelling, currentCurrency());
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right"><span class="subtle number">${displayIndex}</span></td>
-      <td class="mono subtle">${escapeHtml(item.sku || "CUSTOM")}</td>
+      <td class="mono subtle">${escapeHtml(item.sku || "—")}</td>
       <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
@@ -209,7 +209,7 @@
   function mobileCard(item, displayIndex) {
     const calc = calculateItem(item);
     return `<article class="mobile-item-card" data-item-row data-item-id="${item.id}">
-      <div class="mobile-item-head"><div><span class="subtle text-sm">Item ${displayIndex} · ${escapeHtml(item.sku || "Custom")}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
+      <div class="mobile-item-head"><div><span class="subtle text-sm">Item ${displayIndex}${item.sku ? ` · ${escapeHtml(item.sku)}` : ""}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
       <div class="mobile-item-body">
         <label class="field"><span class="field-label">Category</span><input class="input input-sm" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}"></label>
         <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-item-input data-field="unit" data-item-id="${item.id}">${unitOptions(item.unit)}</select></label>
@@ -346,7 +346,7 @@
     const duplicate = {
       ...items[index],
       id: itemId(),
-      sku: items[index].sku === "CUSTOM" ? "CUSTOM" : `${items[index].sku}-COPY`,
+      sku: items[index].sku,
       item: `${items[index].item} (Copy)`,
     };
     items.splice(index + 1, 0, duplicate);
@@ -401,9 +401,9 @@
     host.innerHTML = filtered.length
       ? filtered.map((product) => {
         const source = catalogItem(product);
-        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.sku || "CUSTOM")} · ${escapeHtml(product.description || product.category || "No description")}</span></div><div class="align-right"><strong>${formatCurrency(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
+        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.description || product.category || "No description")}</span></div><div class="align-right"><strong>${formatCurrency(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
-      : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No products found</h3><p>Try searching by product name, SKU, category, or description.</p></div></div>';
+      : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No products found</h3><p>Try searching by product name, part number, category, or description.</p></div></div>';
     document.querySelector("#product-suggestions").innerHTML = catalog.map(
       (product) => `<option value="${escapeHtml(product.name)}"></option>`,
     ).join("");
@@ -447,9 +447,7 @@
       store.save("products", {
         ...existing,
         id: existing?.id,
-        sku: item.sku && item.sku !== "CUSTOM"
-          ? item.sku
-          : existing?.sku || `ITEM-${String(store.list("products").length + 1).padStart(3, "0")}`,
+        sku: item.sku || existing?.sku || "",
         name: item.item,
         category: item.category,
         description: item.description,

@@ -171,10 +171,10 @@
       cloudCreatedAt: cloud?.created_at,
       cloudUpdatedAt: cloud?.updated_at,
     });
-    const migratedProductSkus = store.migrateImportedProductSkus({
+    const migratedPartNumbers = store.migrateLegacyPartNumbers({
       silent: true,
     });
-    if (migratedBoqs || migratedProductSkus) {
+    if (migratedBoqs || migratedPartNumbers) {
       changed = true;
       shouldPush = true;
     }

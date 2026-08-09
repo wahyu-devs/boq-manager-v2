@@ -198,21 +198,6 @@
     return `${prefixText}-${year}-${String(sequence).padStart(3, "0")}`;
   }
 
-  function nextProductSku() {
-    const matches = list("products").map((product) =>
-      /^SKU-(\d+)$/i.exec(String(product.sku || "").trim())
-    ).filter(Boolean);
-    const highest = matches.reduce((maximum, match) =>
-      Math.max(maximum, Number(match[1]) || 0), 0);
-    const next = highest + 1;
-    const width = Math.max(
-      3,
-      String(next).length,
-      ...matches.map((match) => match[1].length),
-    );
-    return `SKU-${String(next).padStart(width, "0")}`;
-  }
-
   function getSettings() {
     return read("settings", {});
   }
@@ -248,7 +233,7 @@
       ? null
       : Number(item.sellingPrice);
     return {
-      sku: item.sku || "CUSTOM",
+      sku: "",
       item: String(item.name || item.item || `Item ${index + 1}`),
       description: String(item.description || ""),
       qty: Number(item.qty || 0),
@@ -468,14 +453,14 @@
     }
 
     const productRecords = legacyProducts.filter((item) => item?.name).map(
-      (item, index) => {
+      (item) => {
         const cogs = Number(item.price || 0);
         const selling = Number(item.sellingPrice || 0);
         const updatedAt = new Date(Number(item.updatedAt || Date.now()))
           .toISOString();
         return {
           id: stableId("product", item.name),
-          sku: `SKU-${String(index + 1).padStart(3, "0")}`,
+          sku: "",
           name: String(item.name),
           category: String(item.category || "Uncategorized"),
           description: String(item.description || ""),
@@ -707,24 +692,39 @@
     return true;
   }
 
-  function migrateImportedProductSkus(options = {}) {
-    const raw = parseJson(localStorage.getItem(storageKey("products")), []);
-    if (!Array.isArray(raw)) return false;
-    let changed = false;
-    const migrated = raw.map((product) => {
-      const match = product?.source === "imported"
-        ? /^ITEM-(\d+)$/i.exec(String(product.sku || "").trim())
-        : null;
-      if (!match) return product;
-      changed = true;
-      return { ...product, sku: `SKU-${match[1]}` };
-    });
-    if (!changed) return false;
-    localStorage.setItem(storageKey("products"), JSON.stringify(migrated));
+  function migrateLegacyPartNumbers(options = {}) {
+    const migrationVersion = 1;
+    const meta = read("meta", {});
+    if (Number(meta.partNumberMigrationVersion || 0) >= migrationVersion) {
+      return false;
+    }
+    const products = parseJson(
+      localStorage.getItem(storageKey("products")),
+      [],
+    );
+    const boqs = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (Array.isArray(products)) {
+      localStorage.setItem(
+        storageKey("products"),
+        JSON.stringify(products.map((product) => ({ ...product, sku: "" }))),
+      );
+    }
+    if (Array.isArray(boqs)) {
+      localStorage.setItem(
+        storageKey("boqs"),
+        JSON.stringify(boqs.map((boq) => ({
+          ...boq,
+          items: Array.isArray(boq.items)
+            ? boq.items.map((item) => ({ ...item, sku: "" }))
+            : [],
+        }))),
+      );
+    }
     const clientUpdatedAt = Date.now();
     localStorage.setItem(storageKey("meta"), JSON.stringify({
-      ...read("meta", {}),
+      ...meta,
       schemaVersion: 4,
+      partNumberMigrationVersion: migrationVersion,
       clientUpdatedAt,
     }));
     if (!options.silent) {
@@ -770,7 +770,6 @@
     save,
     remove,
     nextNumber,
-    nextProductSku,
     formatDocumentNumber,
     isValidNumberingFormat,
     getSettings,
@@ -780,7 +779,7 @@
     getUserId,
     getMeta,
     migrateExistingBoqs,
-    migrateImportedProductSkus,
+    migrateLegacyPartNumbers,
     exportState,
     applyState,
     convertLegacySnapshot,

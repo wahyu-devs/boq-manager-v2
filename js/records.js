@@ -8,8 +8,7 @@
   const collection = collectionByPage[page];
   if (!collection) return;
 
-  const { list, get, save, remove, nextNumber, nextProductSku } =
-    window.BOQStore;
+  const { list, get, save, remove, nextNumber } = window.BOQStore;
   const { escapeHtml, formatCurrency, formatPercent } = window.BOQUtils;
   const defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -341,7 +340,6 @@
       ? `Edit ${singular(collection)}`
       : `Add ${singular(collection)}`;
     if (!record) {
-      if (collection === "products") form.elements.sku.value = nextProductSku();
       updateCalculatedProductPrice();
       return;
     }

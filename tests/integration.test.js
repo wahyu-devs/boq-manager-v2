@@ -80,8 +80,8 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(store.list("projects").length, 0, "project collection removed");
   equal(boqs.length, 1, "BOQ count");
   equal(products.length, 1, "product count");
-  equal(products[0].sku, "SKU-001", "legacy product SKU prefix");
-  equal(store.nextProductSku(), "SKU-002", "next product SKU");
+  equal(products[0].sku, "", "legacy product part number is blank");
+  equal(boqs[0].items[0].sku, "", "legacy BOQ item part number is blank");
   equal(boqs[0].projectName, "Office Upgrade", "BOQ project name");
   equal(boqs[0].projectId, undefined, "BOQ project id removed");
   equal(boqs[0].title, undefined, "BOQ title removed");
@@ -283,27 +283,40 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "boq-manager-v2:migration-user:products",
     JSON.stringify([{
       id: "imported-product",
-      sku: "ITEM-001",
+      sku: "SKU-001",
       name: "Imported Product",
       source: "imported",
     }, {
       id: "manual-product",
-      sku: "ITEM-002",
+      sku: "PN-002",
       name: "Manual Product",
     }]),
   );
+  localStorage.setItem(
+    "boq-manager-v2:migration-user:boqs",
+    JSON.stringify([{
+      ...migratedBoq,
+      items: [{ id: "legacy-item", sku: "SKU-001", item: "Legacy Item" }],
+    }]),
+  );
   equal(
-    store.migrateImportedProductSkus({ silent: true }),
+    store.migrateLegacyPartNumbers({ silent: true }),
     true,
-    "imported product SKU migration applied",
+    "legacy part number migration applied",
   );
   const migratedProducts = store.list("products");
-  equal(migratedProducts[0].sku, "SKU-001", "imported SKU prefix updated");
-  equal(migratedProducts[1].sku, "ITEM-002", "manual SKU left unchanged");
+  equal(migratedProducts[0].sku, "", "imported part number cleared");
+  equal(migratedProducts[1].sku, "", "manual part number cleared");
+  equal(store.list("boqs")[0].items[0].sku, "", "BOQ part number cleared");
   equal(
-    store.migrateImportedProductSkus({ silent: true }),
+    store.getMeta().partNumberMigrationVersion,
+    1,
+    "part number migration version stored",
+  );
+  equal(
+    store.migrateLegacyPartNumbers({ silent: true }),
     false,
-    "imported SKU migration is idempotent",
+    "part number migration only runs once",
   );
   const updatedBoq = store.save("boqs", {
     ...migratedBoq,
