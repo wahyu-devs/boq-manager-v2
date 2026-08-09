@@ -92,11 +92,19 @@
     };
   }
 
+  function normalizeProduct(record) {
+    const value = { ...(record || {}) };
+    delete value.description;
+    return value;
+  }
+
   function list(collection) {
     if (!collections.includes(collection)) return [];
     const records = read(collection, []);
     if (!Array.isArray(records)) return [];
-    return collection === "boqs" ? records.map(normalizeBoq) : records;
+    if (collection === "boqs") return records.map(normalizeBoq);
+    if (collection === "products") return records.map(normalizeProduct);
+    return records;
   }
 
   function get(collection, id) {
@@ -117,7 +125,11 @@
         ? isoTimestamp(record.updatedAt) || existing?.updatedAt || now
         : now,
     };
-    const normalized = collection === "boqs" ? normalizeBoq(value) : value;
+    const normalized = collection === "boqs"
+      ? normalizeBoq(value)
+      : collection === "products"
+      ? normalizeProduct(value)
+      : value;
     const existingIndex = records.findIndex((entry) =>
       entry.id === normalized.id
     );
@@ -463,7 +475,6 @@
           sku: "",
           name: String(item.name),
           category: String(item.category || "Uncategorized"),
-          description: String(item.description || ""),
           unit: String(item.unit || "Each"),
           defaultCogs: cogs,
           defaultMargin: deriveMargin(cogs, selling),

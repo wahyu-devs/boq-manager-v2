@@ -300,6 +300,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       id: "imported-product",
       sku: "SKU-001",
       name: "Imported Product",
+      description: "Legacy description",
       source: "imported",
     }, {
       id: "manual-product",
@@ -321,6 +322,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   );
   const migratedProducts = store.list("products");
   equal(migratedProducts[0].sku, "", "imported part number cleared");
+  equal(
+    migratedProducts[0].description,
+    undefined,
+    "product description removed",
+  );
   equal(migratedProducts[1].sku, "", "manual part number cleared");
   equal(store.list("boqs")[0].items[0].sku, "", "BOQ part number cleared");
   equal(

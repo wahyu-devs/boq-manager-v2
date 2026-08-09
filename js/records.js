@@ -136,8 +136,7 @@
       margin,
       sellingOverride: record.defaultSellingPrice,
     }).unitSelling;
-    const search = [record.sku, record.name, record.description].filter(Boolean)
-      .join(" ");
+    const search = [record.sku, record.name].filter(Boolean).join(" ");
     return {
       row: `<tr data-table-row data-record-id="${record.id}" data-search="${
         escapeHtml(search)
@@ -153,8 +152,6 @@
         escapeHtml(record.sku || "")
       }</td><td><span class="cell-primary">${
         escapeHtml(record.name || "Untitled product")
-      }</span><span class="cell-secondary">${
-        escapeHtml(record.description || "No description")
       }</span></td><td>${escapeHtml(record.category || "—")}</td><td>${
         escapeHtml(record.unit || "Each")
       }</td><td class="align-right currency">${
