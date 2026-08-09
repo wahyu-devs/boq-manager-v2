@@ -400,6 +400,10 @@
   font-weight: 620;
 }
 
+.data-table .boq-number-cell {
+  white-space: nowrap;
+}
+
 .data-table .cell-secondary {
   display: block;
   margin-top: 2px;

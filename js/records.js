@@ -73,7 +73,7 @@
         Number(record.marginPercent || 0)
       }" data-created="${escapeHtml(record.createdAt || "")}" data-updated="${
         escapeHtml(record.updatedAt || "")
-      }"><td><a class="cell-primary" href="boq-editor.html?id=${
+      }"><td class="boq-number-cell"><a class="cell-primary" href="boq-editor.html?id=${
         encodeURIComponent(record.id)
       }">${
         escapeHtml(record.number || "Untitled")
