@@ -614,8 +614,8 @@
 }
 
 .editor-table td {
-  height: 50px;
-  padding: 4px 6px;
+  height: 42px;
+  padding: 3px 5px;
 }
 
 .editor-table th {
@@ -623,9 +623,30 @@
 }
 
 .editor-table .editor-input {
-  height: 30px;
+  height: 28px;
   padding-right: 6px;
   padding-left: 6px;
+}
+
+.editor-table .icon-button {
+  width: 28px;
+  height: 28px;
+}
+
+.editor-item-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.editor-item-cell .editor-input {
+  min-width: 0;
+  flex: 1;
+}
+
+.editor-item-cell .cell-secondary {
+  margin-top: 0;
+  flex: 0 0 auto;
 }
 
 .editor-input {

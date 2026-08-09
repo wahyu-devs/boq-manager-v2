@@ -182,7 +182,7 @@
     const autoSelling = formatCurrency(calc.unitSelling, currentCurrency());
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right"><span class="subtle number">${displayIndex}</span></td>
-      <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"><span class="cell-secondary mono">${escapeHtml(item.sku || "CUSTOM")}</span></td>
+      <td><div class="editor-item-cell"><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"><span class="cell-secondary mono">${escapeHtml(item.sku || "CUSTOM")}</span></div></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
       <td><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
