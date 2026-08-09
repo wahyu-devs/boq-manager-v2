@@ -203,7 +203,9 @@
 
   function desktopRow(item, displayIndex) {
     const calc = calculateItem(item);
-    const autoSelling = formatCurrency(calc.unitSelling, currentCurrency());
+    const sellingValue = calc.isManualSelling
+      ? item.sellingOverride
+      : calc.unitSelling;
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right item-order-cell">${itemDragHandle(item)}<span class="subtle number item-index">${displayIndex}</span></td>
       <td class="mono subtle">${escapeHtml(item.sku || "")}</td>
@@ -214,7 +216,7 @@
       <td class="column-cogs column-price"><input class="editor-input numeric" data-item-input data-field="unitCogs" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.unitCogs}" aria-label="Unit COGS, row ${displayIndex}"></td>
       <td class="calculated-cell column-cogs column-price" data-item-output="totalCogs">${formatCurrency(calc.totalCogs, currentCurrency())}</td>
       <td class="column-margin column-price"><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}" aria-label="Gross margin percentage, row ${displayIndex}"></td>
-      <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.sellingOverride ?? ""}" placeholder="Auto: ${escapeHtml(autoSelling)}" aria-label="Unit selling price, row ${displayIndex}"></td>
+      <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${sellingValue}" aria-label="Unit selling price, row ${displayIndex}"></td>
       <td class="calculated-cell column-selling column-price" data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</td>
       <td><div class="row-actions"><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(item.item)}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-item-action="duplicate" data-item-id="${item.id}">Duplicate item</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and all totals recalculated.">Delete item</button></div></div></div></td>
     </tr>`;
@@ -232,6 +234,9 @@
 
   function mobileCard(item, displayIndex) {
     const calc = calculateItem(item);
+    const sellingValue = calc.isManualSelling
+      ? item.sellingOverride
+      : calc.unitSelling;
     return `<article class="mobile-item-card" data-item-row data-item-id="${item.id}">
       <div class="mobile-item-head">${itemDragHandle(item)}<div class="mobile-item-main"><span class="subtle text-sm">Item ${displayIndex}${item.sku ? ` · ${escapeHtml(item.sku)}` : ""}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
       <div class="mobile-item-body">
@@ -240,7 +245,7 @@
         <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}"></label>
         <label class="field column-cogs column-price"><span class="field-label">Unit COGS</span><input class="input input-sm align-right" data-item-input data-field="unitCogs" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.unitCogs}"></label>
         <label class="field column-margin column-price"><span class="field-label">Gross margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}"></label>
-        <label class="field column-selling column-price"><span class="field-label">Unit selling <small>(blank = auto)</small></span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.sellingOverride ?? ""}" placeholder="${escapeHtml(formatCurrency(calc.unitSelling, currentCurrency()))}"></label>
+        <label class="field column-selling column-price"><span class="field-label">Unit selling <small>(edit to override)</small></span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${sellingValue}"></label>
         <div class="mobile-item-total column-selling column-price"><span class="muted">Total selling</span><strong data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</strong></div>
       </div>
     </article>`;
@@ -284,7 +289,7 @@
         );
         row.querySelectorAll('[data-field="sellingOverride"]').forEach((input) => {
           input.classList.toggle("is-manual", calc.isManualSelling);
-          input.placeholder = `Auto: ${formatCurrency(calc.unitSelling, currentCurrency())}`;
+          if (!calc.isManualSelling) input.value = calc.unitSelling;
         });
       });
     updateSummary();
