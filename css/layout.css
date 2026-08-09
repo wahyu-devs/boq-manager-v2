@@ -252,22 +252,16 @@
     "metrics attention"
     "recent attention";
   column-gap: 20px;
-  row-gap: 0;
+  row-gap: 12px;
   align-items: start;
 }
 
 .dashboard-metrics {
   grid-area: metrics;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .dashboard-recent {
   grid-area: recent;
-}
-
-.dashboard-recent > .panel {
-  border-top: 0;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 .dashboard-attention {

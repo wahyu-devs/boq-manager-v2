@@ -85,15 +85,6 @@
     row-gap: 20px;
   }
 
-  .dashboard-metrics {
-    border-radius: var(--radius-md);
-  }
-
-  .dashboard-recent > .panel {
-    border-top: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-  }
-
   .editor-summary {
     position: static;
     grid-row: 1;
