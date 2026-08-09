@@ -67,13 +67,33 @@
     if (!item || !target || item.category !== target.category) {
       return { items, changed: false };
     }
-    const previousOrder = items.map((entry) => entry.id).join("|");
+    const previousOrder = items.map((entry) => entry.id);
     items.splice(items.indexOf(item), 1);
     const targetIndex = items.indexOf(target);
     items.splice(targetIndex + (position === "after" ? 1 : 0), 0, item);
     return {
       items,
-      changed: items.map((entry) => entry.id).join("|") !== previousOrder,
+      changed: items.some((entry, index) => entry.id !== previousOrder[index]),
+    };
+  }
+
+  function reorderValues(records, value, targetValue, position) {
+    const values = Array.isArray(records) ? records.slice() : [];
+    if (!value || !targetValue || value === targetValue ||
+        !values.includes(value) || !values.includes(targetValue)) {
+      return { values, changed: false };
+    }
+    const previousOrder = values.slice();
+    values.splice(values.indexOf(value), 1);
+    const targetIndex = values.indexOf(targetValue);
+    values.splice(
+      targetIndex + (position === "after" ? 1 : 0),
+      0,
+      value,
+    );
+    return {
+      values,
+      changed: values.some((entry, index) => entry !== previousOrder[index]),
     };
   }
 
@@ -84,5 +104,6 @@
     debounce,
     escapeHtml,
     reorderItemsWithinCategory,
+    reorderValues,
   };
 })();

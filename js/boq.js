@@ -10,6 +10,7 @@
     formatPercent,
     escapeHtml,
     reorderItemsWithinCategory,
+    reorderValues,
   } = window.BOQUtils;
   const store = window.BOQStore;
   const settings = store.getSettings();
@@ -192,7 +193,12 @@
 
   function itemDragHandle(item) {
     const itemName = escapeHtml(item.item || "item");
-    return `<button class="icon-button drag-handle" type="button" data-drag-handle data-item-id="${item.id}" draggable="${reorderMode}" aria-label="Drag ${itemName} to reorder. Use arrow keys for keyboard reordering." title="Drag to reorder"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7h.01M15 7h.01M9 12h.01M15 12h.01M9 17h.01M15 17h.01" /></svg></button>`;
+    return `<button class="icon-button drag-handle" type="button" data-drag-handle data-item-id="${item.id}" aria-label="Drag ${itemName} to reorder. Use arrow keys for keyboard reordering." title="Drag to reorder"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7h.01M15 7h.01M9 12h.01M15 12h.01M9 17h.01M15 17h.01" /></svg></button>`;
+  }
+
+  function categoryDragHandle(category) {
+    const categoryName = escapeHtml(category);
+    return `<button class="icon-button drag-handle" type="button" data-category-drag-handle data-category="${categoryName}" aria-label="Drag ${categoryName} category to reorder. Use arrow keys for keyboard reordering." title="Drag category to reorder"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7h.01M15 7h.01M9 12h.01M15 12h.01M9 17h.01M15 17h.01" /></svg></button>`;
   }
 
   function desktopRow(item, displayIndex) {
@@ -215,7 +221,7 @@
   }
 
   function categoryDesktopHeader(category) {
-    return `<tr class="editor-category-row"><td colspan="12"><div><strong>${escapeHtml(category)}</strong></div></td></tr>`;
+    return `<tr class="editor-category-row" data-category-row data-category="${escapeHtml(category)}"><td colspan="12"><div><span class="category-title">${categoryDragHandle(category)}<strong>${escapeHtml(category)}</strong></span></div></td></tr>`;
   }
 
   function categorySubtotalRow(category) {
@@ -256,7 +262,7 @@
       const categoryItems = items.filter((item) =>
         (item.category || "Uncategorized") === category
       );
-      return `<section class="mobile-category-section"><header><strong>${escapeHtml(category)}</strong></header>${categoryItems.map((item) => mobileCard(item, ++displayIndex)).join("")}</section>`;
+      return `<section class="mobile-category-section"><header data-category-row data-category="${escapeHtml(category)}"><span class="category-title">${categoryDragHandle(category)}<strong>${escapeHtml(category)}</strong></span></header>${categoryItems.map((item) => mobileCard(item, ++displayIndex)).join("")}</section>`;
     }).join("");
     editor.querySelector("[data-editor-table]").hidden = items.length === 0;
     editor.querySelector("[data-items-empty]").hidden = items.length > 0;
@@ -407,6 +413,39 @@
     return true;
   }
 
+  function moveCategory(category, direction) {
+    const index = categories().indexOf(category);
+    const destination = index + direction;
+    if (index < 0 || destination < 0 || destination >= categoryOrder.length) {
+      return;
+    }
+    [categoryOrder[index], categoryOrder[destination]] =
+      [categoryOrder[destination], categoryOrder[index]];
+    renderItems();
+    markDirty();
+    requestAnimationFrame(() => {
+      const handles = [...editor.querySelectorAll(
+        `[data-category-drag-handle][data-category="${CSS.escape(category)}"]`,
+      )];
+      handles.find((handle) => handle.offsetParent !== null)?.focus();
+    });
+  }
+
+  function reorderCategory(category, targetCategory, position) {
+    categories();
+    const reordered = reorderValues(
+      categoryOrder,
+      category,
+      targetCategory,
+      position,
+    );
+    if (!reordered.changed) return false;
+    categoryOrder = reordered.values;
+    renderItems();
+    markDirty();
+    return true;
+  }
+
   function clearDropIndicators() {
     editor.querySelectorAll(".is-dragging, .drop-before, .drop-after")
       .forEach((element) =>
@@ -420,13 +459,14 @@
     activeDrag = null;
   }
 
-  function beginDrag(itemId, row, pointerId = null) {
+  function beginDrag(type, key, row, pointerId) {
     clearDragState();
     activeDrag = {
-      itemId,
+      type,
+      key,
       pointerId,
       sourceRow: row,
-      targetId: null,
+      targetKey: null,
       position: "before",
     };
     row.classList.add("is-dragging");
@@ -438,26 +478,35 @@
     editor.querySelectorAll(".drop-before, .drop-after").forEach((element) =>
       element.classList.remove("drop-before", "drop-after")
     );
-    activeDrag.targetId = null;
+    activeDrag.targetKey = null;
     if (!row || row === activeDrag.sourceRow) return false;
-    const item = items.find((entry) => entry.id === activeDrag.itemId);
-    const target = items.find((entry) => entry.id === row.dataset.itemId);
-    if (!item || !target || item.category !== target.category) return false;
+    let targetKey;
+    if (activeDrag.type === "category") {
+      targetKey = row.dataset.category;
+      if (!targetKey || activeDrag.key === targetKey) return false;
+    } else {
+      const item = items.find((entry) => entry.id === activeDrag.key);
+      const target = items.find((entry) => entry.id === row.dataset.itemId);
+      if (!item || !target || item.category !== target.category) return false;
+      targetKey = target.id;
+    }
     const bounds = row.getBoundingClientRect();
     const position = clientY < bounds.top + bounds.height / 2
       ? "before"
       : "after";
     row.classList.add(position === "before" ? "drop-before" : "drop-after");
-    activeDrag.targetId = target.id;
+    activeDrag.targetKey = targetKey;
     activeDrag.position = position;
     return true;
   }
 
   function completeDrag() {
     if (!activeDrag) return false;
-    const { itemId, targetId, position } = activeDrag;
+    const { type, key, targetKey, position } = activeDrag;
     clearDragState();
-    return reorderItem(itemId, targetId, position);
+    return type === "category"
+      ? reorderCategory(key, targetKey, position)
+      : reorderItem(key, targetKey, position);
   }
 
   function autoScrollDuringDrag(clientY) {
@@ -513,8 +562,9 @@
       reorderButton.textContent = reorderMode ? "Reorder on" : "Reorder off";
       reorderButton.setAttribute("aria-pressed", String(reorderMode));
     }
-    editor.querySelectorAll("[data-drag-handle]").forEach((handle) => {
-      handle.draggable = reorderMode;
+    editor.querySelectorAll(
+      "[data-drag-handle], [data-category-drag-handle]",
+    ).forEach((handle) => {
       handle.tabIndex = reorderMode ? 0 : -1;
     });
     if (!reorderMode) clearDragState();
@@ -643,54 +693,34 @@
     }
   });
 
-  editor.addEventListener("dragstart", (event) => {
-    const handle = event.target.closest("[data-drag-handle]");
-    if (!handle) return;
-    if (!reorderMode) {
-      event.preventDefault();
-      return;
-    }
-    const row = handle.closest("[data-item-row]");
-    if (!row) return;
-    beginDrag(handle.dataset.itemId, row);
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", handle.dataset.itemId);
-    }
-  });
-
-  editor.addEventListener("dragover", (event) => {
-    if (!reorderMode || !activeDrag) return;
-    const row = event.target.closest("[data-item-row]");
-    if (!updateDropTarget(row, event.clientY)) return;
-    event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-    autoScrollDuringDrag(event.clientY);
-  });
-
-  editor.addEventListener("drop", (event) => {
-    if (!reorderMode || !activeDrag?.targetId) return;
-    event.preventDefault();
-    completeDrag();
-  });
-
-  editor.addEventListener("dragend", clearDragState);
-
   editor.addEventListener("pointerdown", (event) => {
-    const handle = event.target.closest("[data-drag-handle]");
-    if (!reorderMode || !handle || event.pointerType === "mouse") return;
-    const row = handle.closest("[data-item-row]");
+    const itemHandle = event.target.closest("[data-drag-handle]");
+    const categoryHandle = event.target.closest("[data-category-drag-handle]");
+    const handle = itemHandle || categoryHandle;
+    if (!reorderMode || !handle || event.button > 0) return;
+    const type = categoryHandle ? "category" : "item";
+    const row = handle.closest(
+      type === "category" ? "[data-category-row]" : "[data-item-row]",
+    );
     if (!row) return;
     event.preventDefault();
     handle.setPointerCapture?.(event.pointerId);
-    beginDrag(handle.dataset.itemId, row, event.pointerId);
+    beginDrag(
+      type,
+      type === "category" ? handle.dataset.category : handle.dataset.itemId,
+      row,
+      event.pointerId,
+    );
   });
 
   editor.addEventListener("pointermove", (event) => {
     if (!reorderMode || activeDrag?.pointerId !== event.pointerId) return;
     event.preventDefault();
     const target = document.elementFromPoint(event.clientX, event.clientY);
-    updateDropTarget(target?.closest("[data-item-row]"), event.clientY);
+    const rowSelector = activeDrag.type === "category"
+      ? "[data-category-row]"
+      : "[data-item-row]";
+    updateDropTarget(target?.closest(rowSelector), event.clientY);
     autoScrollDuringDrag(event.clientY);
   });
 
@@ -705,6 +735,16 @@
   });
 
   editor.addEventListener("keydown", (event) => {
+    const categoryHandle = event.target.closest("[data-category-drag-handle]");
+    if (categoryHandle && reorderMode &&
+        ["ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      moveCategory(
+        categoryHandle.dataset.category,
+        event.key === "ArrowUp" ? -1 : 1,
+      );
+      return;
+    }
     const dragHandle = event.target.closest("[data-drag-handle]");
     if (dragHandle && reorderMode &&
         ["ArrowUp", "ArrowDown"].includes(event.key)) {

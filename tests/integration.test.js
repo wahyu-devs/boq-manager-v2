@@ -223,6 +223,18 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     false,
     "cross-category drop does not change item category",
   );
+  const reorderedCategories = window.BOQUtils.reorderValues(
+    ["Network", "Services", "Other"],
+    "Other",
+    "Network",
+    "before",
+  );
+  equal(reorderedCategories.changed, true, "category reorder applied");
+  equal(
+    reorderedCategories.values.join(","),
+    "Other,Network,Services",
+    "category placed around drop target",
+  );
 
   store.saveSettings({ ...store.getSettings(), numberFormat: "dot" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1.234,50", "dot number format");

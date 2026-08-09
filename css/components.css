@@ -703,6 +703,12 @@
   letter-spacing: 0.02em;
 }
 
+.category-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .category-subtotal-row td {
   height: 32px;
   border-top: 1px solid var(--color-border);
@@ -750,7 +756,6 @@
 
 .drag-in-progress .is-dragging {
   opacity: 0.38;
-  pointer-events: none;
 }
 
 .editor-table tr.drop-before td {
@@ -766,6 +771,14 @@
 }
 
 .mobile-item-card.drop-after {
+  box-shadow: inset 0 -2px var(--color-primary);
+}
+
+.mobile-category-section > header.drop-before {
+  box-shadow: inset 0 2px var(--color-primary);
+}
+
+.mobile-category-section > header.drop-after {
   box-shadow: inset 0 -2px var(--color-primary);
 }
 
