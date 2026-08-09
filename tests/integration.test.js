@@ -195,6 +195,16 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   );
   equal(normalizedLegacyBoq.title, undefined, "legacy title discarded");
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1,234.50", "comma number format");
+  equal(
+    window.BOQUtils.formatNumberInput(1234567.5),
+    "1,234,567.5",
+    "comma financial input format",
+  );
+  equal(
+    window.BOQUtils.parseNumberInput("1,234,567.5"),
+    1234567.5,
+    "comma financial input parsing",
+  );
 
   const reorderedItems = window.BOQUtils.reorderItemsWithinCategory(
     [
@@ -239,9 +249,34 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   store.saveSettings({ ...store.getSettings(), numberFormat: "dot" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1.234,50", "dot number format");
   equal(window.BOQUtils.formatPercent(12.5), "12,5%", "dot percentage format");
+  equal(
+    window.BOQUtils.formatNumberInput(1234567.5),
+    "1.234.567,5",
+    "dot financial input format",
+  );
+  equal(
+    window.BOQUtils.parseNumberInput("1.234.567,5"),
+    1234567.5,
+    "dot financial input parsing",
+  );
+  equal(
+    window.BOQUtils.numberInputEditingValue(1234567.5),
+    "1234567,5",
+    "localized financial editing value",
+  );
 
   store.saveSettings({ ...store.getSettings(), numberFormat: "space" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1 234,50", "space number format");
+  equal(
+    window.BOQUtils.formatNumberInput(1234567.5),
+    "1 234 567,5",
+    "space financial input format",
+  );
+  equal(
+    window.BOQUtils.parseNumberInput("1 234 567,5"),
+    1234567.5,
+    "space financial input parsing",
+  );
 
   store.applyState({
     collections: {

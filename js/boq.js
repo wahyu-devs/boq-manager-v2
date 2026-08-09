@@ -8,6 +8,9 @@
   const {
     formatCurrency,
     formatPercent,
+    formatNumberInput,
+    parseNumberInput,
+    numberInputEditingValue,
     escapeHtml,
     reorderItemsWithinCategory,
     reorderValues,
@@ -213,10 +216,10 @@
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
       <td><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
-      <td class="column-cogs column-price"><input class="editor-input numeric" data-item-input data-field="unitCogs" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.unitCogs}" aria-label="Unit COGS, row ${displayIndex}"></td>
+      <td class="column-cogs column-price"><input class="editor-input numeric" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}" aria-label="Unit COGS, row ${displayIndex}"></td>
       <td class="calculated-cell column-cogs column-price" data-item-output="totalCogs">${formatCurrency(calc.totalCogs, currentCurrency())}</td>
       <td class="column-margin column-price"><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}" aria-label="Gross margin percentage, row ${displayIndex}"></td>
-      <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${sellingValue}" aria-label="Unit selling price, row ${displayIndex}"></td>
+      <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}" aria-label="Unit selling price, row ${displayIndex}"></td>
       <td class="calculated-cell column-selling column-price" data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</td>
       <td><div class="row-actions"><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(item.item)}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-item-action="duplicate" data-item-id="${item.id}">Duplicate item</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and all totals recalculated.">Delete item</button></div></div></div></td>
     </tr>`;
@@ -243,9 +246,9 @@
         <label class="field"><span class="field-label">Category</span><input class="input input-sm" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}"></label>
         <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-item-input data-field="unit" data-item-id="${item.id}">${unitOptions(item.unit)}</select></label>
         <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}"></label>
-        <label class="field column-cogs column-price"><span class="field-label">Unit COGS</span><input class="input input-sm align-right" data-item-input data-field="unitCogs" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.unitCogs}"></label>
+        <label class="field column-cogs column-price"><span class="field-label">Unit COGS</span><input class="input input-sm align-right" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}"></label>
         <label class="field column-margin column-price"><span class="field-label">Gross margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}"></label>
-        <label class="field column-selling column-price"><span class="field-label">Unit selling <small>(edit to override)</small></span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${sellingValue}"></label>
+        <label class="field column-selling column-price"><span class="field-label">Unit selling <small>(edit to override)</small></span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}"></label>
         <div class="mobile-item-total column-selling column-price"><span class="muted">Total selling</span><strong data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</strong></div>
       </div>
     </article>`;
@@ -287,9 +290,18 @@
         row.querySelectorAll('[data-item-output="totalSelling"]').forEach((cell) =>
           cell.textContent = formatCurrency(calc.totalSelling, currentCurrency())
         );
+        row.querySelectorAll('[data-field="unitCogs"]').forEach((input) => {
+          if (document.activeElement !== input) {
+            input.value = formatNumberInput(item.unitCogs);
+          }
+        });
         row.querySelectorAll('[data-field="sellingOverride"]').forEach((input) => {
           input.classList.toggle("is-manual", calc.isManualSelling);
-          if (!calc.isManualSelling) input.value = calc.unitSelling;
+          if (document.activeElement !== input) {
+            input.value = formatNumberInput(
+              calc.isManualSelling ? item.sellingOverride : calc.unitSelling,
+            );
+          }
         });
       });
     updateSummary();
@@ -653,21 +665,51 @@
     return record;
   }
 
+  editor.addEventListener("focusin", (event) => {
+    const input = event.target.closest("[data-number-input]");
+    if (!input) return;
+    const item = items.find((entry) => entry.id === input.dataset.itemId);
+    if (!item) return;
+    const calc = calculateItem(item);
+    const value = input.dataset.field === "sellingOverride"
+      ? calc.isManualSelling
+        ? item.sellingOverride
+        : calc.unitSelling
+      : item.unitCogs;
+    input.value = numberInputEditingValue(value);
+  });
+
+  editor.addEventListener("focusout", (event) => {
+    const input = event.target.closest("[data-number-input]");
+    if (!input) return;
+    const item = items.find((entry) => entry.id === input.dataset.itemId);
+    if (!item) return;
+    const calc = calculateItem(item);
+    const value = input.dataset.field === "sellingOverride"
+      ? calc.isManualSelling
+        ? item.sellingOverride
+        : calc.unitSelling
+      : item.unitCogs;
+    input.value = formatNumberInput(value);
+  });
+
   editor.addEventListener("input", (event) => {
     const input = event.target.closest("[data-item-input]");
     if (!input) return;
     const item = items.find((entry) => entry.id === input.dataset.itemId);
     if (!item) return;
     const numericFields = ["qty", "unitCogs", "margin", "sellingOverride"];
-    if (numericFields.includes(input.dataset.field)) {
+    if (input.matches("[data-number-input]")) {
       if (input.dataset.field === "sellingOverride" && input.value === "") {
         item.sellingOverride = null;
       } else {
-        const value = Math.max(0, Number(input.value) || 0);
-        item[input.dataset.field] = input.dataset.field === "margin"
-          ? Math.min(value, 99.99)
-          : value;
+        item[input.dataset.field] = Math.max(0, parseNumberInput(input.value));
       }
+    } else if (numericFields.includes(input.dataset.field)) {
+      const value = Math.max(0, Number(input.value) || 0);
+      item[input.dataset.field] = input.dataset.field === "margin"
+        ? Math.min(value, 99.99)
+        : value;
     } else item[input.dataset.field] = input.value;
     syncItem(item);
     markDirty();

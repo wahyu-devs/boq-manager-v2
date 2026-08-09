@@ -22,6 +22,56 @@
       : formatted;
   }
 
+  function formatNumberInput(value) {
+    const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
+    const preference = numberFormatPreference();
+    const locale = preference === "comma"
+      ? "en-US"
+      : preference === "dot"
+      ? "de-DE"
+      : "fr-FR";
+    const formatted = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+    return preference === "space"
+      ? formatted.replace(/[\u00a0\u202f]/g, " ")
+      : formatted;
+  }
+
+  function parseNumberInput(value) {
+    const preference = numberFormatPreference();
+    let text = String(value ?? "").trim().replace(/[\s\u00a0\u202f]/g, "");
+    if (!text) return 0;
+    if (preference === "comma") {
+      if (text.includes(",") && text.includes(".")) {
+        text = text.replaceAll(",", "");
+      } else if (text.includes(",")) {
+        text = /^-?\d{1,3}(,\d{3})+$/.test(text)
+          ? text.replaceAll(",", "")
+          : text.replaceAll(",", ".");
+      }
+    } else if (preference === "dot") {
+      if (text.includes(".") && text.includes(",")) {
+        text = text.replaceAll(".", "").replaceAll(",", ".");
+      } else if (text.includes(",")) {
+        text = text.replaceAll(",", ".");
+      } else if (/^-?\d{1,3}(\.\d{3})+$/.test(text)) {
+        text = text.replaceAll(".", "");
+      }
+    } else {
+      text = text.replaceAll(",", ".");
+    }
+    const number = Number(text.replace(/[^\d.-]/g, ""));
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function numberInputEditingValue(value) {
+    const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
+    const text = String(amount);
+    return numberFormatPreference() === "comma" ? text : text.replace(".", ",");
+  }
+
   function formatCurrency(value, currency = "USD", decimals) {
     const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
     const fractionDigits = decimals ?? (currency === "IDR" ? 0 : 2);
@@ -99,6 +149,9 @@
 
   window.BOQUtils = {
     formatNumber,
+    formatNumberInput,
+    parseNumberInput,
+    numberInputEditingValue,
     formatCurrency,
     formatPercent,
     debounce,
