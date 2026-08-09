@@ -8,7 +8,8 @@
   const collection = collectionByPage[page];
   if (!collection) return;
 
-  const { list, get, save, remove, nextNumber } = window.BOQStore;
+  const { list, get, save, remove, nextNumber, backfillBoqPartNumbers } =
+    window.BOQStore;
   const { escapeHtml, formatCurrency, formatPercent } = window.BOQUtils;
   const defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -489,10 +490,16 @@
         ...formRecord(form),
         id: form.dataset.recordId || undefined,
       });
+      const updatedExistingBoqs = collection === "products" &&
+        backfillBoqPartNumbers();
       window.BOQModal.close(form.closest(".modal-backdrop"));
       render();
       document.dispatchEvent(new CustomEvent("records:changed"));
-      window.BOQApp.showToast(`${singular(collection)} saved.`);
+      window.BOQApp.showToast(
+        updatedExistingBoqs
+          ? "Product saved. Existing BOQs updated."
+          : `${singular(collection)} saved.`,
+      );
     },
   );
 

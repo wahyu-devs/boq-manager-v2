@@ -758,6 +758,58 @@
     return true;
   }
 
+  function backfillBoqPartNumbers(options = {}) {
+    const partNumbersByName = new Map();
+    list("products").forEach((product) => {
+      const name = String(product.name || "").trim().replace(/\s+/g, " ")
+        .toLowerCase();
+      const partNumber = String(product.sku || "").trim();
+      if (!name || !partNumber) return;
+      if (!partNumbersByName.has(name)) {
+        partNumbersByName.set(name, partNumber);
+      } else if (partNumbersByName.get(name) !== partNumber) {
+        partNumbersByName.set(name, null);
+      }
+    });
+    if (![...partNumbersByName.values()].some(Boolean)) return false;
+
+    const boqs = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (!Array.isArray(boqs)) return false;
+    let changed = false;
+    const updatedBoqs = boqs.map((boq) => {
+      if (!Array.isArray(boq?.items)) return boq;
+      let boqChanged = false;
+      const items = boq.items.map((item) => {
+        if (!item || typeof item !== "object" || String(item.sku || "").trim()) {
+          return item;
+        }
+        const name = String(item.item || "").trim().replace(/\s+/g, " ")
+          .toLowerCase();
+        const partNumber = partNumbersByName.get(name);
+        if (!partNumber) return item;
+        boqChanged = true;
+        changed = true;
+        return { ...item, sku: partNumber };
+      });
+      return boqChanged ? { ...boq, items } : boq;
+    });
+    if (!changed) return false;
+
+    localStorage.setItem(storageKey("boqs"), JSON.stringify(updatedBoqs));
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...read("meta", {}),
+      schemaVersion: 4,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
   function removeProjectCollection() {
     const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return;
@@ -805,6 +857,7 @@
     saveLocalPreference,
     migrateExistingBoqs,
     migrateLegacyPartNumbers,
+    backfillBoqPartNumbers,
     exportState,
     applyState,
     convertLegacySnapshot,

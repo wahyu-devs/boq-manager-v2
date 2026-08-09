@@ -312,7 +312,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "boq-manager-v2:migration-user:boqs",
     JSON.stringify([{
       ...migratedBoq,
-      items: [{ id: "legacy-item", sku: "SKU-001", item: "Legacy Item" }],
+      items: [{
+        id: "legacy-item",
+        sku: "SKU-001",
+        item: "Imported Product",
+      }],
     }]),
   );
   equal(
@@ -338,6 +342,45 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     store.migrateLegacyPartNumbers({ silent: true }),
     false,
     "part number migration only runs once",
+  );
+  const boqBeforeBackfill = store.list("boqs")[0];
+  store.save("boqs", {
+    ...boqBeforeBackfill,
+    items: [
+      ...boqBeforeBackfill.items,
+      {
+        id: "custom-part-number-item",
+        sku: "CUSTOM-001",
+        item: "Imported Product",
+      },
+    ],
+  });
+  const beforeBackfillUpdatedAt = store.list("boqs")[0].updatedAt;
+  store.save("products", { ...migratedProducts[0], sku: "PN-100" });
+  equal(
+    store.backfillBoqPartNumbers({ silent: true }),
+    true,
+    "product part number backfilled to existing BOQ",
+  );
+  equal(
+    store.list("boqs")[0].items[0].sku,
+    "PN-100",
+    "existing BOQ receives product part number",
+  );
+  equal(
+    store.list("boqs")[0].items[1].sku,
+    "CUSTOM-001",
+    "existing BOQ part number is not overwritten",
+  );
+  equal(
+    store.list("boqs")[0].updatedAt,
+    beforeBackfillUpdatedAt,
+    "part number backfill preserves BOQ update timestamp",
+  );
+  equal(
+    store.backfillBoqPartNumbers({ silent: true }),
+    false,
+    "part number backfill is idempotent",
   );
   const updatedBoq = store.save("boqs", {
     ...migratedBoq,
