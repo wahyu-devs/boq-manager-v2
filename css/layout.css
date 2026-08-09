@@ -250,7 +250,7 @@
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
   grid-template-areas:
     "metrics attention"
-    "recent recent";
+    "recent .";
   align-items: start;
 }
 
