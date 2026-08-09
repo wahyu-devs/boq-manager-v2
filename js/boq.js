@@ -5,7 +5,12 @@
   const calculations = window.BOQCalculations;
   const { calculateItem, calculateSummary, calculateCategorySummary } =
     calculations;
-  const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
+  const {
+    formatCurrency,
+    formatPercent,
+    escapeHtml,
+    reorderItemsWithinCategory,
+  } = window.BOQUtils;
   const store = window.BOQStore;
   const settings = store.getSettings();
   const editorPreferences = store.getLocalPreference("boq-editor", {});
@@ -22,6 +27,8 @@
     ? editorPreferences.showTablePrices
     : settings.showTablePrices !== false;
   let currentView = "all";
+  let reorderMode = false;
+  let activeDrag = null;
 
   const desktopBody = editor.querySelector("[data-items-body]");
   const mobileList = editor.querySelector("[data-mobile-items]");
@@ -183,11 +190,16 @@
     ).join("");
   }
 
+  function itemDragHandle(item) {
+    const itemName = escapeHtml(item.item || "item");
+    return `<button class="icon-button drag-handle" type="button" data-drag-handle data-item-id="${item.id}" draggable="${reorderMode}" aria-label="Drag ${itemName} to reorder. Use arrow keys for keyboard reordering." title="Drag to reorder"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7h.01M15 7h.01M9 12h.01M15 12h.01M9 17h.01M15 17h.01" /></svg></button>`;
+  }
+
   function desktopRow(item, displayIndex) {
     const calc = calculateItem(item);
     const autoSelling = formatCurrency(calc.unitSelling, currentCurrency());
     return `<tr data-item-row data-item-id="${item.id}">
-      <td class="align-right"><span class="subtle number">${displayIndex}</span></td>
+      <td class="align-right item-order-cell">${itemDragHandle(item)}<span class="subtle number item-index">${displayIndex}</span></td>
       <td class="mono subtle">${escapeHtml(item.sku || "")}</td>
       <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
@@ -198,12 +210,12 @@
       <td class="column-margin column-price"><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}" aria-label="Gross margin percentage, row ${displayIndex}"></td>
       <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-field="sellingOverride" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.sellingOverride ?? ""}" placeholder="Auto: ${escapeHtml(autoSelling)}" aria-label="Unit selling price, row ${displayIndex}"></td>
       <td class="calculated-cell column-selling column-price" data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</td>
-      <td><div class="row-actions"><button class="icon-button" type="button" data-item-action="move-up" data-item-id="${item.id}" aria-label="Move ${escapeHtml(item.item)} up">↑</button><button class="icon-button" type="button" data-item-action="move-down" data-item-id="${item.id}" aria-label="Move ${escapeHtml(item.item)} down">↓</button><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(item.item)}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-item-action="duplicate" data-item-id="${item.id}">Duplicate item</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and all totals recalculated.">Delete item</button></div></div></div></td>
+      <td><div class="row-actions"><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(item.item)}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-item-action="duplicate" data-item-id="${item.id}">Duplicate item</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and all totals recalculated.">Delete item</button></div></div></div></td>
     </tr>`;
   }
 
-  function categoryDesktopHeader(category, categoryIndex) {
-    return `<tr class="editor-category-row"><td colspan="12"><div><strong>${escapeHtml(category)}</strong><span class="row-actions"><button class="icon-button" type="button" data-category-action="up" data-category="${escapeHtml(category)}" ${categoryIndex === 0 ? "disabled" : ""} aria-label="Move category up">↑</button><button class="icon-button" type="button" data-category-action="down" data-category="${escapeHtml(category)}" ${categoryIndex === categories().length - 1 ? "disabled" : ""} aria-label="Move category down">↓</button></span></div></td></tr>`;
+  function categoryDesktopHeader(category) {
+    return `<tr class="editor-category-row"><td colspan="12"><div><strong>${escapeHtml(category)}</strong></div></td></tr>`;
   }
 
   function categorySubtotalRow(category) {
@@ -215,7 +227,7 @@
   function mobileCard(item, displayIndex) {
     const calc = calculateItem(item);
     return `<article class="mobile-item-card" data-item-row data-item-id="${item.id}">
-      <div class="mobile-item-head"><div><span class="subtle text-sm">Item ${displayIndex}${item.sku ? ` · ${escapeHtml(item.sku)}` : ""}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
+      <div class="mobile-item-head">${itemDragHandle(item)}<div class="mobile-item-main"><span class="subtle text-sm">Item ${displayIndex}${item.sku ? ` · ${escapeHtml(item.sku)}` : ""}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
       <div class="mobile-item-body">
         <label class="field"><span class="field-label">Category</span><input class="input input-sm" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}"></label>
         <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-item-input data-field="unit" data-item-id="${item.id}">${unitOptions(item.unit)}</select></label>
@@ -231,20 +243,20 @@
   function renderItems() {
     const categoryList = categories();
     let displayIndex = 0;
-    desktopBody.innerHTML = categoryList.map((category, categoryIndex) => {
+    desktopBody.innerHTML = categoryList.map((category) => {
       const categoryItems = items.filter((item) =>
         (item.category || "Uncategorized") === category
       );
-      return categoryDesktopHeader(category, categoryIndex) +
+      return categoryDesktopHeader(category) +
         categoryItems.map((item) => desktopRow(item, ++displayIndex)).join("") +
         categorySubtotalRow(category);
     }).join("");
     displayIndex = 0;
-    mobileList.innerHTML = categoryList.map((category, categoryIndex) => {
+    mobileList.innerHTML = categoryList.map((category) => {
       const categoryItems = items.filter((item) =>
         (item.category || "Uncategorized") === category
       );
-      return `<section class="mobile-category-section"><header><strong>${escapeHtml(category)}</strong><span class="row-actions"><button class="icon-button" type="button" data-category-action="up" data-category="${escapeHtml(category)}" ${categoryIndex === 0 ? "disabled" : ""}>↑</button><button class="icon-button" type="button" data-category-action="down" data-category="${escapeHtml(category)}" ${categoryIndex === categoryList.length - 1 ? "disabled" : ""}>↓</button></span></header>${categoryItems.map((item) => mobileCard(item, ++displayIndex)).join("")}</section>`;
+      return `<section class="mobile-category-section"><header><strong>${escapeHtml(category)}</strong></header>${categoryItems.map((item) => mobileCard(item, ++displayIndex)).join("")}</section>`;
     }).join("");
     editor.querySelector("[data-editor-table]").hidden = items.length === 0;
     editor.querySelector("[data-items-empty]").hidden = items.length > 0;
@@ -373,16 +385,96 @@
       [items[destinationIndex], items[sourceIndex]];
     renderItems();
     markDirty();
+    requestAnimationFrame(() => {
+      const handles = [...editor.querySelectorAll(
+        `[data-drag-handle][data-item-id="${CSS.escape(id)}"]`,
+      )];
+      handles.find((handle) => handle.offsetParent !== null)?.focus();
+    });
   }
 
-  function moveCategory(category, direction) {
-    const index = categories().indexOf(category);
-    const destination = index + direction;
-    if (index < 0 || destination < 0 || destination >= categoryOrder.length) return;
-    [categoryOrder[index], categoryOrder[destination]] =
-      [categoryOrder[destination], categoryOrder[index]];
+  function reorderItem(itemId, targetId, position) {
+    const reordered = reorderItemsWithinCategory(
+      items,
+      itemId,
+      targetId,
+      position,
+    );
+    if (!reordered.changed) return false;
+    items = reordered.items;
     renderItems();
     markDirty();
+    return true;
+  }
+
+  function clearDropIndicators() {
+    editor.querySelectorAll(".is-dragging, .drop-before, .drop-after")
+      .forEach((element) =>
+        element.classList.remove("is-dragging", "drop-before", "drop-after")
+      );
+  }
+
+  function clearDragState() {
+    clearDropIndicators();
+    editor.classList.remove("drag-in-progress");
+    activeDrag = null;
+  }
+
+  function beginDrag(itemId, row, pointerId = null) {
+    clearDragState();
+    activeDrag = {
+      itemId,
+      pointerId,
+      sourceRow: row,
+      targetId: null,
+      position: "before",
+    };
+    row.classList.add("is-dragging");
+    editor.classList.add("drag-in-progress");
+  }
+
+  function updateDropTarget(row, clientY) {
+    if (!activeDrag) return false;
+    editor.querySelectorAll(".drop-before, .drop-after").forEach((element) =>
+      element.classList.remove("drop-before", "drop-after")
+    );
+    activeDrag.targetId = null;
+    if (!row || row === activeDrag.sourceRow) return false;
+    const item = items.find((entry) => entry.id === activeDrag.itemId);
+    const target = items.find((entry) => entry.id === row.dataset.itemId);
+    if (!item || !target || item.category !== target.category) return false;
+    const bounds = row.getBoundingClientRect();
+    const position = clientY < bounds.top + bounds.height / 2
+      ? "before"
+      : "after";
+    row.classList.add(position === "before" ? "drop-before" : "drop-after");
+    activeDrag.targetId = target.id;
+    activeDrag.position = position;
+    return true;
+  }
+
+  function completeDrag() {
+    if (!activeDrag) return false;
+    const { itemId, targetId, position } = activeDrag;
+    clearDragState();
+    return reorderItem(itemId, targetId, position);
+  }
+
+  function autoScrollDuringDrag(clientY) {
+    const threshold = 56;
+    const tableWrap = editor.querySelector("[data-editor-table]");
+    if (tableWrap && !tableWrap.hidden && tableWrap.offsetParent !== null) {
+      const bounds = tableWrap.getBoundingClientRect();
+      if (clientY > bounds.top && clientY < bounds.bottom) {
+        if (clientY < bounds.top + threshold) tableWrap.scrollTop -= 12;
+        if (clientY > bounds.bottom - threshold) tableWrap.scrollTop += 12;
+        return;
+      }
+    }
+    if (clientY < threshold) globalThis.scrollBy(0, -12);
+    if (clientY > globalThis.innerHeight - threshold) {
+      globalThis.scrollBy(0, 12);
+    }
   }
 
   function applyCatalogMatch(item) {
@@ -414,6 +506,20 @@
     ).join("");
   }
 
+  function applyReorderState() {
+    editor.classList.toggle("reorder-mode", reorderMode);
+    const reorderButton = document.querySelector("[data-toggle-reorder]");
+    if (reorderButton) {
+      reorderButton.textContent = reorderMode ? "Reorder on" : "Reorder off";
+      reorderButton.setAttribute("aria-pressed", String(reorderMode));
+    }
+    editor.querySelectorAll("[data-drag-handle]").forEach((handle) => {
+      handle.draggable = reorderMode;
+      handle.tabIndex = reorderMode ? 0 : -1;
+    });
+    if (!reorderMode) clearDragState();
+  }
+
   function applyViewState() {
     editor.dataset.editorViewMode = currentView;
     editor.classList.toggle("prices-hidden", !showTablePrices);
@@ -429,6 +535,7 @@
       priceButton.textContent = showTablePrices ? "Prices shown" : "Prices hidden";
       priceButton.setAttribute("aria-pressed", String(showTablePrices));
     }
+    applyReorderState();
   }
 
   function saveEditorPreferences() {
@@ -533,19 +640,78 @@
     if (action) {
       const id = action.dataset.itemId;
       if (action.dataset.itemAction === "duplicate") duplicateItem(id);
-      if (action.dataset.itemAction === "move-up") moveItem(id, -1);
-      if (action.dataset.itemAction === "move-down") moveItem(id, 1);
-    }
-    const categoryAction = event.target.closest("[data-category-action]");
-    if (categoryAction) {
-      moveCategory(
-        categoryAction.dataset.category,
-        categoryAction.dataset.categoryAction === "up" ? -1 : 1,
-      );
     }
   });
 
+  editor.addEventListener("dragstart", (event) => {
+    const handle = event.target.closest("[data-drag-handle]");
+    if (!handle) return;
+    if (!reorderMode) {
+      event.preventDefault();
+      return;
+    }
+    const row = handle.closest("[data-item-row]");
+    if (!row) return;
+    beginDrag(handle.dataset.itemId, row);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", handle.dataset.itemId);
+    }
+  });
+
+  editor.addEventListener("dragover", (event) => {
+    if (!reorderMode || !activeDrag) return;
+    const row = event.target.closest("[data-item-row]");
+    if (!updateDropTarget(row, event.clientY)) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    autoScrollDuringDrag(event.clientY);
+  });
+
+  editor.addEventListener("drop", (event) => {
+    if (!reorderMode || !activeDrag?.targetId) return;
+    event.preventDefault();
+    completeDrag();
+  });
+
+  editor.addEventListener("dragend", clearDragState);
+
+  editor.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest("[data-drag-handle]");
+    if (!reorderMode || !handle || event.pointerType === "mouse") return;
+    const row = handle.closest("[data-item-row]");
+    if (!row) return;
+    event.preventDefault();
+    handle.setPointerCapture?.(event.pointerId);
+    beginDrag(handle.dataset.itemId, row, event.pointerId);
+  });
+
+  editor.addEventListener("pointermove", (event) => {
+    if (!reorderMode || activeDrag?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    updateDropTarget(target?.closest("[data-item-row]"), event.clientY);
+    autoScrollDuringDrag(event.clientY);
+  });
+
+  editor.addEventListener("pointerup", (event) => {
+    if (activeDrag?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    completeDrag();
+  });
+
+  editor.addEventListener("pointercancel", (event) => {
+    if (activeDrag?.pointerId === event.pointerId) clearDragState();
+  });
+
   editor.addEventListener("keydown", (event) => {
+    const dragHandle = event.target.closest("[data-drag-handle]");
+    if (dragHandle && reorderMode &&
+        ["ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      moveItem(dragHandle.dataset.itemId, event.key === "ArrowUp" ? -1 : 1);
+      return;
+    }
     const input = event.target.closest(".editor-table [data-item-input]");
     if (!input || !["Enter", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
     if ((event.key === "ArrowLeft" || event.key === "ArrowRight") &&
@@ -580,6 +746,10 @@
       showTablePrices = !showTablePrices;
       saveEditorPreferences();
       applyViewState();
+    }
+    if (event.target.closest("[data-toggle-reorder]")) {
+      reorderMode = !reorderMode;
+      applyReorderState();
     }
   });
 

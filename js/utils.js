@@ -57,11 +57,32 @@
       .replaceAll("'", "&#039;");
   }
 
+  function reorderItemsWithinCategory(records, itemId, targetId, position) {
+    const items = Array.isArray(records) ? records.slice() : [];
+    if (!itemId || !targetId || itemId === targetId) {
+      return { items, changed: false };
+    }
+    const item = items.find((entry) => entry.id === itemId);
+    const target = items.find((entry) => entry.id === targetId);
+    if (!item || !target || item.category !== target.category) {
+      return { items, changed: false };
+    }
+    const previousOrder = items.map((entry) => entry.id).join("|");
+    items.splice(items.indexOf(item), 1);
+    const targetIndex = items.indexOf(target);
+    items.splice(targetIndex + (position === "after" ? 1 : 0), 0, item);
+    return {
+      items,
+      changed: items.map((entry) => entry.id).join("|") !== previousOrder,
+    };
+  }
+
   window.BOQUtils = {
     formatNumber,
     formatCurrency,
     formatPercent,
     debounce,
     escapeHtml,
+    reorderItemsWithinCategory,
   };
 })();

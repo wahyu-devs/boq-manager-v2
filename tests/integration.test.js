@@ -196,6 +196,34 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(normalizedLegacyBoq.title, undefined, "legacy title discarded");
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1,234.50", "comma number format");
 
+  const reorderedItems = window.BOQUtils.reorderItemsWithinCategory(
+    [
+      { id: "first", category: "Network" },
+      { id: "second", category: "Network" },
+      { id: "third", category: "Services" },
+    ],
+    "second",
+    "first",
+    "before",
+  );
+  equal(reorderedItems.changed, true, "same-category reorder applied");
+  equal(
+    reorderedItems.items.map((item) => item.id).join(","),
+    "second,first,third",
+    "items reordered around drop target",
+  );
+  const crossCategoryReorder = window.BOQUtils.reorderItemsWithinCategory(
+    reorderedItems.items,
+    "third",
+    "first",
+    "before",
+  );
+  equal(
+    crossCategoryReorder.changed,
+    false,
+    "cross-category drop does not change item category",
+  );
+
   store.saveSettings({ ...store.getSettings(), numberFormat: "dot" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1.234,50", "dot number format");
   equal(window.BOQUtils.formatPercent(12.5), "12,5%", "dot percentage format");
