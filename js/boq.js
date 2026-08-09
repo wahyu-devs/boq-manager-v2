@@ -182,7 +182,8 @@
     const autoSelling = formatCurrency(calc.unitSelling, currentCurrency());
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right"><span class="subtle number">${displayIndex}</span></td>
-      <td><div class="editor-item-cell"><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"><span class="cell-secondary mono">${escapeHtml(item.sku || "CUSTOM")}</span></div></td>
+      <td class="mono subtle">${escapeHtml(item.sku || "CUSTOM")}</td>
+      <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
       <td><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
@@ -196,13 +197,13 @@
   }
 
   function categoryDesktopHeader(category, categoryIndex) {
-    return `<tr class="editor-category-row"><td colspan="11"><div><strong>${escapeHtml(category)}</strong><span class="row-actions"><button class="icon-button" type="button" data-category-action="up" data-category="${escapeHtml(category)}" ${categoryIndex === 0 ? "disabled" : ""} aria-label="Move category up">↑</button><button class="icon-button" type="button" data-category-action="down" data-category="${escapeHtml(category)}" ${categoryIndex === categories().length - 1 ? "disabled" : ""} aria-label="Move category down">↓</button></span></div></td></tr>`;
+    return `<tr class="editor-category-row"><td colspan="12"><div><strong>${escapeHtml(category)}</strong><span class="row-actions"><button class="icon-button" type="button" data-category-action="up" data-category="${escapeHtml(category)}" ${categoryIndex === 0 ? "disabled" : ""} aria-label="Move category up">↑</button><button class="icon-button" type="button" data-category-action="down" data-category="${escapeHtml(category)}" ${categoryIndex === categories().length - 1 ? "disabled" : ""} aria-label="Move category down">↓</button></span></div></td></tr>`;
   }
 
   function categorySubtotalRow(category) {
     if (!showCategorySubtotals) return "";
     const summary = calculateCategorySummary(items, category, { commission: 0 });
-    return `<tr class="category-subtotal-row" data-category-subtotal="${escapeHtml(category)}"><td colspan="6">${escapeHtml(category)} subtotal</td><td class="align-right column-cogs column-price" data-category-total="cogs">${formatCurrency(summary.totalCogs, currentCurrency())}</td><td class="column-margin column-price"></td><td class="column-selling column-price"></td><td class="align-right column-selling column-price" data-category-total="selling">${formatCurrency(summary.totalSelling, currentCurrency())}</td><td></td></tr>`;
+    return `<tr class="category-subtotal-row" data-category-subtotal="${escapeHtml(category)}"><td colspan="7">${escapeHtml(category)} subtotal</td><td class="align-right column-cogs column-price" data-category-total="cogs">${formatCurrency(summary.totalCogs, currentCurrency())}</td><td class="column-margin column-price"></td><td class="column-selling column-price"></td><td class="align-right column-selling column-price" data-category-total="selling">${formatCurrency(summary.totalSelling, currentCurrency())}</td><td></td></tr>`;
   }
 
   function mobileCard(item, displayIndex) {

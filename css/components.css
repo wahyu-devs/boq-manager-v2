@@ -604,7 +604,7 @@
 }
 
 .editor-table {
-  min-width: 1280px;
+  min-width: 1360px;
 }
 
 .editor-table thead {
@@ -631,22 +631,6 @@
 .editor-table .icon-button {
   width: 28px;
   height: 28px;
-}
-
-.editor-item-cell {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.editor-item-cell .editor-input {
-  min-width: 0;
-  flex: 1;
-}
-
-.editor-item-cell .cell-secondary {
-  margin-top: 0;
-  flex: 0 0 auto;
 }
 
 .editor-input {
@@ -1289,6 +1273,9 @@
 
 .item-col-index {
   width: 36px;
+}
+.item-col-sku {
+  width: 88px;
 }
 .item-col-name {
   width: 300px;
