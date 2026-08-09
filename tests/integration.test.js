@@ -100,6 +100,21 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   );
   equal(store.getSettings().showTablePrices, false, "price visibility preference");
   equal(store.getSettings().showCategorySubtotals, true, "subtotal preference");
+  const preferenceMetaTimestamp = store.getMeta().clientUpdatedAt;
+  store.saveLocalPreference("boq-editor", {
+    showCategorySubtotals: false,
+    showTablePrices: true,
+  });
+  equal(
+    JSON.stringify(store.getLocalPreference("boq-editor")),
+    JSON.stringify({ showCategorySubtotals: false, showTablePrices: true }),
+    "BOQ editor preferences saved locally",
+  );
+  equal(
+    store.getMeta().clientUpdatedAt,
+    preferenceMetaTimestamp,
+    "local preferences do not trigger cloud sync",
+  );
 
   store.saveSettings({ ...store.getSettings(), rounding: "2" });
   const exact = calculations.calculateItem({

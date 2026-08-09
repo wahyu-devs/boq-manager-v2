@@ -651,6 +651,18 @@
     return read("meta", {});
   }
 
+  function getLocalPreference(name, fallback = {}) {
+    return read(`preference-${name}`, fallback);
+  }
+
+  function saveLocalPreference(name, value) {
+    localStorage.setItem(
+      storageKey(`preference-${name}`),
+      JSON.stringify(value),
+    );
+    return value;
+  }
+
   function migrateExistingBoqs(options = {}) {
     const migrationVersion = 1;
     const meta = read("meta", {});
@@ -778,6 +790,8 @@
     setUser,
     getUserId,
     getMeta,
+    getLocalPreference,
+    saveLocalPreference,
     migrateExistingBoqs,
     migrateLegacyPartNumbers,
     exportState,

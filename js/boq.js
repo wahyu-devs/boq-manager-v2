@@ -7,14 +7,20 @@
     calculations;
   const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
   const store = window.BOQStore;
-  let settings = store.getSettings();
+  const settings = store.getSettings();
+  const editorPreferences = store.getLocalPreference("boq-editor", {});
   let currentRecordId = new URLSearchParams(location.search).get("id");
   let items = [];
   let commission = 0;
   let categoryOrder = [];
   let dirty = false;
-  let showCategorySubtotals = settings.showCategorySubtotals !== false;
-  let showTablePrices = settings.showTablePrices !== false;
+  let showCategorySubtotals = typeof editorPreferences.showCategorySubtotals ===
+      "boolean"
+    ? editorPreferences.showCategorySubtotals
+    : settings.showCategorySubtotals !== false;
+  let showTablePrices = typeof editorPreferences.showTablePrices === "boolean"
+    ? editorPreferences.showTablePrices
+    : settings.showTablePrices !== false;
   let currentView = "all";
 
   const desktopBody = editor.querySelector("[data-items-body]");
@@ -426,6 +432,13 @@
     }
   }
 
+  function saveEditorPreferences() {
+    store.saveLocalPreference("boq-editor", {
+      showCategorySubtotals,
+      showTablePrices,
+    });
+  }
+
   function buildPdfPreview() {
     const host = document.querySelector("[data-pdf-preview]");
     const payload = documentPayload();
@@ -562,14 +575,12 @@
     if (event.target.closest("[data-preview-pdf]")) buildPdfPreview();
     if (event.target.closest("[data-toggle-subtotals]")) {
       showCategorySubtotals = !showCategorySubtotals;
-      settings = { ...settings, showCategorySubtotals };
-      store.saveSettings(settings);
+      saveEditorPreferences();
       renderItems();
     }
     if (event.target.closest("[data-toggle-prices]")) {
       showTablePrices = !showTablePrices;
-      settings = { ...settings, showTablePrices };
-      store.saveSettings(settings);
+      saveEditorPreferences();
       applyViewState();
     }
   });
