@@ -80,6 +80,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(store.list("projects").length, 0, "project collection removed");
   equal(boqs.length, 1, "BOQ count");
   equal(products.length, 1, "product count");
+  equal(products[0].sku, "SKU-001", "legacy product SKU prefix");
   equal(boqs[0].projectName, "Office Upgrade", "BOQ project name");
   equal(boqs[0].projectId, undefined, "BOQ project id removed");
   equal(boqs[0].title, undefined, "BOQ title removed");
@@ -276,6 +277,32 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     store.migrateExistingBoqs({ silent: true }),
     false,
     "existing BOQ migration only runs once",
+  );
+  localStorage.setItem(
+    "boq-manager-v2:migration-user:products",
+    JSON.stringify([{
+      id: "imported-product",
+      sku: "ITEM-001",
+      name: "Imported Product",
+      source: "imported",
+    }, {
+      id: "manual-product",
+      sku: "ITEM-002",
+      name: "Manual Product",
+    }]),
+  );
+  equal(
+    store.migrateImportedProductSkus({ silent: true }),
+    true,
+    "imported product SKU migration applied",
+  );
+  const migratedProducts = store.list("products");
+  equal(migratedProducts[0].sku, "SKU-001", "imported SKU prefix updated");
+  equal(migratedProducts[1].sku, "ITEM-002", "manual SKU left unchanged");
+  equal(
+    store.migrateImportedProductSkus({ silent: true }),
+    false,
+    "imported SKU migration is idempotent",
   );
   const updatedBoq = store.save("boqs", {
     ...migratedBoq,

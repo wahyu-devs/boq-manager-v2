@@ -460,7 +460,7 @@
           .toISOString();
         return {
           id: stableId("product", item.name),
-          sku: `ITEM-${String(index + 1).padStart(3, "0")}`,
+          sku: `SKU-${String(index + 1).padStart(3, "0")}`,
           name: String(item.name),
           category: String(item.category || "Uncategorized"),
           description: String(item.description || ""),
@@ -692,6 +692,34 @@
     return true;
   }
 
+  function migrateImportedProductSkus(options = {}) {
+    const raw = parseJson(localStorage.getItem(storageKey("products")), []);
+    if (!Array.isArray(raw)) return false;
+    let changed = false;
+    const migrated = raw.map((product) => {
+      const match = product?.source === "imported"
+        ? /^ITEM-(\d+)$/i.exec(String(product.sku || "").trim())
+        : null;
+      if (!match) return product;
+      changed = true;
+      return { ...product, sku: `SKU-${match[1]}` };
+    });
+    if (!changed) return false;
+    localStorage.setItem(storageKey("products"), JSON.stringify(migrated));
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...read("meta", {}),
+      schemaVersion: 4,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
   function removeProjectCollection() {
     const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return;
@@ -736,6 +764,7 @@
     getUserId,
     getMeta,
     migrateExistingBoqs,
+    migrateImportedProductSkus,
     exportState,
     applyState,
     convertLegacySnapshot,

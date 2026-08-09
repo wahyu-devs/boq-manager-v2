@@ -166,12 +166,15 @@
       });
       changed = true;
     }
-    const migrated = store.migrateExistingBoqs({
+    const migratedBoqs = store.migrateExistingBoqs({
       silent: true,
       cloudCreatedAt: cloud?.created_at,
       cloudUpdatedAt: cloud?.updated_at,
     });
-    if (migrated) {
+    const migratedProductSkus = store.migrateImportedProductSkus({
+      silent: true,
+    });
+    if (migratedBoqs || migratedProductSkus) {
       changed = true;
       shouldPush = true;
     }
