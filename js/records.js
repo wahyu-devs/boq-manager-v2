@@ -150,7 +150,7 @@
       }" data-cogs="${Number(record.defaultCogs || 0)}" data-margin="${
         Number(record.defaultMargin || 0)
       }"><td class="mono">${
-        escapeHtml(record.sku || "—")
+        escapeHtml(record.sku || "")
       }</td><td><span class="cell-primary">${
         escapeHtml(record.name || "Untitled product")
       }</span><span class="cell-secondary">${
@@ -175,9 +175,7 @@
           escapeHtml((record.status || "Active").toLowerCase())
         }"><div class="record-card-header"><div><strong>${
           escapeHtml(record.name || "Untitled product")
-        }</strong><div class="muted text-sm mono">${
-          escapeHtml(record.sku || "—")
-        }</div></div>${
+        }</strong>${record.sku ? `<div class="muted text-sm mono">${escapeHtml(record.sku)}</div>` : ""}</div>${
           statusHtml(record.status || "Active")
         }</div><dl class="record-card-grid"><div><dt>Category</dt><dd>${
           escapeHtml(record.category || "—")

@@ -182,7 +182,7 @@
     const autoSelling = formatCurrency(calc.unitSelling, currentCurrency());
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right"><span class="subtle number">${displayIndex}</span></td>
-      <td class="mono subtle">${escapeHtml(item.sku || "—")}</td>
+      <td class="mono subtle">${escapeHtml(item.sku || "")}</td>
       <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
