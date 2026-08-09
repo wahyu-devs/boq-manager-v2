@@ -604,7 +604,7 @@
 }
 
 .editor-table {
-  min-width: 1420px;
+  min-width: 1280px;
 }
 
 .editor-table thead {
@@ -614,12 +614,18 @@
 }
 
 .editor-table td {
-  height: 62px;
-  padding: 7px 6px;
+  height: 50px;
+  padding: 4px 6px;
 }
 
 .editor-table th {
   padding: 0 7px;
+}
+
+.editor-table .editor-input {
+  height: 30px;
+  padding-right: 6px;
+  padding-left: 6px;
 }
 
 .editor-input {
@@ -1264,10 +1270,7 @@
   width: 36px;
 }
 .item-col-name {
-  width: 170px;
-}
-.item-col-description {
-  width: 230px;
+  width: 300px;
 }
 .item-col-category {
   width: 130px;

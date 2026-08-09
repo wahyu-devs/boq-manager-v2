@@ -183,7 +183,6 @@
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right"><span class="subtle number">${displayIndex}</span></td>
       <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"><span class="cell-secondary mono">${escapeHtml(item.sku || "CUSTOM")}</span></td>
-      <td class="column-description"><input class="editor-input" data-item-input data-field="description" data-item-id="${item.id}" value="${escapeHtml(item.description)}" aria-label="Description, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
       <td><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
@@ -197,13 +196,13 @@
   }
 
   function categoryDesktopHeader(category, categoryIndex) {
-    return `<tr class="editor-category-row"><td colspan="12"><div><strong>${escapeHtml(category)}</strong><span class="row-actions"><button class="icon-button" type="button" data-category-action="up" data-category="${escapeHtml(category)}" ${categoryIndex === 0 ? "disabled" : ""} aria-label="Move category up">↑</button><button class="icon-button" type="button" data-category-action="down" data-category="${escapeHtml(category)}" ${categoryIndex === categories().length - 1 ? "disabled" : ""} aria-label="Move category down">↓</button></span></div></td></tr>`;
+    return `<tr class="editor-category-row"><td colspan="11"><div><strong>${escapeHtml(category)}</strong><span class="row-actions"><button class="icon-button" type="button" data-category-action="up" data-category="${escapeHtml(category)}" ${categoryIndex === 0 ? "disabled" : ""} aria-label="Move category up">↑</button><button class="icon-button" type="button" data-category-action="down" data-category="${escapeHtml(category)}" ${categoryIndex === categories().length - 1 ? "disabled" : ""} aria-label="Move category down">↓</button></span></div></td></tr>`;
   }
 
   function categorySubtotalRow(category) {
     if (!showCategorySubtotals) return "";
     const summary = calculateCategorySummary(items, category, { commission: 0 });
-    return `<tr class="category-subtotal-row" data-category-subtotal="${escapeHtml(category)}"><td colspan="7">${escapeHtml(category)} subtotal</td><td class="align-right column-cogs column-price" data-category-total="cogs">${formatCurrency(summary.totalCogs, currentCurrency())}</td><td class="column-margin column-price"></td><td class="column-selling column-price"></td><td class="align-right column-selling column-price" data-category-total="selling">${formatCurrency(summary.totalSelling, currentCurrency())}</td><td></td></tr>`;
+    return `<tr class="category-subtotal-row" data-category-subtotal="${escapeHtml(category)}"><td colspan="6">${escapeHtml(category)} subtotal</td><td class="align-right column-cogs column-price" data-category-total="cogs">${formatCurrency(summary.totalCogs, currentCurrency())}</td><td class="column-margin column-price"></td><td class="column-selling column-price"></td><td class="align-right column-selling column-price" data-category-total="selling">${formatCurrency(summary.totalSelling, currentCurrency())}</td><td></td></tr>`;
   }
 
   function mobileCard(item, displayIndex) {
@@ -211,7 +210,6 @@
     return `<article class="mobile-item-card" data-item-row data-item-id="${item.id}">
       <div class="mobile-item-head"><div><span class="subtle text-sm">Item ${displayIndex} · ${escapeHtml(item.sku || "Custom")}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
       <div class="mobile-item-body">
-        <label class="field"><span class="field-label">Description</span><input class="input input-sm" data-item-input data-field="description" data-item-id="${item.id}" value="${escapeHtml(item.description)}"></label>
         <label class="field"><span class="field-label">Category</span><input class="input input-sm" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}"></label>
         <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-item-input data-field="unit" data-item-id="${item.id}">${unitOptions(item.unit)}</select></label>
         <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}"></label>
