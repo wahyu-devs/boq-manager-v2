@@ -9,7 +9,6 @@
     defaultValidity: 30,
     numberingFormat: "BOQ-{YYYY}-{NNN}",
     rounding: "2",
-    showDescriptions: true,
     showSku: false,
     showUnitPricing: true,
     taxEnabled: false,

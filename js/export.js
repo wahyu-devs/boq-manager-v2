@@ -221,55 +221,218 @@
     window.BOQApp.showToast("Excel workbook downloaded.");
   }
 
+  function pdfImageType(source) {
+    return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
+  }
+
+  function addPdfLogo(doc, source, x, y) {
+    if (!source) return null;
+    try {
+      const properties = doc.getImageProperties(source);
+      const scale = Math.min(
+        34 / properties.width,
+        16 / properties.height,
+      );
+      const width = properties.width * scale;
+      const height = properties.height * scale;
+      doc.addImage(source, pdfImageType(source), x, y, width, height);
+      return { width, height };
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function pdfTextLines(doc, values, width) {
+    return values.filter(Boolean).flatMap((value) =>
+      doc.splitTextToSize(String(value), width)
+    );
+  }
+
   function pdfHeader(doc, data, label) {
     doc.setProperties({
-      title: `${data.document.number} — ${data.document.projectName || "Bill of Quantities"}`,
+      title: `${data.document.number} - ${data.document.projectName || "Bill of Quantities"}`,
       subject: label,
       author: data.settings.companyName || "BOQ Manager",
       creator: "BOQ Manager",
     });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const logo = addPdfLogo(doc, data.settings.companyLogo, 14, 10);
+    const companyX = logo ? 14 + logo.width + 6 : 14;
+    const companyWidth = Math.max(62, (pageWidth / 2) - companyX - 6);
+    const companyNameLines = pdfTextLines(
+      doc,
+      [data.settings.companyName || "Company information not configured"],
+      companyWidth,
+    );
     doc.setTextColor(36, 50, 45);
-    doc.setFontSize(15);
-    doc.text(data.settings.companyName || "BOQ Manager", 14, 14);
-    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(companyNameLines, companyX, 13);
+    const companyNameBottom = 13 + Math.max(0, companyNameLines.length - 1) *
+      4.5;
+    const companyDetails = pdfTextLines(doc, [
+      data.settings.registrationNumber
+        ? `Registration no.: ${data.settings.registrationNumber}`
+        : "",
+      data.settings.address,
+      [data.settings.email, data.settings.phone].filter(Boolean).join(" | "),
+    ], companyWidth);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
     doc.setTextColor(90, 101, 96);
-    doc.text(`${label} · ${data.document.number || "BOQ"}`, 14, 21);
-    doc.text(`Customer: ${data.document.customerName || "—"}`, 14, 27);
-    doc.text(`Project: ${data.document.projectName || "—"}`, 105, 27);
-    doc.text(`Date: ${data.document.date || "—"}`, 14, 33);
-    doc.text(`Valid until: ${data.document.validUntil || "—"}`, 105, 33);
+    const companyDetailsY = companyNameBottom + 4.5;
+    if (companyDetails.length) {
+      doc.text(companyDetails, companyX, companyDetailsY);
+    }
+    const companyBottom = Math.max(
+      logo ? 10 + logo.height : 13,
+      companyDetails.length
+        ? companyDetailsY + (companyDetails.length - 1) * 3.5
+        : companyNameBottom,
+    );
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(36, 50, 45);
+    doc.text(label, pageWidth - 14, 13, { align: "right" });
+    doc.setFontSize(9);
+    doc.text(data.document.number || "BOQ", pageWidth - 14, 19, {
+      align: "right",
+    });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(90, 101, 96);
+    doc.text(`Date: ${data.document.date || "-"}`, pageWidth - 14, 25, {
+      align: "right",
+    });
+    doc.text(
+      `Valid until: ${data.document.validUntil || "-"}`,
+      pageWidth - 14,
+      29,
+      { align: "right" },
+    );
+
+    const dividerY = Math.max(35, companyBottom + 5);
+    doc.setDrawColor(49, 93, 80);
+    doc.setLineWidth(0.5);
+    doc.line(14, dividerY, pageWidth - 14, dividerY);
+    const partyLabelY = dividerY + 7;
+    const partyValueY = partyLabelY + 5;
+    const partyWidth = (pageWidth - 42) / 2;
+    const customerLines = pdfTextLines(
+      doc,
+      [data.document.customerName || "-"],
+      partyWidth,
+    );
+    const projectLines = pdfTextLines(
+      doc,
+      [data.document.projectName || "-"],
+      partyWidth,
+    );
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(90, 101, 96);
+    doc.text("PREPARED FOR", 14, partyLabelY);
+    doc.text("PROJECT", pageWidth / 2 + 7, partyLabelY);
+    doc.setFontSize(9);
+    doc.setTextColor(36, 50, 45);
+    doc.text(customerLines, 14, partyValueY);
+    doc.text(projectLines, pageWidth / 2 + 7, partyValueY);
+    doc.setFont("helvetica", "normal");
+    return partyValueY + Math.max(customerLines.length, projectLines.length) *
+      4 + 4;
   }
 
-  function groupedPdfRows(data, mode) {
+  function pdfColumns(data, mode) {
+    const columns = [{ key: "index", label: "No", align: "center" }];
+    if (data.settings.showSku === true) {
+      columns.push({ key: "sku", label: "Part Number" });
+    }
+    columns.push(
+      { key: "item", label: "Item" },
+      { key: "qty", label: "Qty", align: "right" },
+      { key: "unit", label: "Unit", align: "center" },
+    );
+    if (mode === "cogs") {
+      columns.push(
+        { key: "unitCogs", label: "Unit COGS", align: "right" },
+        { key: "totalCogs", label: "Total COGS", align: "right" },
+        { key: "margin", label: "Margin", align: "right" },
+      );
+    } else {
+      if (data.settings.showUnitPricing !== false) {
+        columns.push({
+          key: "unitSelling",
+          label: "Unit Price",
+          align: "right",
+        });
+      }
+      columns.push({ key: "totalSelling", label: "Total", align: "right" });
+    }
+    return columns;
+  }
+
+  function groupedPdfRows(data, mode, columns) {
     const rows = [];
     let index = 0;
     const decimals = data.document.currency === "IDR" ? 0 : 2;
     data.categories.forEach((category) => {
-      const columnCount = mode === "cogs" ? 7 : 6;
       rows.push([{
         content: category,
-        colSpan: columnCount,
+        colSpan: columns.length,
         styles: { fillColor: [232, 239, 236], fontStyle: "bold" },
       }]);
       data.items.filter((item) => item.category === category).forEach((item) => {
         const calc = calculateItem(item);
-        if (mode === "cogs") {
-          rows.push([
-            ++index, item.item, item.qty, item.unit,
-            formatNumber(item.unitCogs || 0, decimals),
-            formatNumber(calc.totalCogs, decimals),
-            formatPercent(item.margin || 0),
-          ]);
-        } else {
-          rows.push([
-            ++index, item.item, item.qty, item.unit,
-            formatNumber(calc.unitSelling, decimals),
-            formatNumber(calc.totalSelling, decimals),
-          ]);
-        }
+        const values = {
+          index: ++index,
+          sku: item.sku || "",
+          item: item.item,
+          qty: item.qty,
+          unit: item.unit,
+          unitCogs: formatNumber(item.unitCogs || 0, decimals),
+          totalCogs: formatNumber(calc.totalCogs, decimals),
+          margin: formatPercent(item.margin || 0),
+          unitSelling: formatNumber(calc.unitSelling, decimals),
+          totalSelling: formatNumber(calc.totalSelling, decimals),
+        };
+        rows.push(columns.map((column) => values[column.key]));
       });
     });
     return rows;
+  }
+
+  function pdfFooterLines(doc, settings) {
+    const footerText = String(settings.footerText || "").trim();
+    if (!footerText) return [];
+    return doc.splitTextToSize(
+      footerText,
+      doc.internal.pageSize.getWidth() - 36,
+    );
+  }
+
+  function pdfFooterReserve(doc, settings) {
+    const lines = pdfFooterLines(doc, settings);
+    return lines.length ? 13 + lines.length * 3.4 : 10;
+  }
+
+  function addPdfFooters(doc, settings) {
+    const lines = pdfFooterLines(doc, settings);
+    if (!lines.length) return;
+    const pageCount = doc.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const firstLineY = pageHeight - 7 - Math.max(0, lines.length - 1) * 3.4;
+      doc.setDrawColor(207, 214, 211);
+      doc.setLineWidth(0.2);
+      doc.line(14, firstLineY - 5, pageWidth - 14, firstLineY - 5);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(105, 116, 111);
+      doc.text(lines, pageWidth / 2, firstLineY, { align: "center" });
+    }
   }
 
   function exportPdf() {
@@ -289,11 +452,12 @@
       : mode === "summary"
       ? "BOQ Calculation"
       : "Bill of Quantities";
-    pdfHeader(doc, data, label);
+    const contentStartY = pdfHeader(doc, data, label);
+    const footerReserve = pdfFooterReserve(doc, data.settings);
     if (mode === "summary") {
       const summary = calculateSummary(data.items, { commission: data.document.commission });
       doc.autoTable({
-        startY: 40,
+        startY: contentStartY,
         head: [["Total COGS", "Total Selling", "Commission", "Gross Profit", "Gross Margin"]],
         body: [[
           formatCurrency(summary.totalCogs, data.document.currency),
@@ -304,27 +468,30 @@
         ]],
         theme: "grid",
         headStyles: { fillColor: [49, 93, 80] },
+        margin: { bottom: footerReserve },
       });
     } else {
-      const head = mode === "cogs"
-        ? [["No", "Item", "Qty", "Unit", "Unit COGS", "Total COGS", "Margin"]]
-        : [["No", "Item", "Qty", "Unit", "Unit Price", "Total"]];
+      const columns = pdfColumns(data, mode);
+      const columnStyles = Object.fromEntries(columns.map((column, index) => [
+        index,
+        column.align ? { halign: column.align } : {},
+      ]));
       doc.autoTable({
-        startY: 40,
-        head,
-        body: groupedPdfRows(data, mode),
+        startY: contentStartY,
+        head: [columns.map((column) => column.label)],
+        body: groupedPdfRows(data, mode, columns),
         theme: "grid",
         headStyles: { fillColor: [49, 93, 80], halign: "center" },
         styles: { fontSize: 8, cellPadding: 2.3 },
-        columnStyles: mode === "cogs"
-          ? { 4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" } }
-          : { 4: { halign: "right" }, 5: { halign: "right" } },
+        columnStyles,
+        margin: { bottom: footerReserve },
       });
       const total = mode === "cogs"
         ? data.document.totalCogs
         : data.document.totalSelling;
       let y = doc.lastAutoTable.finalY + 9;
-      if (y > 190) {
+      const contentBottom = doc.internal.pageSize.getHeight() - footerReserve;
+      if (y > contentBottom - 8) {
         doc.addPage();
         y = 18;
       }
@@ -338,20 +505,19 @@
       );
       if (data.document.notes) {
         let notesY = y + 10;
-        if (notesY > 190) {
+        const noteLines = doc.splitTextToSize(data.document.notes, 250);
+        const notesHeight = 5 + noteLines.length * 3.5;
+        if (notesY + notesHeight > contentBottom) {
           doc.addPage();
           notesY = 18;
         }
         doc.setFontSize(8);
         doc.setTextColor(90, 101, 96);
         doc.text("Terms / Notes", 14, notesY);
-        doc.text(
-          doc.splitTextToSize(data.document.notes, 250),
-          14,
-          notesY + 5,
-        );
+        doc.text(noteLines, 14, notesY + 5);
       }
     }
+    addPdfFooters(doc, data.settings);
     const suffix = mode === "selling" ? "" : ` - ${label}`;
     doc.save(`${safeFilename(data.document.number)}${suffix}.pdf`);
     window.BOQApp.showToast("PDF downloaded.");
