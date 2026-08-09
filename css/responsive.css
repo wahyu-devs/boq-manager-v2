@@ -77,6 +77,13 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-grid {
+    grid-template-areas:
+      "metrics"
+      "recent"
+      "attention";
+  }
+
   .editor-summary {
     position: static;
     grid-row: 1;

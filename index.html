@@ -49,49 +49,58 @@
             </div>
           </header>
 
-          <section
-            class="panel dashboard-metrics"
-            aria-label="Workspace records"
-          >
-            <div class="record-metric-overview">
-              <a class="record-metric" href="boqs.html">
-                <div class="record-metric-label">Total BOQs</div>
-                <div class="record-metric-value" data-metric="boqCount">
-                  0
-                </div>
-                <div class="record-metric-detail" data-metric-detail="boqCount">
-                  No documents yet
-                </div>
-              </a>
-              <a class="record-metric" href="products.html">
-                <div class="record-metric-label">Products</div>
-                <div
-                  class="record-metric-value"
-                  data-metric="productCount"
-                >
-                  0
-                </div>
-                <div class="record-metric-detail" data-metric-detail="productCount">
-                  Catalog is empty
-                </div>
-              </a>
-              <a class="record-metric" href="customers.html">
-                <div class="record-metric-label">Customers</div>
-                <div
-                  class="record-metric-value"
-                  data-metric="customerCount"
-                >
-                  0
-                </div>
-                <div class="record-metric-detail" data-metric-detail="customerCount">
-                  No customer records
-                </div>
-              </a>
-            </div>
-          </section>
-
           <div class="content-grid dashboard-grid">
-            <div class="stack-lg">
+            <section
+              class="panel dashboard-metrics"
+              aria-label="Workspace records"
+            >
+              <div class="record-metric-overview">
+                <a class="record-metric" href="boqs.html">
+                  <div class="record-metric-label">Total BOQs</div>
+                  <div class="record-metric-value" data-metric="boqCount">
+                    0
+                  </div>
+                  <div
+                    class="record-metric-detail"
+                    data-metric-detail="boqCount"
+                  >
+                    No documents yet
+                  </div>
+                </a>
+                <a class="record-metric" href="products.html">
+                  <div class="record-metric-label">Products</div>
+                  <div
+                    class="record-metric-value"
+                    data-metric="productCount"
+                  >
+                    0
+                  </div>
+                  <div
+                    class="record-metric-detail"
+                    data-metric-detail="productCount"
+                  >
+                    Catalog is empty
+                  </div>
+                </a>
+                <a class="record-metric" href="customers.html">
+                  <div class="record-metric-label">Customers</div>
+                  <div
+                    class="record-metric-value"
+                    data-metric="customerCount"
+                  >
+                    0
+                  </div>
+                  <div
+                    class="record-metric-detail"
+                    data-metric-detail="customerCount"
+                  >
+                    No customer records
+                  </div>
+                </a>
+              </div>
+            </section>
+
+            <div class="stack-lg dashboard-recent">
               <section class="panel" aria-labelledby="recent-boqs-heading">
                 <div class="panel-header">
                   <div>
@@ -128,7 +137,10 @@
               </section>
             </div>
 
-            <aside class="stack-lg" aria-label="Operational details">
+            <aside
+              class="stack-lg dashboard-attention"
+              aria-label="Operational details"
+            >
               <section class="panel" aria-labelledby="attention-heading">
                 <div class="panel-header">
                   <div>

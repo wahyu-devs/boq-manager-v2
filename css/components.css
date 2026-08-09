@@ -451,10 +451,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.dashboard-metrics {
-  margin-bottom: 20px;
-}
-
 .record-metric {
   display: block;
   min-height: 126px;
