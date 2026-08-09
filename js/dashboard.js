@@ -37,8 +37,6 @@
 
   const metrics = {
     boqCount: String(boqs.length),
-    draftCount: String(draftBoqs.length),
-    sentCount: String(sentBoqs.length),
     productCount: String(products.length),
     customerCount: String(customers.length),
   };
@@ -51,16 +49,6 @@
     boqCount: boqs.length
       ? `${plural(draftBoqs.length, "draft")} · ${plural(sentBoqs.length, "sent")}`
       : "No documents yet",
-    draftCount: staleDrafts.length
-      ? `${plural(staleDrafts.length, "draft")} older than 14 days`
-      : draftBoqs.length
-      ? "All drafts recently updated"
-      : "No work in progress",
-    sentCount: expiringSoon.length
-      ? `${plural(expiringSoon.length, "BOQ")} ${expiryVerb} within 7 days`
-      : sentBoqs.length
-      ? "No upcoming expiry"
-      : "No issued documents",
     productCount: products.length
       ? `${plural(activeProducts.length, "active product")}`
       : "Catalog is empty",
@@ -130,33 +118,6 @@
     `<li class="insight-item"><span class="insight-icon insight-icon-${item.tone}" aria-hidden="true">!</span><div><a class="insight-title" href="boqs.html">${escapeHtml(item.title)}</a><p>${escapeHtml(item.detail)}</p></div></li>`
   ).join("");
   insightEmpty.hidden = attentionItems.length > 0;
-
-  const dataChecks = [
-    {
-      label: "Customer assignment",
-      detail: "BOQs without a customer",
-      count: boqs.filter((boq) => !boq.customerId && !boq.customerName?.trim())
-        .length,
-      href: "boqs.html",
-    },
-    {
-      label: "Catalog costing",
-      detail: "Products with zero COGS",
-      count: products.filter((product) =>
-        Number(product.defaultCogs || 0) <= 0
-      ).length,
-      href: "products.html",
-    },
-    {
-      label: "Customer contacts",
-      detail: "Customers without email",
-      count: customers.filter((customer) => !customer.email?.trim()).length,
-      href: "customers.html",
-    },
-  ];
-  document.querySelector("[data-data-checks]").innerHTML = dataChecks.map((check) =>
-    `<li><a class="data-check-link" href="${check.href}"><span><strong>${escapeHtml(check.label)}</strong><small>${escapeHtml(check.detail)}</small></span><span class="data-check-count${check.count === 0 ? " is-clear" : ""}">${check.count}</span></a></li>`
-  ).join("");
 
   function startOfDay(value) {
     const date = new Date(value);
