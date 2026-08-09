@@ -81,6 +81,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(boqs.length, 1, "BOQ count");
   equal(products.length, 1, "product count");
   equal(products[0].sku, "SKU-001", "legacy product SKU prefix");
+  equal(store.nextProductSku(), "SKU-002", "next product SKU");
   equal(boqs[0].projectName, "Office Upgrade", "BOQ project name");
   equal(boqs[0].projectId, undefined, "BOQ project id removed");
   equal(boqs[0].title, undefined, "BOQ title removed");

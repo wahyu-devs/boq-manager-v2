@@ -198,6 +198,21 @@
     return `${prefixText}-${year}-${String(sequence).padStart(3, "0")}`;
   }
 
+  function nextProductSku() {
+    const matches = list("products").map((product) =>
+      /^SKU-(\d+)$/i.exec(String(product.sku || "").trim())
+    ).filter(Boolean);
+    const highest = matches.reduce((maximum, match) =>
+      Math.max(maximum, Number(match[1]) || 0), 0);
+    const next = highest + 1;
+    const width = Math.max(
+      3,
+      String(next).length,
+      ...matches.map((match) => match[1].length),
+    );
+    return `SKU-${String(next).padStart(width, "0")}`;
+  }
+
   function getSettings() {
     return read("settings", {});
   }
@@ -755,6 +770,7 @@
     save,
     remove,
     nextNumber,
+    nextProductSku,
     formatDocumentNumber,
     isValidNumberingFormat,
     getSettings,

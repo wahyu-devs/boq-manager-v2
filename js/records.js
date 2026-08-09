@@ -8,7 +8,8 @@
   const collection = collectionByPage[page];
   if (!collection) return;
 
-  const { list, get, save, remove, nextNumber } = window.BOQStore;
+  const { list, get, save, remove, nextNumber, nextProductSku } =
+    window.BOQStore;
   const { escapeHtml, formatCurrency, formatPercent } = window.BOQUtils;
   const defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -291,6 +292,41 @@
     }
   }
 
+  function productOptionValues(field, defaults, currentValue = "") {
+    const seen = new Set();
+    const values = [];
+    const add = (value) => {
+      const text = String(value || "").trim();
+      const key = text.toLowerCase();
+      if (!text || seen.has(key)) return;
+      seen.add(key);
+      values.push(text);
+    };
+    defaults.forEach(add);
+    list("products").map((product) => product[field]).filter(Boolean)
+      .sort((a, b) => String(a).localeCompare(String(b))).forEach(add);
+    add(currentValue);
+    return values;
+  }
+
+  function updateProductFormOptions(form, record) {
+    if (collection !== "products") return;
+    const optionSets = {
+      category: ["Network", "Cabling", "Power", "Services", "Other"],
+      unit: ["Each", "Lot", "Meter", "Hour", "Day", "Month"],
+    };
+    Object.entries(optionSets).forEach(([field, defaults]) => {
+      const control = form.elements.namedItem(field);
+      if (!(control instanceof HTMLSelectElement)) return;
+      const selected = String(record?.[field] || control.value || defaults[0]);
+      const values = productOptionValues(field, defaults, selected);
+      control.innerHTML = values.map((value) =>
+        `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`
+      ).join("");
+      control.value = selected;
+    });
+  }
+
   function populateForm(record) {
     const form = document.querySelector("[data-record-form]");
     if (!form) return;
@@ -300,10 +336,12 @@
       "false",
     );
     form.dataset.recordId = record?.id || "";
+    updateProductFormOptions(form, record);
     document.querySelector("[data-record-form-title]").textContent = record
       ? `Edit ${singular(collection)}`
       : `Add ${singular(collection)}`;
     if (!record) {
+      if (collection === "products") form.elements.sku.value = nextProductSku();
       updateCalculatedProductPrice();
       return;
     }
