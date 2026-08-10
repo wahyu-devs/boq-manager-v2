@@ -16,7 +16,7 @@
     reorderValues,
   } = window.BOQUtils;
   const store = window.BOQStore;
-  const settings = store.getSettings();
+  let settings = store.getSettings();
   const editorPreferences = store.getLocalPreference("boq-editor", {});
   let currentRecordId = new URLSearchParams(location.search).get("id");
   let items = [];
@@ -148,6 +148,10 @@
         "All changes saved";
     } else {
       currentRecordId = null;
+      items = [];
+      commission = 0;
+      categoryOrder = [];
+      if (commissionInput) commissionInput.value = "";
       const today = new Date();
       const validUntil = new Date(today);
       validUntil.setDate(
@@ -904,6 +908,15 @@
     if (!dirty) return;
     event.preventDefault();
     event.returnValue = "";
+  });
+  document.addEventListener("boq:workspace-updated", () => {
+    settings = store.getSettings();
+    populateRecordOptions();
+    updateCatalogResults();
+    if (dirty) return;
+    currentRecordId = new URLSearchParams(location.search).get("id");
+    initializeDocument();
+    renderItems();
   });
 
   window.BOQEditor = {

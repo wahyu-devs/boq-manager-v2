@@ -2,7 +2,6 @@
   const form = document.querySelector("#settings-form");
   if (!form) return;
   const store = window.BOQStore;
-  const saved = store.getSettings();
   const defaults = {
     defaultCurrency: "USD",
     defaultMargin: 0,
@@ -17,15 +16,22 @@
     numberFormat: "comma",
     compactTables: false,
   };
-  const values = { ...defaults, ...saved };
-  let companyLogo = saved.companyLogo || "";
+  let companyLogo = "";
+  let formDirty = false;
 
-  Object.entries(values).forEach(([name, value]) => {
-    const control = form.elements.namedItem(name);
-    if (!control) return;
-    if (control.type === "checkbox") control.checked = Boolean(value);
-    else control.value = value ?? "";
-  });
+  function applyStoredSettings() {
+    const saved = store.getSettings();
+    const values = { ...defaults, ...saved };
+    companyLogo = saved.companyLogo || "";
+    Object.entries(values).forEach(([name, value]) => {
+      const control = form.elements.namedItem(name);
+      if (!control) return;
+      if (control.type === "checkbox") control.checked = Boolean(value);
+      else control.value = value ?? "";
+    });
+  }
+
+  applyStoredSettings();
 
   function updateTaxControls() {
     const enabled = form.elements.taxEnabled.checked;
@@ -128,6 +134,7 @@
     () => {
       if (!form.checkValidity()) return form.reportValidity();
       store.saveSettings(collectSettings());
+      formDirty = false;
       window.BOQApp.showToast("Settings saved.");
     },
   );
@@ -185,8 +192,7 @@
       button.disabled = true;
       try {
         const changed = await window.BOQAuth?.refresh?.();
-        if (changed) location.reload();
-        else window.BOQApp.showToast("Workspace is already up to date.");
+        if (!changed) window.BOQApp.showToast("Workspace is already up to date.");
       } catch (_error) {
         window.BOQApp.showToast("Cloud refresh failed.", "error");
       } finally {
@@ -194,6 +200,20 @@
       }
     },
   );
+  form.addEventListener("input", () => {
+    formDirty = true;
+  });
+  form.addEventListener("change", () => {
+    formDirty = true;
+  });
+  document.addEventListener("boq:workspace-updated", () => {
+    if (formDirty) return;
+    applyStoredSettings();
+    updateTaxControls();
+    updateLogoPreview();
+    updateSyncStatus();
+    updateNumberingPreview();
+  });
   document.addEventListener("boq:sync-complete", updateSyncStatus);
   updateTaxControls();
   updateLogoPreview();

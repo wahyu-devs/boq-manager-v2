@@ -1,4 +1,4 @@
-(function renderDashboard() {
+(function renderDashboard(event) {
   const { list } = window.BOQStore;
   const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
   const boqs = list("boqs").map((boq) => ({
@@ -90,6 +90,10 @@
         formatPercent(boq.marginPercent || 0)
       }</td><td>${formatDateTime(boq.updatedAt)}</td></tr>`
     ).join("");
+  } else {
+    boqTable.hidden = true;
+    boqEmpty.hidden = false;
+    document.querySelector("[data-recent-boqs]").innerHTML = "";
   }
 
   const attentionItems = [
@@ -148,5 +152,9 @@
       month: "short",
       year: "numeric",
     }).format(new Date(value));
+  }
+
+  if (!event) {
+    document.addEventListener("boq:workspace-updated", renderDashboard);
   }
 })();

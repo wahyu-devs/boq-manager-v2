@@ -4,11 +4,17 @@
   const profileTable = "user_profiles";
   const stateTable = "user_app_state";
   const syncDelay = 3000;
+  const backgroundRefreshInterval = 10000;
+  const workspaceReadyKey = "boq-manager-workspace-ready";
   const store = window.BOQStore;
+  const syncPolicy = window.BOQSyncPolicy;
   let client = null;
   let currentSession = null;
   let syncTimer = null;
   let syncInFlight = false;
+  let refreshInFlight = null;
+  let lastRefreshAt = 0;
+  let signingOut = false;
 
   function renderAuthInterface() {
     document.body.insertAdjacentHTML(
@@ -52,16 +58,26 @@
   }
 
   function authError(message) {
+    const screen = document.querySelector("[data-auth-screen]");
     const loading = document.querySelector("[data-auth-loading]");
     const form = document.querySelector("[data-login-form]");
+    if (screen) screen.hidden = false;
+    document.body.classList.add("auth-pending");
     if (loading) loading.hidden = true;
     if (form) form.hidden = false;
+    const button = form?.querySelector('button[type="submit"]');
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Sign in";
+    }
     const error = document.querySelector("[data-login-error]");
     if (error) error.textContent = message || "Unable to sign in.";
   }
 
   function showLogin() {
     document.body.classList.add("auth-pending");
+    const screen = document.querySelector("[data-auth-screen]");
+    if (screen) screen.hidden = false;
     document.querySelector("[data-auth-loading]")?.setAttribute("hidden", "");
     const form = document.querySelector("[data-login-form]");
     if (form) {
@@ -71,7 +87,8 @@
   }
 
   function showApplication() {
-    document.querySelector("[data-auth-screen]")?.remove();
+    const screen = document.querySelector("[data-auth-screen]");
+    if (screen) screen.hidden = true;
     document.body.classList.remove("auth-pending");
   }
 
@@ -80,27 +97,79 @@
       .map((word) => word[0]).join("").toUpperCase();
   }
 
-  async function updateUserInterface(session) {
-    const user = session?.user;
-    if (!user) return;
-    let displayName = user.email?.split("@")[0] || "User";
-    const { data } = await client.from(profileTable).select("username")
-      .eq("user_id", user.id).maybeSingle();
-    if (data?.username?.trim()) displayName = data.username.trim();
+  function profileCacheKey(userId) {
+    return `boq-manager-profile:${userId}`;
+  }
+
+  function cachedProfile(userId) {
+    try {
+      return JSON.parse(sessionStorage.getItem(profileCacheKey(userId))) ||
+        null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function renderUserInterface(profile) {
+    if (!profile) return;
+    const displayName = profile.displayName || "User";
     document.querySelectorAll("[data-user-name]").forEach((node) =>
       node.textContent = displayName
     );
     document.querySelectorAll("[data-user-email]").forEach((node) =>
-      node.textContent = user.email || ""
+      node.textContent = profile.email || ""
     );
     document.querySelectorAll("[data-user-initials]").forEach((node) =>
       node.textContent = initials(displayName)
     );
   }
 
+  async function updateUserInterface(session) {
+    const user = session?.user;
+    if (!user) return;
+    let displayName = user.email?.split("@")[0] || "User";
+    const cached = cachedProfile(user.id);
+    if (cached) renderUserInterface(cached);
+    try {
+      const { data } = await client.from(profileTable).select("username")
+        .eq("user_id", user.id).maybeSingle();
+      if (data?.username?.trim()) displayName = data.username.trim();
+    } catch (error) {
+      console.error("Unable to refresh user profile:", error);
+    }
+    const profile = { displayName, email: user.email || "" };
+    sessionStorage.setItem(profileCacheKey(user.id), JSON.stringify(profile));
+    renderUserInterface(profile);
+  }
+
+  function hasCachedWorkspace(userId) {
+    const prefix = `boq-manager-v2:${userId}:`;
+    return ["boqs", "products", "customers", "settings", "meta"].some(
+      (key) => localStorage.getItem(`${prefix}${key}`) !== null,
+    );
+  }
+
+  function notifyWorkspaceUpdated(detail = {}) {
+    document.dispatchEvent(
+      new CustomEvent("boq:workspace-updated", {
+        detail,
+      }),
+    );
+  }
+
+  function announceAuthReady(session) {
+    document.dispatchEvent(
+      new CustomEvent("boq:auth-ready", {
+        detail: { user: session.user },
+      }),
+    );
+  }
+
   function cloudTimestamp(row) {
-    return Number(row?.state?.meta?.clientUpdatedAt ||
-      Date.parse(row?.client_updated_at || row?.updated_at || "") || 0);
+    return Number(
+      row?.state?.meta?.clientUpdatedAt ||
+        Date.parse(row?.client_updated_at || row?.updated_at || "") || 0,
+    );
   }
 
   async function fetchCloudState(userId) {
@@ -151,85 +220,172 @@
     syncTimer = window.setTimeout(pushCloudState, syncDelay);
   }
 
-  async function reconcileCloud(session) {
-    const cloud = await fetchCloudState(session.user.id);
-    const local = store.exportState();
-    const localTimestamp = Number(local.meta.clientUpdatedAt || 0);
-    const remoteTimestamp = cloudTimestamp(cloud);
-    let changed = false;
-    let shouldPush = !cloud?.state || localTimestamp > remoteTimestamp;
-    if (cloud?.state && remoteTimestamp > localTimestamp) {
-      store.applyState(cloud.state, {
+  async function reconcileCloud(session, options = {}) {
+    if (refreshInFlight) return refreshInFlight;
+    refreshInFlight = (async () => {
+      const cloud = await fetchCloudState(session.user.id);
+      const local = store.exportState();
+      const localTimestamp = Number(local.meta.clientUpdatedAt || 0);
+      const remoteTimestamp = cloudTimestamp(cloud);
+      let changed = false;
+      let shouldPush = !cloud?.state || localTimestamp > remoteTimestamp;
+      if (cloud?.state && remoteTimestamp > localTimestamp) {
+        store.applyState(cloud.state, {
+          silent: true,
+          cloudCreatedAt: cloud.created_at,
+          cloudUpdatedAt: cloud.updated_at,
+        });
+        changed = true;
+      }
+      const migratedBoqs = store.migrateExistingBoqs({
         silent: true,
-        cloudCreatedAt: cloud.created_at,
-        cloudUpdatedAt: cloud.updated_at,
+        cloudCreatedAt: cloud?.created_at,
+        cloudUpdatedAt: cloud?.updated_at,
       });
-      changed = true;
+      const migratedPartNumbers = store.migrateLegacyPartNumbers({
+        silent: true,
+      });
+      const backfilledPartNumbers = store.backfillBoqPartNumbers({
+        silent: true,
+      });
+      if (migratedBoqs || migratedPartNumbers || backfilledPartNumbers) {
+        changed = true;
+        shouldPush = true;
+      }
+      if (shouldPush) await pushCloudState();
+      if (changed && options.notify !== false) {
+        notifyWorkspaceUpdated({ source: "cloud" });
+      }
+      return changed;
+    })();
+    try {
+      return await refreshInFlight;
+    } finally {
+      refreshInFlight = null;
+      lastRefreshAt = Date.now();
     }
-    const migratedBoqs = store.migrateExistingBoqs({
-      silent: true,
-      cloudCreatedAt: cloud?.created_at,
-      cloudUpdatedAt: cloud?.updated_at,
-    });
-    const migratedPartNumbers = store.migrateLegacyPartNumbers({
-      silent: true,
-    });
-    const backfilledPartNumbers = store.backfillBoqPartNumbers({
-      silent: true,
-    });
-    if (migratedBoqs || migratedPartNumbers || backfilledPartNumbers) {
-      changed = true;
-      shouldPush = true;
+  }
+
+  async function refreshInBackground(options = {}) {
+    if (
+      !syncPolicy.shouldRefresh({
+        hasSession: Boolean(currentSession?.user),
+        isVisible: document.visibilityState !== "hidden",
+        force: options.force,
+        lastRefreshAt,
+        interval: backgroundRefreshInterval,
+      })
+    ) {
+      return false;
     }
-    if (shouldPush) await pushCloudState();
-    return changed;
+    try {
+      return await reconcileCloud(currentSession);
+    } catch (error) {
+      console.error("Unable to refresh cloud data:", error);
+      return false;
+    }
   }
 
   async function enterApplication(session, options = {}) {
     currentSession = session;
     const changedUser = store.setUser(session.user.id);
-    await updateUserInterface(session);
-    let cloudChanged = false;
-    try {
-      cloudChanged = await reconcileCloud(session);
-    } catch (error) {
-      console.error("Unable to refresh cloud data:", error);
-    }
-    if ((changedUser || cloudChanged) && !options.afterReload) {
-      sessionStorage.setItem("boq-manager-session-refresh", session.user.id);
-      location.reload();
+    const cached = cachedProfile(session.user.id);
+    if (cached) renderUserInterface(cached);
+
+    if (options.background) {
+      showApplication();
+      announceAuthReady(session);
+      void updateUserInterface(session);
+      void refreshInBackground({ force: true });
       return;
     }
-    sessionStorage.removeItem("boq-manager-session-refresh");
+
+    const hadCache = hasCachedWorkspace(session.user.id);
+    let cloudChanged = false;
+    try {
+      [cloudChanged] = await Promise.all([
+        reconcileCloud(session, { notify: false }),
+        updateUserInterface(session),
+      ]);
+    } catch (error) {
+      console.error("Unable to refresh cloud data:", error);
+      if (!hadCache) {
+        authError(
+          "Unable to load your workspace. Check your connection and sign in again.",
+        );
+        return;
+      }
+    }
+    sessionStorage.setItem(workspaceReadyKey, session.user.id);
+    if (changedUser || cloudChanged) {
+      notifyWorkspaceUpdated({
+        source: cloudChanged ? "cloud" : "local",
+        initial: true,
+        userChanged: changedUser,
+      });
+    }
     showApplication();
-    document.dispatchEvent(new CustomEvent("boq:auth-ready", {
-      detail: { user: session.user },
-    }));
+    announceAuthReady(session);
   }
 
   async function initialize() {
     renderAuthInterface();
     if (!window.supabase?.createClient) {
-      authError("Authentication service could not be loaded. Check your connection and reload.");
+      authError(
+        "Authentication service could not be loaded. Check your connection and reload.",
+      );
       return;
     }
     client = window.supabase.createClient(serviceUrl, publishableKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     });
     window.BOQAuth.client = client;
+    client.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        sessionStorage.removeItem(workspaceReadyKey);
+        currentSession = null;
+        store.setUser(null);
+        if (!signingOut) location.reload();
+        return;
+      }
+      if (!session?.user || event === "INITIAL_SESSION") return;
+      const previousUserId = currentSession?.user?.id || store.getUserId();
+      currentSession = session;
+      if (previousUserId && previousUserId !== session.user.id) {
+        sessionStorage.removeItem(workspaceReadyKey);
+        location.reload();
+      }
+    });
+    const readyUserId = sessionStorage.getItem(workspaceReadyKey);
+    const cachedUserId = store.getUserId();
+    const warmStart = syncPolicy.isWarmStart(readyUserId, cachedUserId);
+    if (warmStart) {
+      renderUserInterface(cachedProfile(cachedUserId));
+      showApplication();
+    }
     const { data, error } = await client.auth.getSession();
     if (error) {
+      sessionStorage.removeItem(workspaceReadyKey);
+      store.setUser(null);
       authError(error.message);
       return;
     }
     if (!data.session?.user) {
+      sessionStorage.removeItem(workspaceReadyKey);
       store.setUser(null);
       showLogin();
       return;
     }
-    const afterReload = sessionStorage.getItem("boq-manager-session-refresh") ===
-      data.session.user.id;
-    await enterApplication(data.session, { afterReload });
+    await enterApplication(data.session, {
+      background: warmStart && syncPolicy.canResumeWorkspace(
+        readyUserId,
+        data.session.user.id,
+      ),
+    });
   }
 
   document.addEventListener("submit", async (event) => {
@@ -292,14 +448,27 @@
       window.BOQModal.open("password-modal");
     }
     if (!event.target.closest("[data-logout]")) return;
+    signingOut = true;
     await pushCloudState();
+    sessionStorage.removeItem(workspaceReadyKey);
     await client.auth.signOut();
     store.setUser(null);
     location.reload();
   });
 
   document.addEventListener("boq:data-changed", scheduleCloudSync);
-  window.addEventListener("online", scheduleCloudSync);
+  window.addEventListener("online", () => {
+    scheduleCloudSync();
+    void refreshInBackground({ force: true });
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      void refreshInBackground();
+    }
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) void refreshInBackground({ force: true });
+  });
   window.addEventListener("pagehide", () => {
     if (syncTimer) void pushCloudState();
   });
@@ -309,7 +478,7 @@
     push: pushCloudState,
     refresh: async () => {
       if (!currentSession?.user) return false;
-      return reconcileCloud(currentSession);
+      return reconcileCloud(currentSession, { notify: true });
     },
   };
   initialize();

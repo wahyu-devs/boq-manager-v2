@@ -11,7 +11,7 @@
   const { list, get, save, remove, nextNumber, backfillBoqPartNumbers } =
     window.BOQStore;
   const { escapeHtml, formatCurrency, formatPercent } = window.BOQUtils;
-  const defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
+  let defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
   const body = document.querySelector("[data-records-body]");
   const cards = document.querySelector("[data-records-cards]");
@@ -517,5 +517,9 @@
       updateCalculatedProductPrice();
     },
   );
+  document.addEventListener("boq:workspace-updated", () => {
+    defaultCurrency = window.BOQStore.getSettings().defaultCurrency || "USD";
+    render();
+  });
   render();
 })();

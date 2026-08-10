@@ -331,11 +331,9 @@
         '<svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"/></svg><span>Refreshing…</span>';
       try {
         const changed = await window.BOQAuth?.refresh?.();
-        if (changed) {
-          location.reload();
-          return;
-        }
-        showToast("Dashboard data is up to date.");
+        showToast(changed
+          ? "Dashboard data updated."
+          : "Dashboard data is up to date.");
       } catch (_error) {
         showToast("Unable to refresh cloud data.", "error");
       } finally {
