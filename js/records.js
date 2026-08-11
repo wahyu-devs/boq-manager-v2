@@ -168,7 +168,7 @@
         formatCurrency(selling, defaultCurrency)
       }</td><td>${
         statusHtml(record.status || "Active")
-      }</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit product">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete this product?">×</button></div></td></tr>`,
+      }</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit product">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete This Product?">×</button></div></td></tr>`,
       card:
         `<article class="record-card" data-record-card data-record-id="${record.id}" data-search="${
           escapeHtml(search)
@@ -223,7 +223,7 @@
         escapeHtml(record.phone || "")
       }</span></td><td class="align-right number">${projectCount}</td><td class="align-right number">${boqCount}</td><td>${
         statusHtml(record.status || "Prospect")
-      }</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit customer">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete this customer?">×</button></div></td></tr>`,
+      }</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit customer">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete This Customer?">×</button></div></td></tr>`,
       card:
         `<article class="record-card" data-record-card data-record-id="${record.id}" data-search="${
           escapeHtml(search)
@@ -326,9 +326,14 @@
     );
     form.dataset.recordId = record?.id || "";
     updateProductFormOptions(form, record);
+    const recordLabel = singular(collection);
+    const headingLabel =
+      recordLabel === "BOQ"
+        ? recordLabel
+        : `${recordLabel.charAt(0).toUpperCase()}${recordLabel.slice(1)}`;
     document.querySelector("[data-record-form-title]").textContent = record
-      ? `Edit ${singular(collection)}`
-      : `Add ${singular(collection)}`;
+      ? `Edit ${headingLabel}`
+      : `Add ${headingLabel}`;
     if (!record) {
       updateCalculatedProductPrice();
       return;

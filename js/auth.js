@@ -27,10 +27,10 @@
           <div class="auth-brand">BOQ Manager</div>
           <div class="auth-loading" data-auth-loading>
             <span class="auth-spinner" aria-hidden="true"></span>
-            <div><h1 id="auth-title">Preparing your workspace</h1><p>Checking your session and latest data…</p></div>
+            <div><h1 id="auth-title">Preparing Your Workspace</h1><p>Checking your session and latest data…</p></div>
           </div>
           <form class="auth-form stack-md" data-login-form hidden>
-            <div><h1>Welcome back</h1><p>Sign in to continue to BOQ Manager.</p></div>
+            <div><h1>Welcome Back</h1><p>Sign in to continue to BOQ Manager.</p></div>
             <label class="field"><span class="field-label">Email</span><input class="input" name="email" type="email" autocomplete="username" required></label>
             <label class="field"><span class="field-label">Password</span><input class="input" name="password" type="password" autocomplete="current-password" required></label>
             <label class="checkbox-row"><input type="checkbox" name="remember" checked><span>Keep me signed in</span></label>
@@ -41,7 +41,7 @@
       </div>
       <div class="modal-backdrop" id="password-modal" hidden>
         <section class="modal" role="dialog" aria-modal="true" aria-labelledby="password-title">
-          <header class="modal-header"><div><h2 id="password-title">Change password</h2><p class="muted text-sm">Confirm your current password first.</p></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></header>
+          <header class="modal-header"><div><h2 id="password-title">Change Password</h2><p class="muted text-sm">Confirm your current password first.</p></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></header>
           <form data-password-form>
             <div class="modal-body stack-md">
               <label class="field"><span class="field-label">Current password</span><input class="input" name="currentPassword" type="password" autocomplete="current-password" required></label>

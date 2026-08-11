@@ -21,7 +21,7 @@
         <div class="modal-backdrop" id="confirm-modal" role="presentation" hidden>
           <section class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
             <header class="modal-header">
-              <h2 id="confirm-title">Confirm action</h2>
+              <h2 id="confirm-title">Confirm Action</h2>
               <button class="icon-button" type="button" data-close-modal aria-label="Close confirmation">×</button>
             </header>
             <div class="modal-body stack-sm">
@@ -236,7 +236,7 @@
 
   function requestConfirmation(trigger) {
     const modal = document.getElementById("confirm-modal");
-    const title = trigger.dataset.confirmTitle || "Confirm action";
+    const title = trigger.dataset.confirmTitle || "Confirm Action";
     const message = trigger.dataset.confirmMessage ||
       "This action cannot be undone.";
     modal.querySelector("#confirm-title").textContent = title;
