@@ -225,7 +225,7 @@
       : calc.unitSelling;
     return `<tr data-item-row data-item-id="${item.id}">
       <td class="align-right item-order-cell">${itemDragHandle(item)}<span class="subtle number item-index">${displayIndex}</span></td>
-      <td class="mono subtle">${escapeHtml(item.sku || "")}</td>
+      <td><input class="editor-input mono" data-item-input data-field="sku" data-item-id="${item.id}" value="${escapeHtml(item.sku || "")}" aria-label="Part number, row ${displayIndex}"></td>
       <td><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
@@ -255,8 +255,9 @@
       ? item.sellingOverride
       : calc.unitSelling;
     return `<article class="mobile-item-card" data-item-row data-item-id="${item.id}">
-      <div class="mobile-item-head">${itemDragHandle(item)}<div class="mobile-item-main"><span class="subtle text-sm">Item ${displayIndex}${item.sku ? ` · ${escapeHtml(item.sku)}` : ""}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
+      <div class="mobile-item-head">${itemDragHandle(item)}<div class="mobile-item-main"><span class="subtle text-sm">Item ${displayIndex}</span><input class="editor-input text-medium" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, item ${displayIndex}"></div><div class="row-actions"><button class="icon-button" type="button" data-item-action="duplicate" data-item-id="${item.id}" aria-label="Duplicate ${escapeHtml(item.item)}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and totals recalculated." aria-label="Delete ${escapeHtml(item.item)}">×</button></div></div>
       <div class="mobile-item-body">
+        <label class="field"><span class="field-label">Part Number</span><input class="input input-sm mono" data-item-input data-field="sku" data-item-id="${item.id}" value="${escapeHtml(item.sku || "")}"></label>
         <label class="field"><span class="field-label">Category</span><input class="input input-sm" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}"></label>
         <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-item-input data-field="unit" data-item-id="${item.id}">${unitOptions(item.unit)}</select></label>
         <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}"></label>
