@@ -107,6 +107,22 @@
       .replaceAll("'", "&#039;");
   }
 
+  function collectUniqueTextValues(...groups) {
+    const seen = new Set();
+    const values = [];
+    groups.forEach((group) => {
+      const entries = Array.isArray(group) ? group : [group];
+      entries.forEach((entry) => {
+        const value = String(entry || "").trim();
+        const key = value.toLowerCase();
+        if (!value || seen.has(key)) return;
+        seen.add(key);
+        values.push(value);
+      });
+    });
+    return values;
+  }
+
   function reorderItemsWithinCategory(records, itemId, targetId, position) {
     const items = Array.isArray(records) ? records.slice() : [];
     if (!itemId || !targetId || itemId === targetId) {
@@ -156,6 +172,7 @@
     formatPercent,
     debounce,
     escapeHtml,
+    collectUniqueTextValues,
     reorderItemsWithinCategory,
     reorderValues,
   };

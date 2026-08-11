@@ -10,7 +10,12 @@
 
   const { list, get, save, remove, nextNumber, backfillBoqPartNumbers } =
     window.BOQStore;
-  const { escapeHtml, formatCurrency, formatPercent } = window.BOQUtils;
+  const {
+    escapeHtml,
+    formatCurrency,
+    formatPercent,
+    collectUniqueTextValues,
+  } = window.BOQUtils;
   let defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
   const body = document.querySelector("[data-records-body]");
@@ -288,20 +293,9 @@
   }
 
   function productOptionValues(field, defaults, currentValue = "") {
-    const seen = new Set();
-    const values = [];
-    const add = (value) => {
-      const text = String(value || "").trim();
-      const key = text.toLowerCase();
-      if (!text || seen.has(key)) return;
-      seen.add(key);
-      values.push(text);
-    };
-    defaults.forEach(add);
-    list("products").map((product) => product[field]).filter(Boolean)
-      .sort((a, b) => String(a).localeCompare(String(b))).forEach(add);
-    add(currentValue);
-    return values;
+    const savedValues = list("products").map((product) => product[field])
+      .filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)));
+    return collectUniqueTextValues(defaults, savedValues, currentValue);
   }
 
   function updateProductFormOptions(form, record) {

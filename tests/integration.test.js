@@ -264,6 +264,15 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "1234567,5",
     "localized financial editing value",
   );
+  equal(
+    JSON.stringify(window.BOQUtils.collectUniqueTextValues(
+      ["Each", "Lot"],
+      ["Box", "each", "Pack"],
+      "Crate",
+    )),
+    JSON.stringify(["Each", "Lot", "Box", "Pack", "Crate"]),
+    "dynamic option values remain complete and unique",
+  );
 
   store.saveSettings({ ...store.getSettings(), numberFormat: "space" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1 234,50", "space number format");

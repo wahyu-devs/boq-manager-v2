@@ -12,6 +12,7 @@
     parseNumberInput,
     numberInputEditingValue,
     escapeHtml,
+    collectUniqueTextValues,
     reorderItemsWithinCategory,
     reorderValues,
   } = window.BOQUtils;
@@ -179,22 +180,31 @@
   }
 
   function unitOptions(value) {
-    const options = [
+    const defaults = [
       "Each",
       "Lot",
-      "Unit",
-      "Set",
       "Meter",
-      "M2",
-      "M3",
-      "Kg",
       "Hour",
       "Day",
       "Month",
+      "Unit",
+      "Set",
+      "M2",
+      "M3",
+      "Kg",
     ];
-    if (value && !options.includes(value)) options.unshift(value);
+    const catalogUnits = store.list("products").map((product) => product.unit)
+      .filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)));
+    const itemUnits = items.map((item) => item.unit).filter(Boolean);
+    const options = collectUniqueTextValues(
+      defaults,
+      catalogUnits,
+      itemUnits,
+      value,
+    );
+    const selected = String(value || "").trim().toLowerCase();
     return options.map((unit) =>
-      `<option${unit === value ? " selected" : ""}>${escapeHtml(unit)}</option>`
+      `<option${unit.toLowerCase() === selected ? " selected" : ""}>${escapeHtml(unit)}</option>`
     ).join("");
   }
 
