@@ -182,6 +182,25 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     items: [],
   });
   equal(store.nextNumber("boqs", "BOQ"), `EST-${year}-10`, "next BOQ number");
+  store.saveSettings({
+    ...store.getSettings(),
+    numberingFormat: "BOQ-{YY}{MM}{NN}",
+  });
+  const firstMonthlyNumber = store.formatDocumentNumber(
+    "BOQ-{YY}{MM}{NN}",
+    1,
+  );
+  store.save("boqs", {
+    number: firstMonthlyNumber,
+    projectName: "Monthly Numbering Test",
+    status: "Draft",
+    items: [],
+  });
+  equal(
+    store.nextNumber("boqs", "BOQ"),
+    store.formatDocumentNumber("BOQ-{YY}{MM}{NN}", 2),
+    "monthly BOQ sequence increments",
+  );
   const normalizedLegacyBoq = store.save("boqs", {
     number: "LEGACY-001",
     title: "Legacy Project Name",
@@ -377,6 +396,71 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     store.migrateExistingBoqs({ silent: true }),
     false,
     "existing BOQ migration only runs once",
+  );
+  store.saveSettings({
+    ...store.getSettings(),
+    numberingFormat: "BOQ-{YYYY}-{NNN}",
+  });
+  localStorage.setItem(
+    "boq-manager-v2:migration-user:boqs",
+    JSON.stringify([{
+      id: "february-second",
+      number: "OLD-003",
+      projectName: "February Second",
+      status: "Sent",
+      items: [],
+      createdAt: "2025-02-20T08:00:00.000Z",
+      updatedAt: "2025-03-02T08:00:00.000Z",
+    }, migratedBoq, {
+      id: "february-first",
+      number: "OLD-001",
+      projectName: "February First",
+      status: "Sent",
+      items: [],
+      createdAt: "2025-02-01T08:00:00.000Z",
+      updatedAt: "2025-02-03T08:00:00.000Z",
+    }]),
+  );
+  equal(
+    store.migrateBoqNumbers({ silent: true }),
+    true,
+    "existing BOQ numbers migrated",
+  );
+  const renumberedBoqs = store.list("boqs");
+  equal(
+    renumberedBoqs.find((record) => record.id === "existing-boq").number,
+    "BOQ-241201",
+    "December BOQ sequence starts at one",
+  );
+  equal(
+    renumberedBoqs.find((record) => record.id === "february-first").number,
+    "BOQ-250201",
+    "first February BOQ numbered from creation date",
+  );
+  equal(
+    renumberedBoqs.find((record) => record.id === "february-second").number,
+    "BOQ-250202",
+    "second February BOQ increments monthly sequence",
+  );
+  equal(
+    renumberedBoqs.find((record) => record.id === "february-second").updatedAt,
+    "2025-03-02T08:00:00.000Z",
+    "renumbering preserves update timestamp",
+  );
+  equal(
+    store.getSettings().numberingFormat,
+    "BOQ-{YY}{MM}{NN}",
+    "new BOQ numbering format saved",
+  );
+  equal(
+    store.getMeta().boqNumberingMigrationVersion,
+    1,
+    "BOQ numbering migration version stored",
+  );
+  equal(
+    store.migrateBoqNumbers({ silent: true }),
+    false,
+    "BOQ numbering migration only runs once",
   );
   localStorage.setItem(
     "boq-manager-v2:migration-user:products",

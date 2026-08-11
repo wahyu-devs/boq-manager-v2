@@ -3,6 +3,7 @@
   const previousPrefix = "boq-manager-v1";
   const sessionUserKey = "boq-manager-session-user";
   const collections = ["boqs", "products", "customers"];
+  const defaultBoqNumberingFormat = "BOQ-{YY}{MM}{NN}";
   let activeUserId = localStorage.getItem(sessionUserKey) || "guest";
 
   function namespace(userId = activeUserId) {
@@ -157,7 +158,7 @@
   }
 
   function formatDocumentNumber(format, sequence, date = new Date()) {
-    const template = String(format || "BOQ-{YYYY}-{NNN}");
+    const template = String(format || defaultBoqNumberingFormat);
     const tokens = numberingTokens(template, date);
     return template.replace(/\{(YYYY|YY|MM|N+)\}/g, (token, name) => {
       if (name.startsWith("N")) {
@@ -172,7 +173,7 @@
   }
 
   function numberingMatcher(format, date = new Date()) {
-    const template = String(format || "BOQ-{YYYY}-{NNN}");
+    const template = String(format || defaultBoqNumberingFormat);
     const tokens = numberingTokens(template, date);
     let sequenceCaptured = false;
     let cursor = 0;
@@ -194,7 +195,9 @@
   function nextNumber(collection, prefixText) {
     if (collection === "boqs") {
       const format = getSettings().numberingFormat ||
-        `${prefixText || "BOQ"}-{YYYY}-{NNN}`;
+        (prefixText === "BOQ" || !prefixText
+          ? defaultBoqNumberingFormat
+          : `${prefixText}-{YY}{MM}{NN}`);
       const matcher = numberingMatcher(format);
       const sequence = list(collection).reduce((highest, record) => {
         const match = String(record.number || "").match(matcher || /$^/);
@@ -758,6 +761,72 @@
     return true;
   }
 
+  function migrateBoqNumbers(options = {}) {
+    const migrationVersion = 1;
+    const meta = read("meta", {});
+    if (Number(meta.boqNumberingMigrationVersion || 0) >= migrationVersion) {
+      return false;
+    }
+    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (!Array.isArray(raw)) return false;
+
+    const datedRecords = raw.map((record, index) => {
+      const createdTimestamp = timestampValue(record?.createdAt) ||
+        timestampValue(record?.date) || timestampValue(record?.updatedAt) ||
+        Date.now();
+      return {
+        record,
+        index,
+        createdTimestamp,
+        updatedTimestamp: timestampValue(record?.updatedAt),
+        date: new Date(createdTimestamp),
+      };
+    }).sort((left, right) =>
+      left.createdTimestamp - right.createdTimestamp ||
+      left.updatedTimestamp - right.updatedTimestamp ||
+      String(left.record?.id || "").localeCompare(
+        String(right.record?.id || ""),
+      ) || left.index - right.index
+    );
+
+    const monthlySequences = new Map();
+    const numbersByIndex = new Map();
+    datedRecords.forEach(({ date, index }) => {
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      const sequence = (monthlySequences.get(monthKey) || 0) + 1;
+      monthlySequences.set(monthKey, sequence);
+      numbersByIndex.set(
+        index,
+        formatDocumentNumber(defaultBoqNumberingFormat, sequence, date),
+      );
+    });
+
+    localStorage.setItem(
+      storageKey("boqs"),
+      JSON.stringify(raw.map((record, index) => ({
+        ...record,
+        number: numbersByIndex.get(index),
+      }))),
+    );
+    localStorage.setItem(storageKey("settings"), JSON.stringify({
+      ...getSettings(),
+      numberingFormat: defaultBoqNumberingFormat,
+    }));
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...meta,
+      schemaVersion: 4,
+      boqNumberingMigrationVersion: migrationVersion,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
   function backfillBoqPartNumbers(options = {}) {
     const partNumbersByName = new Map();
     list("products").forEach((product) => {
@@ -857,6 +926,7 @@
     saveLocalPreference,
     migrateExistingBoqs,
     migrateLegacyPartNumbers,
+    migrateBoqNumbers,
     backfillBoqPartNumbers,
     exportState,
     applyState,

@@ -245,10 +245,14 @@
       const migratedPartNumbers = store.migrateLegacyPartNumbers({
         silent: true,
       });
+      const migratedBoqNumbers = store.migrateBoqNumbers({ silent: true });
       const backfilledPartNumbers = store.backfillBoqPartNumbers({
         silent: true,
       });
-      if (migratedBoqs || migratedPartNumbers || backfilledPartNumbers) {
+      if (
+        migratedBoqs || migratedPartNumbers || migratedBoqNumbers ||
+        backfilledPartNumbers
+      ) {
         changed = true;
         shouldPush = true;
       }

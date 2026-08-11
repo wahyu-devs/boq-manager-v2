@@ -6,7 +6,7 @@
     defaultCurrency: "USD",
     defaultMargin: 0,
     defaultValidity: 30,
-    numberingFormat: "BOQ-{YYYY}-{NNN}",
+    numberingFormat: "BOQ-{YY}{MM}{NN}",
     rounding: "2",
     showSku: false,
     showUnitPricing: true,
