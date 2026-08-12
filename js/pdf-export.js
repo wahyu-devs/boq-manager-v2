@@ -1,17 +1,19 @@
 (function definePdfExport() {
   const COLORS = {
     ink: [32, 39, 36],
-    muted: [105, 115, 111],
-    primary: [38, 115, 95],
-    primaryDark: [31, 98, 79],
-    primarySoft: [232, 243, 239],
-    surface: [245, 246, 247],
-    border: [221, 225, 223],
-    warning: [154, 100, 28],
-    warningSoft: [251, 241, 223],
+    body: [37, 42, 40],
+    company: [39, 76, 64],
+    heading: [39, 63, 55],
+    muted: [104, 113, 109],
+    note: [79, 89, 84],
+    footer: [115, 125, 120],
+    tableHead: [237, 241, 239],
+    tableHeadText: [74, 85, 79],
+    border: [216, 221, 218],
     white: [255, 255, 255],
   };
-  const MARGIN = 15;
+  const PAGE_MARGIN = 12;
+  const TABLE_WIDTH = 186;
 
   function imageType(source) {
     return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
@@ -21,7 +23,7 @@
     if (!source) return null;
     try {
       const properties = doc.getImageProperties(source);
-      const scale = Math.min(28 / properties.width, 14 / properties.height);
+      const scale = Math.min(36 / properties.width, 10.5 / properties.height);
       const width = properties.width * scale;
       const height = properties.height * scale;
       doc.addImage(source, imageType(source), x, y, width, height);
@@ -37,208 +39,150 @@
     );
   }
 
-  function displayDate(value, preference = "dmy") {
-    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!match) return value || "-";
-    const [, year, month, day] = match;
-    if (preference === "iso") return `${year}-${month}-${day}`;
-    if (preference === "mdy") return `${month}/${day}/${year}`;
-    const monthName = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ][Number(month) - 1];
-    return `${day} ${monthName} ${year}`;
+  function companyDetailLines(doc, settings, width) {
+    return textLines(doc, [
+      settings.registrationNumber
+        ? `Registration no.: ${settings.registrationNumber}`
+        : "",
+      settings.address,
+      [settings.email, settings.phone].filter(Boolean).join(" · "),
+    ], width);
   }
 
   function drawDocumentHeader(doc, data) {
     const pageWidth = doc.internal.pageSize.getWidth();
-    const logo = addLogo(doc, data.settings.companyLogo, MARGIN, 12);
-    const companyX = logo ? MARGIN + logo.width + 5 : MARGIN;
-    const companyWidth = 92 - (companyX - MARGIN);
-    const companyNameLines = textLines(
+    const contentWidth = pageWidth - PAGE_MARGIN * 2;
+    const headerTop = 12;
+    const rightWidth = 63;
+    const headerGap = 8;
+    const leftWidth = contentWidth - rightWidth - headerGap;
+    const rightX = pageWidth - PAGE_MARGIN;
+    const logo = addLogo(
       doc,
-      [data.settings.companyName || "Company information not configured"],
-      companyWidth,
+      data.settings.companyLogo,
+      PAGE_MARGIN,
+      headerTop,
     );
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11.5);
-    doc.setTextColor(...COLORS.ink);
-    doc.text(companyNameLines, companyX, 15);
-    const companyNameBottom = 15 + Math.max(0, companyNameLines.length - 1) *
-        4.4;
-    const detailLines = textLines(doc, [
-      data.settings.registrationNumber
-        ? `Registration no.: ${data.settings.registrationNumber}`
-        : "",
-      data.settings.address,
-      [data.settings.email, data.settings.phone].filter(Boolean).join(" | "),
-    ], companyWidth);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.3);
-    doc.setTextColor(...COLORS.muted);
-    const detailsY = companyNameBottom + 4;
-    if (detailLines.length) doc.text(detailLines, companyX, detailsY);
-    const companyBottom = Math.max(
-      logo ? 12 + logo.height : 15,
-      detailLines.length
-        ? detailsY + (detailLines.length - 1) * 3.2
-        : companyNameBottom,
-    );
+    let leftY = logo ? headerTop + logo.height + 3 : headerTop + 3;
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...COLORS.primary);
-    doc.text("BILL OF QUANTITIES", pageWidth - MARGIN, 13, {
+    doc.setFontSize(11.25);
+    doc.setTextColor(...COLORS.company);
+    const companyLines = textLines(doc, [
+      data.settings.companyName || "Company information not configured",
+    ], leftWidth);
+    doc.text(companyLines, PAGE_MARGIN, leftY);
+    leftY += Math.max(1, companyLines.length) * 4.4 + 1.6;
+
+    const details = companyDetailLines(doc, data.settings, leftWidth);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.25);
+    doc.setTextColor(...COLORS.body);
+    if (details.length) doc.text(details, PAGE_MARGIN, leftY);
+    const leftBottom = details.length
+      ? leftY + Math.max(0, details.length - 1) * 4
+      : leftY;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12.75);
+    doc.setTextColor(...COLORS.ink);
+    doc.text("Bill of Quantities", rightX, headerTop + 4, { align: "right" });
+    doc.setFontSize(8.25);
+    doc.text(data.document.number || "BOQ", rightX, headerTop + 10, {
       align: "right",
     });
-    doc.setFontSize(15);
-    doc.setTextColor(...COLORS.ink);
-    doc.text(data.document.number || "BOQ", pageWidth - MARGIN, 20, {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.body);
+    doc.text(`Date: ${data.document.date || ""}`, rightX, headerTop + 14, {
       align: "right",
     });
-    if (data.document.status === "Draft") {
-      const pillWidth = 18;
-      doc.setDrawColor(...COLORS.warning);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(
-        pageWidth - MARGIN - pillWidth,
-        23,
-        pillWidth,
-        6,
-        1.5,
-        1.5,
-        "S",
-      );
-      doc.setFontSize(6.5);
-      doc.setTextColor(...COLORS.warning);
-      doc.text("DRAFT", pageWidth - MARGIN - pillWidth / 2, 27, {
-        align: "center",
-      });
-    }
-
-    const dividerY = Math.max(34, companyBottom + 5);
-    doc.setDrawColor(...COLORS.primary);
-    doc.setLineWidth(0.45);
-    doc.line(MARGIN, dividerY, pageWidth - MARGIN, dividerY);
-    return drawInformationPanel(doc, data, dividerY + 5);
-  }
-
-  function drawInformationPanel(doc, data, y) {
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const width = pageWidth - MARGIN * 2;
-    const panelHeight = 22;
-    doc.setFillColor(...COLORS.surface);
-    doc.roundedRect(MARGIN, y, width, panelHeight, 1.5, 1.5, "F");
-    const customerX = MARGIN + 4;
-    const projectX = MARGIN + 64;
-    const datesX = pageWidth - MARGIN - 47;
-    const customerWidth = 53;
-    const projectWidth = datesX - projectX - 5;
-    const dateFormat = data.settings.dateFormat || "dmy";
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(6.3);
-    doc.setTextColor(...COLORS.muted);
-    doc.text("PREPARED FOR", customerX, y + 6);
-    doc.text("PROJECT", projectX, y + 6);
-    doc.text("DATE", datesX, y + 6);
-    doc.text("VALID UNTIL", datesX + 24, y + 6);
-    doc.setFontSize(8.4);
-    doc.setTextColor(...COLORS.ink);
     doc.text(
-      textLines(doc, [data.document.customerName || "-"], customerWidth),
-      customerX,
-      y + 11,
-    );
-    doc.text(
-      textLines(doc, [data.document.projectName || "-"], projectWidth),
-      projectX,
-      y + 11,
-    );
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.text(
-      displayDate(data.document.date, dateFormat),
-      datesX,
-      y + 11,
-    );
-    doc.text(
-      displayDate(data.document.validUntil, dateFormat),
-      datesX + 24,
-      y + 11,
-    );
-    return y + panelHeight + 6;
-  }
-
-  function drawContinuationHeader(doc, data) {
-    const pageWidth = doc.internal.pageSize.getWidth();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...COLORS.primaryDark);
-    doc.text(data.document.number || "BOQ", MARGIN, 11);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...COLORS.muted);
-    doc.text(
-      data.document.projectName || "Bill of Quantities",
-      pageWidth - MARGIN,
-      11,
+      `Valid until: ${data.document.validUntil || ""}`,
+      rightX,
+      headerTop + 18,
       { align: "right" },
     );
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.2);
-    doc.line(MARGIN, 15, pageWidth - MARGIN, 15);
+    const rightBottom = headerTop + 18;
+
+    const dividerY = Math.max(leftBottom, rightBottom) + 5.8;
+    doc.setDrawColor(...COLORS.heading);
+    doc.setLineWidth(0.55);
+    doc.line(PAGE_MARGIN, dividerY, pageWidth - PAGE_MARGIN, dividerY);
+
+    const partiesTop = dividerY + 5.3;
+    const partyGap = 8;
+    const partyWidth = (contentWidth - partyGap) / 2;
+    const projectX = PAGE_MARGIN + partyWidth + partyGap;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.75);
+    doc.setTextColor(...COLORS.muted);
+    doc.text("PREPARED FOR", PAGE_MARGIN, partiesTop);
+    doc.text("PROJECT", projectX, partiesTop);
+
+    const customerLines = textLines(
+      doc,
+      [data.document.customerName || "-"],
+      partyWidth,
+    );
+    const projectLines = textLines(
+      doc,
+      [data.document.projectName || "-"],
+      partyWidth,
+    );
+    doc.setFontSize(8.25);
+    doc.setTextColor(...COLORS.ink);
+    doc.text(customerLines, PAGE_MARGIN, partiesTop + 4.2);
+    doc.text(projectLines, projectX, partiesTop + 4.2);
+    const partyLineCount = Math.max(
+      customerLines.length,
+      projectLines.length,
+      1,
+    );
+    return partiesTop + 4.2 + (partyLineCount - 1) * 4 + 6.3;
   }
 
   function pdfColumns(data) {
-    const currency = data.document.currency || "";
     const columns = [
-      { key: "index", label: "No", align: "center", width: 9 },
+      { key: "index", label: "#", width: 8 },
     ];
     if (data.settings.showSku === true) {
-      columns.push({ key: "sku", label: "Part Number", width: 24 });
+      columns.push({ key: "sku", label: "PART NUMBER", width: 23 });
     }
     columns.push(
-      { key: "item", label: "Item" },
-      { key: "qty", label: "Qty", align: "right", width: 13 },
-      { key: "unit", label: "Unit", align: "center", width: 16 },
+      { key: "item", label: "ITEM" },
+      { key: "qty", label: "QTY", align: "right", width: 13 },
+      { key: "unit", label: "UNIT", width: 16 },
     );
     if (data.settings.showUnitPricing !== false) {
       columns.push({
         key: "unitSelling",
-        label: `Unit Price (${currency})`,
+        label: "UNIT PRICE",
         align: "right",
         width: 27,
       });
     }
     columns.push({
       key: "totalSelling",
-      label: `Total (${currency})`,
+      label: "TOTAL",
       align: "right",
-      width: 30,
+      width: 31,
     });
     const fixedWidth = columns.reduce(
       (sum, column) => sum + Number(column.width || 0),
       0,
     );
-    const itemColumn = columns.find((column) => column.key === "item");
-    itemColumn.width = 180 - fixedWidth;
+    columns.find((column) => column.key === "item").width = TABLE_WIDTH -
+      fixedWidth;
     return columns;
+  }
+
+  function bodyCell(content, styles = {}) {
+    return { content: content ?? "", styles };
   }
 
   function pdfRows(data, columns) {
     const { calculateItem } = window.BOQCalculations;
-    const { formatNumber } = window.BOQUtils;
-    const decimals = data.document.currency === "IDR" ? 0 : 2;
+    const { formatCurrency } = window.BOQUtils;
     const rows = [];
     let index = 0;
     data.categories.forEach((category) => {
@@ -246,24 +190,34 @@
         content: category,
         colSpan: columns.length,
         styles: {
-          fillColor: COLORS.primarySoft,
-          textColor: COLORS.primaryDark,
+          fillColor: COLORS.white,
+          textColor: COLORS.ink,
           fontStyle: "bold",
           halign: "left",
-          cellPadding: { top: 2.2, right: 2.4, bottom: 2.2, left: 2.4 },
         },
       }]);
       data.items.filter((item) => item.category === category).forEach(
         (item) => {
           const calculation = calculateItem(item);
           const values = {
-            index: ++index,
-            sku: item.sku || "",
-            item: item.item,
-            qty: calculation.quantity,
-            unit: item.unit,
-            unitSelling: formatNumber(calculation.unitSelling, decimals),
-            totalSelling: formatNumber(calculation.totalSelling, decimals),
+            index: bodyCell(++index),
+            sku: bodyCell(item.sku || ""),
+            item: bodyCell(item.item, { fontStyle: "bold" }),
+            qty: bodyCell(item.qty),
+            unit: bodyCell(item.unit),
+            unitSelling: bodyCell(
+              formatCurrency(
+                calculation.unitSelling,
+                data.document.currency,
+              ),
+            ),
+            totalSelling: bodyCell(
+              formatCurrency(
+                calculation.totalSelling,
+                data.document.currency,
+              ),
+              { fontStyle: "bold" },
+            ),
           };
           rows.push(columns.map((column) => values[column.key]));
         },
@@ -273,101 +227,115 @@
       rows.push([{
         content: "No BOQ items",
         colSpan: columns.length,
-        styles: {
-          textColor: COLORS.muted,
-          fillColor: COLORS.surface,
-          minCellHeight: 14,
-          valign: "middle",
-        },
+        styles: { textColor: COLORS.muted, minCellHeight: 14 },
       }]);
     }
     return rows;
   }
 
-  function footerLines(doc, data) {
-    const text = String(data.settings.footerText || "").trim();
-    return text ? doc.splitTextToSize(text, 130) : [];
+  function footerText(data) {
+    return String(data.settings.footerText || "").trim();
   }
 
-  function footerReserve(doc, data) {
-    const lines = footerLines(doc, data);
-    return Math.max(18, 13 + lines.length * 3.3);
+  function drawFooter(doc, data, startY) {
+    const text = footerText(data);
+    if (!text) return startY;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const lines = doc.splitTextToSize(text, pageWidth - PAGE_MARGIN * 2);
+    const requiredHeight = 4.2 + Math.max(1, lines.length) * 3.2;
+    const y = ensureSpace(
+      doc,
+      startY,
+      requiredHeight,
+      pageHeight - PAGE_MARGIN,
+    );
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.2);
+    doc.line(PAGE_MARGIN, y, pageWidth - PAGE_MARGIN, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.75);
+    doc.setTextColor(...COLORS.footer);
+    doc.text(lines, pageWidth / 2, y + 4.2, { align: "center" });
+    return y + requiredHeight;
   }
 
-  function addFooters(doc, data) {
-    const pageCount = doc.getNumberOfPages();
-    const lines = footerLines(doc, data);
-    for (let page = 1; page <= pageCount; page += 1) {
-      doc.setPage(page);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const firstLineY = pageHeight - 8 - Math.max(0, lines.length - 1) * 3.2;
-      doc.setDrawColor(...COLORS.border);
-      doc.setLineWidth(0.2);
-      doc.line(MARGIN, firstLineY - 5, pageWidth - MARGIN, firstLineY - 5);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6.8);
-      doc.setTextColor(...COLORS.muted);
-      if (lines.length) {
-        doc.text(lines, MARGIN, firstLineY);
-      } else {
-        doc.text(data.document.number || "BOQ", MARGIN, firstLineY);
-      }
-      doc.text(`Page ${page} of ${pageCount}`, pageWidth - MARGIN, firstLineY, {
-        align: "right",
-      });
-    }
+  function ensureSpace(doc, y, requiredHeight, bottom) {
+    if (y + requiredHeight <= bottom) return y;
+    doc.addPage();
+    return PAGE_MARGIN;
   }
 
   function drawSummary(doc, data, startY, reserve) {
     const { formatCurrency } = window.BOQUtils;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const noteLines = data.document.notes
-      ? doc.splitTextToSize(data.document.notes, 104)
-      : [];
-    const requiredHeight = Math.max(27, noteLines.length * 3.8 + 11);
     const contentBottom = pageHeight - reserve;
-    let y = startY;
-    if (y + requiredHeight > contentBottom) {
-      doc.addPage();
-      drawContinuationHeader(doc, data);
-      y = 24;
-    }
-
-    if (noteLines.length) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
-      doc.setTextColor(...COLORS.muted);
-      doc.text("TERMS / NOTES", MARGIN, y + 2);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...COLORS.ink);
-      doc.text(noteLines, MARGIN, y + 8);
-    }
-
-    const cardWidth = 66;
-    const cardHeight = 24;
-    const cardX = pageWidth - MARGIN - cardWidth;
-    doc.setFillColor(...COLORS.warningSoft);
-    doc.roundedRect(cardX, y, cardWidth, cardHeight, 1.8, 1.8, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(6.8);
-    doc.setTextColor(...COLORS.muted);
-    doc.text("GRAND TOTAL", cardX + 5, y + 7);
-    doc.setFontSize(7);
-    doc.setTextColor(...COLORS.primaryDark);
-    doc.text(data.document.currency || "", cardX + 5, y + 16);
-    doc.setFontSize(13);
-    doc.text(
-      formatCurrency(data.document.totalSelling, data.document.currency),
-      cardX + cardWidth - 5,
-      y + 17,
-      { align: "right" },
+    const totalWidth = 68;
+    const totalX = pageWidth - PAGE_MARGIN - totalWidth;
+    let y = ensureSpace(doc, startY, 16, contentBottom);
+    const total = formatCurrency(
+      data.document.totalSelling,
+      data.document.currency,
     );
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.25);
+    doc.setTextColor(...COLORS.body);
+    doc.text("Subtotal", totalX, y + 3.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.ink);
+    doc.text(total, pageWidth - PAGE_MARGIN, y + 3.5, { align: "right" });
+
+    const grandLineY = y + 7;
+    doc.setDrawColor(...COLORS.heading);
+    doc.setLineWidth(0.55);
+    doc.line(totalX, grandLineY, pageWidth - PAGE_MARGIN, grandLineY);
+    doc.setFontSize(10.5);
+    doc.text("Grand total", totalX, grandLineY + 5.8);
+    doc.text(total, pageWidth - PAGE_MARGIN, grandLineY + 5.8, {
+      align: "right",
+    });
+    y += 16;
+
+    const notes = String(data.document.notes || "").trim();
+    if (!notes) return y;
+    const noteLines = doc.splitTextToSize(
+      notes,
+      pageWidth - PAGE_MARGIN * 2,
+    );
+    const noteLineHeight = 3.8;
+    const noteHeaderHeight = 9;
+    let lineIndex = 0;
+    y += 6.8;
+    while (lineIndex < noteLines.length) {
+      y = ensureSpace(doc, y, noteHeaderHeight + noteLineHeight, contentBottom);
+      doc.setDrawColor(...COLORS.border);
+      doc.setLineWidth(0.2);
+      doc.line(PAGE_MARGIN, y, pageWidth - PAGE_MARGIN, y);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.25);
+      doc.setTextColor(...COLORS.ink);
+      doc.text("Terms / Notes", PAGE_MARGIN, y + 5);
+      y += noteHeaderHeight;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...COLORS.note);
+      while (
+        lineIndex < noteLines.length && y + noteLineHeight <= contentBottom
+      ) {
+        doc.text(noteLines[lineIndex], PAGE_MARGIN, y);
+        lineIndex += 1;
+        y += noteLineHeight;
+      }
+      if (lineIndex < noteLines.length) {
+        doc.addPage();
+        y = PAGE_MARGIN;
+      }
+    }
+    return y;
   }
 
-  function download(data, safeFilename) {
+  function create(data) {
     const doc = new window.jspdf.jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -385,50 +353,67 @@
     const columns = pdfColumns(data);
     const columnStyles = Object.fromEntries(columns.map((column, index) => [
       index,
-      {
-        halign: column.align || "left",
-        cellWidth: column.width,
-      },
+      { halign: column.align || "left", cellWidth: column.width },
     ]));
-    const reserve = footerReserve(doc, data);
+    const reserve = PAGE_MARGIN;
     doc.autoTable({
       startY: tableStartY,
-      margin: { top: 20, right: MARGIN, bottom: reserve, left: MARGIN },
+      margin: {
+        top: PAGE_MARGIN,
+        right: PAGE_MARGIN,
+        bottom: reserve,
+        left: PAGE_MARGIN,
+      },
       head: [columns.map((column) => column.label)],
       body: pdfRows(data, columns),
-      theme: "grid",
+      theme: "plain",
       showHead: "everyPage",
       headStyles: {
-        fillColor: COLORS.primary,
-        textColor: COLORS.white,
+        fillColor: COLORS.tableHead,
+        textColor: COLORS.tableHeadText,
         fontStyle: "bold",
-        halign: "center",
-        fontSize: 7,
-        lineColor: COLORS.primary,
-        lineWidth: 0.2,
-        cellPadding: { top: 2.6, right: 2, bottom: 2.6, left: 2 },
+        fontSize: 6.75,
+        cellPadding: { top: 2.1, right: 2.1, bottom: 2.1, left: 2.1 },
       },
       styles: {
         font: "helvetica",
-        fontSize: 7.5,
-        textColor: COLORS.ink,
-        lineColor: COLORS.border,
-        lineWidth: 0.15,
-        cellPadding: { top: 2.4, right: 2.2, bottom: 2.4, left: 2.2 },
+        fontSize: 8.25,
+        textColor: COLORS.body,
+        fillColor: COLORS.white,
+        lineWidth: 0,
+        cellPadding: { top: 2.1, right: 2.1, bottom: 2.1, left: 2.1 },
         overflow: "linebreak",
         valign: "middle",
       },
       columnStyles,
-      didDrawPage: (tablePage) => {
-        if (tablePage.pageNumber > 1) drawContinuationHeader(doc, data);
+      didDrawCell: (cellData) => {
+        if (!["head", "body"].includes(cellData.section)) return;
+        doc.setDrawColor(...COLORS.border);
+        doc.setLineWidth(0.2);
+        doc.line(
+          cellData.cell.x,
+          cellData.cell.y + cellData.cell.height,
+          cellData.cell.x + cellData.cell.width,
+          cellData.cell.y + cellData.cell.height,
+        );
       },
     });
-    drawSummary(doc, data, doc.lastAutoTable.finalY + 9, reserve);
-    addFooters(doc, data);
+    const summaryBottom = drawSummary(
+      doc,
+      data,
+      doc.lastAutoTable.finalY + 5.8,
+      reserve,
+    );
+    drawFooter(doc, data, summaryBottom + 9);
+    return doc;
+  }
+
+  function download(data, safeFilename) {
+    const doc = create(data);
     const filename = [data.document.number, data.document.projectName]
       .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
     doc.save(`${filename}.pdf`);
   }
 
-  window.BOQPdfExport = { download };
+  window.BOQPdfExport = { create, download };
 })();
