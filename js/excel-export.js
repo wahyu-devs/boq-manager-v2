@@ -989,15 +989,15 @@
     workbook.calcProperties.fullCalcOnLoad = true;
     workbook.calcProperties.forceFullCalc = true;
     const buffer = await workbook.xlsx.writeBuffer();
-    const suffix = mode === "all"
-      ? " - Estimation Workbook"
-      : " - Customer BOQ";
+    const filename = [data.document.number, data.document.projectName]
+      .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
+    const suffix = mode === "all" ? "" : " - Quotation";
     downloadBlob(
       new Blob([buffer], {
         type:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `${safeFilename(data.document.number)}${suffix}.xlsx`,
+      `${filename}${suffix}.xlsx`,
     );
   }
 
