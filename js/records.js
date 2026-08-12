@@ -213,7 +213,7 @@
         escapeHtml((record.status || "Prospect").toLowerCase())
       }" data-company="${
         escapeHtml(record.companyName || "")
-      }" data-projects="${projectCount}" data-boqs="${boqCount}"><td><button class="link cell-primary" type="button" data-record-action="detail" data-record-id="${record.id}" data-open-modal="record-detail-modal">${
+      }" data-projects="${projectCount}" data-boqs="${boqCount}"><td><button class="link cell-primary customer-company-link" type="button" data-record-action="detail" data-record-id="${record.id}" data-open-modal="record-detail-modal">${
         escapeHtml(record.companyName || "Untitled company")
       }</button><span class="cell-secondary">${
         escapeHtml(record.address || "No address")

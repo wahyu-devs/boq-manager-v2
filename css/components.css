@@ -406,6 +406,11 @@
   font-weight: 620;
 }
 
+.customer-company-link {
+  padding: 0;
+  text-align: left;
+}
+
 .data-table .boq-number-cell {
   white-space: nowrap;
 }
