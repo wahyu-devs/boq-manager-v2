@@ -215,6 +215,16 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(normalizedLegacyBoq.title, undefined, "legacy title discarded");
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1,234.50", "comma number format");
   equal(
+    window.BOQUtils.formatBoqAmount(1234567, "IDR"),
+    "1,234,567",
+    "IDR BOQ amount omits the rupiah prefix",
+  );
+  equal(
+    window.BOQUtils.formatBoqAmount(1234.5, "USD", 2),
+    "$1,234.50",
+    "non-IDR BOQ amount keeps its currency symbol",
+  );
+  equal(
     window.BOQUtils.formatNumberInput(1234567.5),
     "1,234,567.5",
     "comma financial input format",

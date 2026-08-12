@@ -182,7 +182,7 @@
 
   function pdfRows(data, columns) {
     const { calculateItem } = window.BOQCalculations;
-    const { formatCurrency } = window.BOQUtils;
+    const { formatBoqAmount } = window.BOQUtils;
     const rows = [];
     let index = 0;
     data.categories.forEach((category) => {
@@ -206,13 +206,13 @@
             qty: bodyCell(item.qty),
             unit: bodyCell(item.unit),
             unitSelling: bodyCell(
-              formatCurrency(
+              formatBoqAmount(
                 calculation.unitSelling,
                 data.document.currency,
               ),
             ),
             totalSelling: bodyCell(
-              formatCurrency(
+              formatBoqAmount(
                 calculation.totalSelling,
                 data.document.currency,
               ),
@@ -267,14 +267,14 @@
   }
 
   function drawSummary(doc, data, startY, reserve) {
-    const { formatCurrency } = window.BOQUtils;
+    const { formatBoqAmount } = window.BOQUtils;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const contentBottom = pageHeight - reserve;
     const totalWidth = 68;
     const totalX = pageWidth - PAGE_MARGIN - totalWidth;
     let y = ensureSpace(doc, startY, 16, contentBottom);
-    const total = formatCurrency(
+    const total = formatBoqAmount(
       data.document.totalSelling,
       data.document.currency,
     );
