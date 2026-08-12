@@ -6,7 +6,6 @@
   const { calculateItem, calculateSummary, calculateCategorySummary } =
     calculations;
   const {
-    formatCurrency,
     formatCurrencyMarkup,
     formatPercent,
     formatNumberInput,
@@ -338,23 +337,15 @@
   function updateSummary() {
     const summary = calculateSummary(items, { commission });
     const values = {
-      totalCogs: summary.totalCogs,
-      totalSelling: summary.totalSelling,
-      marginValue: summary.marginValue,
+      totalCogs: formatCurrencyMarkup(summary.totalCogs, currentCurrency()),
+      totalSelling: formatCurrencyMarkup(summary.totalSelling, currentCurrency()),
+      marginValue: formatCurrencyMarkup(summary.marginValue, currentCurrency()),
+      marginPercent: formatPercent(summary.marginPercent),
     };
-    Object.entries(values).forEach(([key, value]) => {
-      document.querySelectorAll(`[data-summary="${key}"]`).forEach((element) => {
-        if (element.closest(".summary-card")) {
-          element.textContent = formatCurrency(value, currentCurrency());
-          return;
-        }
-        element.innerHTML = formatCurrencyMarkup(value, currentCurrency());
-      });
-    });
-    document.querySelectorAll('[data-summary="marginPercent"]').forEach(
-      (element) => {
-        element.textContent = formatPercent(summary.marginPercent);
-      },
+    Object.entries(values).forEach(([key, value]) =>
+      document.querySelectorAll(`[data-summary="${key}"]`).forEach((element) =>
+        element.innerHTML = value
+      )
     );
   }
 
