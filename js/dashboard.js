@@ -1,6 +1,7 @@
 (function renderDashboard(event) {
   const { list } = window.BOQStore;
-  const { formatCurrencyMarkup, formatPercent, escapeHtml } = window.BOQUtils;
+  const { formatCurrencyMarkup, formatPercent, escapeHtml, debounce } =
+    window.BOQUtils;
   const boqs = list("boqs").map((boq) => ({
     ...boq,
     status: boq.status === "Sent" ? "Sent" : "Draft",
@@ -63,7 +64,7 @@
 
   const recentBoqs = [...boqs].sort((a, b) =>
     new Date(b.updatedAt) - new Date(a.updatedAt)
-  ).slice(0, 6);
+  ).slice(0, recentBoqRowLimit());
   const boqTable = document.querySelector("[data-recent-boqs-table]");
   const boqEmpty = document.querySelector("[data-recent-boqs-empty]");
   if (recentBoqs.length) {
@@ -154,7 +155,44 @@
     }).format(new Date(value));
   }
 
+  function recentBoqRowLimit() {
+    if (!window.matchMedia("(min-width: 992px)").matches) return 6;
+    const panel = document.querySelector("[data-recent-boqs-panel]");
+    const main = document.querySelector(".main-content");
+    if (!panel || !main) return 6;
+
+    const panelStyles = window.getComputedStyle(panel);
+    const mainStyles = window.getComputedStyle(main);
+    const panelHeader = panel.querySelector(".panel-header");
+    const rowHeight = cssPixels(
+      panelStyles,
+      "--dashboard-recent-row-height",
+      52,
+    );
+    const tableHeaderHeight = cssPixels(
+      panelStyles,
+      "--dashboard-recent-table-header-height",
+      40,
+    );
+    const bottomInset = Number.parseFloat(mainStyles.paddingBottom) || 48;
+    const panelBorder = (Number.parseFloat(panelStyles.borderTopWidth) || 0) +
+      (Number.parseFloat(panelStyles.borderBottomWidth) || 0);
+    const panelHeaderHeight = panelHeader?.getBoundingClientRect().height || 54;
+    const availableHeight = window.innerHeight -
+      panel.getBoundingClientRect().top - bottomInset - panelBorder -
+      panelHeaderHeight - tableHeaderHeight;
+    return Math.max(3, Math.floor(availableHeight / rowHeight));
+  }
+
+  function cssPixels(styles, property, fallback) {
+    return Number.parseFloat(styles.getPropertyValue(property)) || fallback;
+  }
+
   if (!event) {
     document.addEventListener("boq:workspace-updated", renderDashboard);
+    window.addEventListener(
+      "resize",
+      debounce(() => renderDashboard({ type: "resize" }), 160),
+    );
   }
 })();

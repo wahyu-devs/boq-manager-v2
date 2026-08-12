@@ -508,6 +508,15 @@
 .table-dashboard {
   min-width: 760px;
 }
+
+.table-dashboard th {
+  height: var(--dashboard-recent-table-header-height, 40px);
+}
+
+.table-dashboard td {
+  height: var(--dashboard-recent-row-height, 52px);
+}
+
 .panel-body-compact-y {
   padding-top: 5px;
   padding-bottom: 5px;
