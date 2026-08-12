@@ -1,6 +1,6 @@
 (function renderDashboard(event) {
   const { list } = window.BOQStore;
-  const { formatCurrency, formatPercent, escapeHtml } = window.BOQUtils;
+  const { formatCurrencyMarkup, formatPercent, escapeHtml } = window.BOQUtils;
   const boqs = list("boqs").map((boq) => ({
     ...boq,
     status: boq.status === "Sent" ? "Sent" : "Draft",
@@ -85,7 +85,7 @@
       }">${
         escapeHtml(boq.status || "Draft")
       }</span></td><td class="align-right currency">${
-        formatCurrency(boq.totalSelling || 0, boq.currency || currency)
+        formatCurrencyMarkup(boq.totalSelling || 0, boq.currency || currency)
       }</td><td class="align-right number">${
         formatPercent(boq.marginPercent || 0)
       }</td><td>${formatDateTime(boq.updatedAt)}</td></tr>`

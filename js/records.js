@@ -12,7 +12,7 @@
     window.BOQStore;
   const {
     escapeHtml,
-    formatCurrency,
+    formatCurrencyMarkup,
     formatPercent,
     collectUniqueTextValues,
   } = window.BOQUtils;
@@ -88,7 +88,7 @@
       }</td><td>${
         statusHtml(record.status)
       }</td><td class="align-right currency">${
-        formatCurrency(record.totalSelling || 0, record.currency || "USD")
+        formatCurrencyMarkup(record.totalSelling || 0, record.currency || "USD")
       }</td><td class="align-right number">${margin}</td><td>${
         dateText(record.createdAt)
       }</td><td>${
@@ -122,7 +122,7 @@
         }</dd></div><div><dt>Customer</dt><dd>${
           escapeHtml(record.customerName || "—")
         }</dd></div><div><dt>Value</dt><dd>${
-          formatCurrency(record.totalSelling || 0, record.currency || "USD")
+          formatCurrencyMarkup(record.totalSelling || 0, record.currency || "USD")
         }</dd></div><div><dt>Gross margin</dt><dd>${margin}</dd></div></dl><div class="cluster space-between card-actions"><span class="subtle text-sm">Updated ${
           dateText(record.updatedAt)
         }</span><a class="button button-secondary button-sm" href="boq-editor.html?id=${
@@ -161,11 +161,11 @@
       }</span></td><td>${escapeHtml(record.category || "—")}</td><td>${
         escapeHtml(record.unit || "Each")
       }</td><td class="align-right currency">${
-        formatCurrency(record.defaultCogs || 0, defaultCurrency)
+        formatCurrencyMarkup(record.defaultCogs || 0, defaultCurrency)
       }</td><td class="align-right number">${
         formatPercent(record.defaultMargin || 0)
       }</td><td class="align-right currency cell-primary">${
-        formatCurrency(selling, defaultCurrency)
+        formatCurrencyMarkup(selling, defaultCurrency)
       }</td><td>${
         statusHtml(record.status || "Active")
       }</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit product">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete This Product?">×</button></div></td></tr>`,
@@ -185,9 +185,9 @@
         }</dd></div><div><dt>Unit</dt><dd>${
           escapeHtml(record.unit || "Each")
         }</dd></div><div><dt>COGS</dt><dd>${
-          formatCurrency(record.defaultCogs || 0, defaultCurrency)
+          formatCurrencyMarkup(record.defaultCogs || 0, defaultCurrency)
         }</dd></div><div><dt>Selling</dt><dd>${
-          formatCurrency(selling, defaultCurrency)
+          formatCurrencyMarkup(selling, defaultCurrency)
         }</dd></div></dl></article>`,
     };
   }
@@ -398,7 +398,7 @@
         }</dd></div><div class="cluster space-between"><dt class="muted">Items</dt><dd>${
           record.items?.length || 0
         }</dd></div><div class="cluster space-between"><dt class="muted">Total selling</dt><dd class="text-medium">${
-          formatCurrency(summary.totalSelling, record.currency || defaultCurrency)
+          formatCurrencyMarkup(summary.totalSelling, record.currency || defaultCurrency)
         }</dd></div></dl></div>`;
     } else if (collection === "customers") {
       const relatedBoqs = list("boqs").filter((boq) =>

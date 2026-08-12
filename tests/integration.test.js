@@ -215,6 +215,18 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(normalizedLegacyBoq.title, undefined, "legacy title discarded");
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1,234.50", "comma number format");
   equal(
+    JSON.stringify(window.BOQUtils.formatCurrencyParts(-1234567, "IDR")),
+    JSON.stringify({ symbol: "Rp", value: "-1,234,567" }),
+    "accounting currency parts",
+  );
+  equal(
+    window.BOQUtils.formatCurrencyMarkup(1234567, "IDR").includes(
+      '<span class="currency-accounting-symbol" aria-hidden="true">Rp</span>',
+    ),
+    true,
+    "accounting currency markup",
+  );
+  equal(
     window.BOQUtils.formatNumberInput(1234567.5),
     "1,234,567.5",
     "comma financial input format",

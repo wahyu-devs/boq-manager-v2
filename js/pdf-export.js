@@ -180,9 +180,47 @@
     return { content: content ?? "", styles };
   }
 
+  function currencyBodyCell(value, currency, styles = {}) {
+    return {
+      content: "",
+      styles,
+      accounting: window.BOQUtils.formatCurrencyParts(value, currency),
+    };
+  }
+
+  function drawAccountingCell(doc, cellData) {
+    const accounting = cellData.cell.raw?.accounting;
+    if (!accounting || cellData.section !== "body") return;
+    const { cell } = cellData;
+    const leftPadding = typeof cell.padding === "function"
+      ? cell.padding("left")
+      : 2.1;
+    const rightPadding = typeof cell.padding === "function"
+      ? cell.padding("right")
+      : 2.1;
+    const textPosition = typeof cell.getTextPos === "function"
+      ? cell.getTextPos()
+      : { y: cell.y + cell.height / 2 + 1 };
+    const textColor = Array.isArray(cell.styles.textColor)
+      ? cell.styles.textColor
+      : COLORS.body;
+    doc.setFont(
+      cell.styles.font || "helvetica",
+      cell.styles.fontStyle || "normal",
+    );
+    doc.setFontSize(cell.styles.fontSize || 8.25);
+    doc.setTextColor(...textColor);
+    doc.text(accounting.symbol, cell.x + leftPadding, textPosition.y);
+    doc.text(
+      accounting.value,
+      cell.x + cell.width - rightPadding,
+      textPosition.y,
+      { align: "right" },
+    );
+  }
+
   function pdfRows(data, columns) {
     const { calculateItem } = window.BOQCalculations;
-    const { formatCurrency } = window.BOQUtils;
     const rows = [];
     let index = 0;
     data.categories.forEach((category) => {
@@ -205,17 +243,13 @@
             item: bodyCell(item.item, { fontStyle: "bold" }),
             qty: bodyCell(item.qty),
             unit: bodyCell(item.unit),
-            unitSelling: bodyCell(
-              formatCurrency(
-                calculation.unitSelling,
-                data.document.currency,
-              ),
+            unitSelling: currencyBodyCell(
+              calculation.unitSelling,
+              data.document.currency,
             ),
-            totalSelling: bodyCell(
-              formatCurrency(
-                calculation.totalSelling,
-                data.document.currency,
-              ),
+            totalSelling: currencyBodyCell(
+              calculation.totalSelling,
+              data.document.currency,
               { fontStyle: "bold" },
             ),
           };
@@ -267,14 +301,15 @@
   }
 
   function drawSummary(doc, data, startY, reserve) {
-    const { formatCurrency } = window.BOQUtils;
+    const { formatCurrencyParts } = window.BOQUtils;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const contentBottom = pageHeight - reserve;
     const totalWidth = 68;
     const totalX = pageWidth - PAGE_MARGIN - totalWidth;
+    const amountX = pageWidth - PAGE_MARGIN - 38;
     let y = ensureSpace(doc, startY, 16, contentBottom);
-    const total = formatCurrency(
+    const total = formatCurrencyParts(
       data.document.totalSelling,
       data.document.currency,
     );
@@ -285,7 +320,10 @@
     doc.text("Subtotal", totalX, y + 3.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...COLORS.ink);
-    doc.text(total, pageWidth - PAGE_MARGIN, y + 3.5, { align: "right" });
+    doc.text(total.symbol, amountX, y + 3.5);
+    doc.text(total.value, pageWidth - PAGE_MARGIN, y + 3.5, {
+      align: "right",
+    });
 
     const grandLineY = y + 7;
     doc.setDrawColor(...COLORS.heading);
@@ -293,7 +331,8 @@
     doc.line(totalX, grandLineY, pageWidth - PAGE_MARGIN, grandLineY);
     doc.setFontSize(10.5);
     doc.text("Grand total", totalX, grandLineY + 5.8);
-    doc.text(total, pageWidth - PAGE_MARGIN, grandLineY + 5.8, {
+    doc.text(total.symbol, amountX, grandLineY + 5.8);
+    doc.text(total.value, pageWidth - PAGE_MARGIN, grandLineY + 5.8, {
       align: "right",
     });
     y += 16;
@@ -396,6 +435,7 @@
           cellData.cell.x + cellData.cell.width,
           cellData.cell.y + cellData.cell.height,
         );
+        drawAccountingCell(doc, cellData);
       },
     });
     const summaryBottom = drawSummary(

@@ -86,6 +86,29 @@
     )}`;
   }
 
+  function formatCurrencyParts(value, currency = "USD", decimals) {
+    const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
+    const fractionDigits = decimals ?? (currency === "IDR" ? 0 : 2);
+    return {
+      symbol: currencySymbols[currency] || currency,
+      value: `${amount < 0 ? "-" : ""}${formatNumber(
+        Math.abs(amount),
+        fractionDigits,
+      )}`,
+    };
+  }
+
+  function formatCurrencyMarkup(value, currency = "USD", decimals) {
+    const parts = formatCurrencyParts(value, currency, decimals);
+    return `<span class="currency-accounting" aria-label="${
+      escapeHtml(formatCurrency(value, currency, decimals))
+    }"><span class="currency-accounting-symbol" aria-hidden="true">${
+      escapeHtml(parts.symbol)
+    }</span><span class="currency-accounting-value" aria-hidden="true">${
+      escapeHtml(parts.value)
+    }</span></span>`;
+  }
+
   function formatPercent(value) {
     return `${formatNumber(value, 1)}%`;
   }
@@ -169,6 +192,8 @@
     parseNumberInput,
     numberInputEditingValue,
     formatCurrency,
+    formatCurrencyParts,
+    formatCurrencyMarkup,
     formatPercent,
     debounce,
     escapeHtml,

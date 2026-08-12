@@ -818,6 +818,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.summary-row dd {
+  min-width: 108px;
+}
+
 .summary-input-wrap {
   display: block;
   width: 108px;
@@ -835,7 +839,7 @@
   background: var(--color-primary-soft);
 }
 
-.summary-total span {
+.summary-total > span {
   display: block;
   color: var(--color-primary);
   font-size: 11px;
@@ -909,6 +913,10 @@
   justify-content: space-between;
   padding-top: 10px;
   border-top: 1px solid var(--color-border);
+}
+
+.mobile-item-total strong {
+  width: 140px;
 }
 
 .menu-wrap {
@@ -1401,12 +1409,12 @@
   background: var(--color-surface-secondary);
 }
 
-.catalog-row strong,
-.catalog-row span {
+.catalog-row > div > strong,
+.catalog-row > div > span {
   display: block;
 }
 
-.catalog-row span {
+.catalog-row > div > span {
   margin-top: 2px;
   color: var(--color-text-muted);
   font-size: 11px;
@@ -1659,6 +1667,10 @@
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
+}
+
+.pdf-preview-total strong {
+  width: 160px;
 }
 
 .pdf-preview-total .grand-total {

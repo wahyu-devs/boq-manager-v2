@@ -25,13 +25,11 @@
   }
 
   function currencyFormat(currency) {
-    const formats = {
-      USD: '"$"#,##0.00',
-      EUR: '"€"#,##0.00',
-      GBP: '"£"#,##0.00',
-      IDR: '"Rp" #,##0',
-    };
-    return formats[currency] || `"${currency}" #,##0.00`;
+    const symbols = { USD: "$", EUR: "€", GBP: "£", IDR: "Rp" };
+    const symbol = String(symbols[currency] || currency).replaceAll('"', '""');
+    const number = currency === "IDR" ? "#,##0" : "#,##0.00";
+    const zero = currency === "IDR" ? "0" : "0.00";
+    return `"${symbol}"* ${number};"${symbol}"* -${number};"${symbol}"* ${zero}`;
   }
 
   function excelDate(value) {
@@ -61,11 +59,14 @@
       bold: Boolean(options.bold),
       color: { argb: options.color || COLORS.ink },
     };
+    const accountingFormat = String(options.numFmt || "").includes("* ");
     cell.alignment = {
       vertical: options.vertical || "middle",
-      horizontal: options.align || "left",
       wrapText: options.wrap !== false,
     };
+    if (!accountingFormat) {
+      cell.alignment.horizontal = options.align || "left";
+    }
     if (options.fill) {
       cell.fill = {
         type: "pattern",

@@ -6,7 +6,7 @@
   const { calculateItem, calculateSummary, calculateCategorySummary } =
     calculations;
   const {
-    formatCurrency,
+    formatCurrencyMarkup,
     formatPercent,
     formatNumberInput,
     parseNumberInput,
@@ -231,10 +231,10 @@
       <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
       <td><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
       <td class="column-cogs column-price"><input class="editor-input numeric" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}" aria-label="Unit COGS, row ${displayIndex}"></td>
-      <td class="calculated-cell column-cogs column-price" data-item-output="totalCogs">${formatCurrency(calc.totalCogs, currentCurrency())}</td>
+      <td class="calculated-cell column-cogs column-price" data-item-output="totalCogs">${formatCurrencyMarkup(calc.totalCogs, currentCurrency())}</td>
       <td class="column-margin column-price"><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}" aria-label="Gross margin percentage, row ${displayIndex}"></td>
       <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}" aria-label="Unit selling price, row ${displayIndex}"></td>
-      <td class="calculated-cell column-selling column-price" data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</td>
+      <td class="calculated-cell column-selling column-price" data-item-output="totalSelling">${formatCurrencyMarkup(calc.totalSelling, currentCurrency())}</td>
       <td><div class="row-actions"><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(item.item)}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-item-action="duplicate" data-item-id="${item.id}">Duplicate item</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and all totals recalculated.">Delete item</button></div></div></div></td>
     </tr>`;
   }
@@ -246,7 +246,7 @@
   function categorySubtotalRow(category) {
     if (!showCategorySubtotals) return "";
     const summary = calculateCategorySummary(items, category, { commission: 0 });
-    return `<tr class="category-subtotal-row" data-category-subtotal="${escapeHtml(category)}"><td colspan="7">${escapeHtml(category)} subtotal</td><td class="align-right column-cogs column-price" data-category-total="cogs">${formatCurrency(summary.totalCogs, currentCurrency())}</td><td class="column-margin column-price"></td><td class="column-selling column-price"></td><td class="align-right column-selling column-price" data-category-total="selling">${formatCurrency(summary.totalSelling, currentCurrency())}</td><td></td></tr>`;
+    return `<tr class="category-subtotal-row" data-category-subtotal="${escapeHtml(category)}"><td colspan="7">${escapeHtml(category)} subtotal</td><td class="align-right column-cogs column-price" data-category-total="cogs">${formatCurrencyMarkup(summary.totalCogs, currentCurrency())}</td><td class="column-margin column-price"></td><td class="column-selling column-price"></td><td class="align-right column-selling column-price" data-category-total="selling">${formatCurrencyMarkup(summary.totalSelling, currentCurrency())}</td><td></td></tr>`;
   }
 
   function mobileCard(item, displayIndex) {
@@ -264,7 +264,7 @@
         <label class="field column-cogs column-price"><span class="field-label">Unit COGS</span><input class="input input-sm align-right" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}"></label>
         <label class="field column-margin column-price"><span class="field-label">Gross margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}"></label>
         <label class="field column-selling column-price"><span class="field-label">Unit selling <small>(edit to override)</small></span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}"></label>
-        <div class="mobile-item-total column-selling column-price"><span class="muted">Total selling</span><strong data-item-output="totalSelling">${formatCurrency(calc.totalSelling, currentCurrency())}</strong></div>
+        <div class="mobile-item-total column-selling column-price"><span class="muted">Total selling</span><strong data-item-output="totalSelling">${formatCurrencyMarkup(calc.totalSelling, currentCurrency())}</strong></div>
       </div>
     </article>`;
   }
@@ -300,10 +300,10 @@
     document.querySelectorAll(`[data-item-row][data-item-id="${CSS.escape(item.id)}"]`)
       .forEach((row) => {
         row.querySelectorAll('[data-item-output="totalCogs"]').forEach((cell) =>
-          cell.textContent = formatCurrency(calc.totalCogs, currentCurrency())
+          cell.innerHTML = formatCurrencyMarkup(calc.totalCogs, currentCurrency())
         );
         row.querySelectorAll('[data-item-output="totalSelling"]').forEach((cell) =>
-          cell.textContent = formatCurrency(calc.totalSelling, currentCurrency())
+          cell.innerHTML = formatCurrencyMarkup(calc.totalSelling, currentCurrency())
         );
         row.querySelectorAll('[data-field="unitCogs"]').forEach((input) => {
           if (document.activeElement !== input) {
@@ -329,22 +329,22 @@
       .forEach((row) => {
         const cogs = row.querySelector('[data-category-total="cogs"]');
         const selling = row.querySelector('[data-category-total="selling"]');
-        if (cogs) cogs.textContent = formatCurrency(summary.totalCogs, currentCurrency());
-        if (selling) selling.textContent = formatCurrency(summary.totalSelling, currentCurrency());
+        if (cogs) cogs.innerHTML = formatCurrencyMarkup(summary.totalCogs, currentCurrency());
+        if (selling) selling.innerHTML = formatCurrencyMarkup(summary.totalSelling, currentCurrency());
       });
   }
 
   function updateSummary() {
     const summary = calculateSummary(items, { commission });
     const values = {
-      totalCogs: formatCurrency(summary.totalCogs, currentCurrency()),
-      totalSelling: formatCurrency(summary.totalSelling, currentCurrency()),
-      marginValue: formatCurrency(summary.marginValue, currentCurrency()),
+      totalCogs: formatCurrencyMarkup(summary.totalCogs, currentCurrency()),
+      totalSelling: formatCurrencyMarkup(summary.totalSelling, currentCurrency()),
+      marginValue: formatCurrencyMarkup(summary.marginValue, currentCurrency()),
       marginPercent: formatPercent(summary.marginPercent),
     };
     Object.entries(values).forEach(([key, value]) =>
       document.querySelectorAll(`[data-summary="${key}"]`).forEach((element) =>
-        element.textContent = value
+        element.innerHTML = value
       )
     );
   }
@@ -579,7 +579,7 @@
     );
     host.innerHTML = filtered.length
       ? filtered.map((product) => {
-        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrency(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
+        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
       : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No Products Found</h3><p>Try searching by product name, part number, or category.</p></div></div>';
     document.querySelector("#product-suggestions").innerHTML = catalog.map(
@@ -653,7 +653,7 @@
       ? '<th class="align-right">Unit price</th>'
       : "";
     let rowIndex = 0;
-    host.innerHTML = `<div class="pdf-preview-content"><header class="pdf-preview-header"><div>${companyLogo}<strong class="pdf-company">${escapeHtml(settings.companyName || "Company information not configured")}</strong><p>${companyDetails}</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${escapeHtml(payload.number)}</strong><br>Date: ${escapeHtml(payload.date)}<br>Valid until: ${escapeHtml(payload.validUntil)}</p></div></header><div class="pdf-parties"><div><span>Prepared for</span><strong>${escapeHtml(payload.customerName || "—")}</strong></div><div><span>Project</span><strong>${escapeHtml(payload.projectName || "—")}</strong></div></div><table class="pdf-preview-table"><thead><tr><th>#</th>${partNumberHeader}<th>Item</th><th class="align-right">Qty</th><th>Unit</th>${unitPriceHeader}<th class="align-right">Total</th></tr></thead><tbody>${categories().map((category) => `<tr class="pdf-category"><td colspan="${columnCount}"><strong>${escapeHtml(category)}</strong></td></tr>${items.filter((item) => item.category === category).map((item) => { const calc = calculateItem(item); return `<tr><td>${++rowIndex}</td>${showPartNumber ? `<td>${escapeHtml(item.sku || "")}</td>` : ""}<td><strong>${escapeHtml(item.item)}</strong></td><td class="align-right">${item.qty}</td><td>${escapeHtml(item.unit)}</td>${showUnitPricing ? `<td class="align-right">${formatCurrency(calc.unitSelling, currentCurrency())}</td>` : ""}<td class="align-right"><strong>${formatCurrency(calc.totalSelling, currentCurrency())}</strong></td></tr>`; }).join("")}`).join("")}</tbody></table><div class="pdf-preview-total"><div><span>Subtotal</span><strong>${formatCurrency(payload.totalSelling, currentCurrency())}</strong></div><div class="grand-total"><span>Grand total</span><strong>${formatCurrency(payload.totalSelling, currentCurrency())}</strong></div></div>${payload.notes ? `<div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div>` : ""}${footerText ? `<footer class="pdf-footer">${escapeHtml(footerText)}</footer>` : ""}</div>`;
+    host.innerHTML = `<div class="pdf-preview-content"><header class="pdf-preview-header"><div>${companyLogo}<strong class="pdf-company">${escapeHtml(settings.companyName || "Company information not configured")}</strong><p>${companyDetails}</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${escapeHtml(payload.number)}</strong><br>Date: ${escapeHtml(payload.date)}<br>Valid until: ${escapeHtml(payload.validUntil)}</p></div></header><div class="pdf-parties"><div><span>Prepared for</span><strong>${escapeHtml(payload.customerName || "—")}</strong></div><div><span>Project</span><strong>${escapeHtml(payload.projectName || "—")}</strong></div></div><table class="pdf-preview-table"><thead><tr><th>#</th>${partNumberHeader}<th>Item</th><th class="align-right">Qty</th><th>Unit</th>${unitPriceHeader}<th class="align-right">Total</th></tr></thead><tbody>${categories().map((category) => `<tr class="pdf-category"><td colspan="${columnCount}"><strong>${escapeHtml(category)}</strong></td></tr>${items.filter((item) => item.category === category).map((item) => { const calc = calculateItem(item); return `<tr><td>${++rowIndex}</td>${showPartNumber ? `<td>${escapeHtml(item.sku || "")}</td>` : ""}<td><strong>${escapeHtml(item.item)}</strong></td><td class="align-right">${item.qty}</td><td>${escapeHtml(item.unit)}</td>${showUnitPricing ? `<td class="align-right">${formatCurrencyMarkup(calc.unitSelling, currentCurrency())}</td>` : ""}<td class="align-right"><strong>${formatCurrencyMarkup(calc.totalSelling, currentCurrency())}</strong></td></tr>`; }).join("")}`).join("")}</tbody></table><div class="pdf-preview-total"><div><span>Subtotal</span><strong>${formatCurrencyMarkup(payload.totalSelling, currentCurrency())}</strong></div><div class="grand-total"><span>Grand total</span><strong>${formatCurrencyMarkup(payload.totalSelling, currentCurrency())}</strong></div></div>${payload.notes ? `<div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div>` : ""}${footerText ? `<footer class="pdf-footer">${escapeHtml(footerText)}</footer>` : ""}</div>`;
   }
 
   function updateCatalogHistory() {

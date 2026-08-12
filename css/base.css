@@ -105,6 +105,25 @@ textarea {
   text-align: right;
 }
 
+.currency-accounting {
+  display: inline-grid;
+  width: 100%;
+  min-width: 88px;
+  grid-template-columns: max-content minmax(max-content, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.currency-accounting-symbol {
+  text-align: left;
+}
+
+.currency-accounting-value {
+  text-align: right;
+}
+
 .link {
   color: var(--color-primary);
   font-weight: 600;
