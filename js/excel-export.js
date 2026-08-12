@@ -29,7 +29,7 @@
       USD: '"$"#,##0.00',
       EUR: '"€"#,##0.00',
       GBP: '"£"#,##0.00',
-      IDR: "#,##0",
+      IDR: '"Rp" #,##0',
     };
     return formats[currency] || `"${currency}" #,##0.00`;
   }

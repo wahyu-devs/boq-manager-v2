@@ -86,12 +86,6 @@
     )}`;
   }
 
-  function formatBoqAmount(value, currency = "IDR", decimals) {
-    return currency === "IDR"
-      ? formatNumber(value, decimals ?? 0)
-      : formatCurrency(value, currency, decimals);
-  }
-
   function formatPercent(value) {
     return `${formatNumber(value, 1)}%`;
   }
@@ -175,7 +169,6 @@
     parseNumberInput,
     numberInputEditingValue,
     formatCurrency,
-    formatBoqAmount,
     formatPercent,
     debounce,
     escapeHtml,
