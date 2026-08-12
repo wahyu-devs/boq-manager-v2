@@ -818,10 +818,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.summary-row dd {
-  min-width: 108px;
-}
-
 .summary-input-wrap {
   display: block;
   width: 108px;
