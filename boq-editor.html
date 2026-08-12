@@ -313,11 +313,14 @@
                   <div class="summary-row">
                     <dt>Commission</dt>
                     <dd><label class="summary-input-wrap"><span class="sr-only"
-                        >Commission</span><input
+                        >Commission</span><span
+                          class="summary-input-currency"
+                          data-commission-currency
+                          aria-hidden="true"
+                        >$</span><input
                           class="editor-input numeric"
-                          type="number"
-                          min="0"
-                          step="1"
+                          type="text"
+                          inputmode="decimal"
                           value="0"
                           data-commission
                         ></label></dd>

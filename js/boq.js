@@ -7,6 +7,7 @@
     calculations;
   const {
     formatCurrencyMarkup,
+    formatCurrencyParts,
     formatPercent,
     formatNumberInput,
     parseNumberInput,
@@ -39,6 +40,9 @@
   const mobileList = editor.querySelector("[data-mobile-items]");
   const currencySelect = document.querySelector("#boq-currency");
   const commissionInput = document.querySelector("[data-commission]");
+  const commissionCurrency = document.querySelector(
+    "[data-commission-currency]",
+  );
 
   function catalogRecords() {
     return store.list("products").filter((product) =>
@@ -144,7 +148,6 @@
       categoryOrder = Array.isArray(record.categoryOrder)
         ? record.categoryOrder.slice()
         : [];
-      if (commissionInput) commissionInput.value = commission || "";
       document.querySelector("[data-save-state]").textContent =
         "All changes saved";
     } else {
@@ -152,7 +155,6 @@
       items = [];
       commission = 0;
       categoryOrder = [];
-      if (commissionInput) commissionInput.value = "";
       const today = new Date();
       const validUntil = new Date(today);
       validUntil.setDate(
@@ -163,6 +165,7 @@
       setFormValue("#boq-valid-until", localDate(validUntil));
       setFormValue("#boq-currency", settings.defaultCurrency || "IDR");
     }
+    updateCommissionInput();
     updateEditorHeader();
   }
 
@@ -336,6 +339,7 @@
 
   function updateSummary() {
     const summary = calculateSummary(items, { commission });
+    updateCommissionInput();
     const values = {
       totalCogs: formatCurrencyMarkup(summary.totalCogs, currentCurrency()),
       totalSelling: formatCurrencyMarkup(summary.totalSelling, currentCurrency()),
@@ -347,6 +351,18 @@
         element.innerHTML = value
       )
     );
+  }
+
+  function updateCommissionInput() {
+    if (commissionCurrency) {
+      commissionCurrency.textContent = formatCurrencyParts(
+        commission,
+        currentCurrency(),
+      ).symbol;
+    }
+    if (commissionInput && document.activeElement !== commissionInput) {
+      commissionInput.value = formatNumberInput(commission);
+    }
   }
 
   function documentPayload() {
@@ -894,11 +910,15 @@
     currentView = event.target.value;
     applyViewState();
   });
+  commissionInput?.addEventListener("focus", () => {
+    commissionInput.value = numberInputEditingValue(commission);
+  });
   commissionInput?.addEventListener("input", () => {
-    commission = Math.max(0, Number(commissionInput.value) || 0);
+    commission = Math.max(0, parseNumberInput(commissionInput.value));
     updateSummary();
     markDirty();
   });
+  commissionInput?.addEventListener("blur", updateCommissionInput);
   document.querySelectorAll("#boq-info input, #boq-info select, #boq-info textarea")
     .forEach((input) => input.addEventListener("input", () => {
       updateEditorHeader();

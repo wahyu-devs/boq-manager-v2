@@ -823,13 +823,53 @@
 }
 
 .summary-input-wrap {
-  display: block;
+  display: grid;
   width: 108px;
+  height: 34px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 6px;
+  padding-left: 7px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-secondary);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.summary-input-wrap:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.summary-input-wrap:focus-within {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+.summary-input-currency {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .summary-input-wrap .editor-input {
-  border-color: var(--color-border);
-  background: var(--color-surface-secondary);
+  height: 32px;
+  padding-right: 7px;
+  padding-left: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.summary-input-wrap .editor-input:hover,
+.summary-input-wrap .editor-input:focus {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .summary-total {
