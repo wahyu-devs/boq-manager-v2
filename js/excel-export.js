@@ -233,10 +233,10 @@
     mergeValue(
       sheet,
       `${rightStart}3:${lastColumn}3`,
-      data.document.status === "Draft" ? "DRAFT" : "SENT",
+      "FOR CUSTOMER",
       {
         bold: true,
-        color: data.document.status === "Draft" ? "FF9A641C" : COLORS.primary,
+        color: COLORS.primary,
         size: 8,
         align: "right",
       },
