@@ -236,7 +236,7 @@
       "FOR CUSTOMER",
       {
         bold: true,
-        color: COLORS.primary,
+        color: "FF9A641C",
         size: 8,
         align: "right",
       },
