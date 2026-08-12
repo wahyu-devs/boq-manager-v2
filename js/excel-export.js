@@ -760,7 +760,7 @@
       size: 10,
       align: "right",
     });
-    mergeValue(sheet, "E3:F3", "INTERNAL WORKING FILE", {
+    mergeValue(sheet, "E3:F3", "INTERNAL - NOT FOR CUSTOMER", {
       bold: true,
       color: "FF9A641C",
       size: 8,
