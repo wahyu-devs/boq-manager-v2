@@ -1658,6 +1658,10 @@
   text-align: right;
 }
 
+.pdf-preview-table .pdf-total-column {
+  width: 160px;
+}
+
 .pdf-preview-total {
   width: 280px;
   margin: 22px 0 0 auto;
@@ -1670,7 +1674,8 @@
 }
 
 .pdf-preview-total strong {
-  width: 160px;
+  width: 144px;
+  margin-right: 8px;
 }
 
 .pdf-preview-total .grand-total {

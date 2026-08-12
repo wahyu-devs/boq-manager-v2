@@ -14,6 +14,8 @@
   };
   const PAGE_MARGIN = 12;
   const TABLE_WIDTH = 186;
+  const TABLE_CELL_PADDING = 2.1;
+  const TOTAL_COLUMN_WIDTH = 31;
 
   function imageType(source) {
     return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
@@ -165,7 +167,7 @@
       key: "totalSelling",
       label: "TOTAL",
       align: "right",
-      width: 31,
+      width: TOTAL_COLUMN_WIDTH,
     });
     const fixedWidth = columns.reduce(
       (sum, column) => sum + Number(column.width || 0),
@@ -194,10 +196,10 @@
     const { cell } = cellData;
     const leftPadding = typeof cell.padding === "function"
       ? cell.padding("left")
-      : 2.1;
+      : TABLE_CELL_PADDING;
     const rightPadding = typeof cell.padding === "function"
       ? cell.padding("right")
-      : 2.1;
+      : TABLE_CELL_PADDING;
     const textPosition = typeof cell.getTextPos === "function"
       ? cell.getTextPos()
       : { y: cell.y + cell.height / 2 + 1 };
@@ -307,7 +309,9 @@
     const contentBottom = pageHeight - reserve;
     const totalWidth = 68;
     const totalX = pageWidth - PAGE_MARGIN - totalWidth;
-    const amountX = pageWidth - PAGE_MARGIN - 38;
+    const amountRightX = pageWidth - PAGE_MARGIN - TABLE_CELL_PADDING;
+    const amountX = amountRightX - TOTAL_COLUMN_WIDTH +
+      TABLE_CELL_PADDING * 2;
     let y = ensureSpace(doc, startY, 16, contentBottom);
     const total = formatCurrencyParts(
       data.document.totalSelling,
@@ -321,7 +325,7 @@
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...COLORS.ink);
     doc.text(total.symbol, amountX, y + 3.5);
-    doc.text(total.value, pageWidth - PAGE_MARGIN, y + 3.5, {
+    doc.text(total.value, amountRightX, y + 3.5, {
       align: "right",
     });
 
@@ -332,7 +336,7 @@
     doc.setFontSize(10.5);
     doc.text("Grand total", totalX, grandLineY + 5.8);
     doc.text(total.symbol, amountX, grandLineY + 5.8);
-    doc.text(total.value, pageWidth - PAGE_MARGIN, grandLineY + 5.8, {
+    doc.text(total.value, amountRightX, grandLineY + 5.8, {
       align: "right",
     });
     y += 16;
@@ -412,7 +416,12 @@
         textColor: COLORS.tableHeadText,
         fontStyle: "bold",
         fontSize: 6.75,
-        cellPadding: { top: 2.1, right: 2.1, bottom: 2.1, left: 2.1 },
+        cellPadding: {
+          top: TABLE_CELL_PADDING,
+          right: TABLE_CELL_PADDING,
+          bottom: TABLE_CELL_PADDING,
+          left: TABLE_CELL_PADDING,
+        },
       },
       styles: {
         font: "helvetica",
@@ -420,7 +429,12 @@
         textColor: COLORS.body,
         fillColor: COLORS.white,
         lineWidth: 0,
-        cellPadding: { top: 2.1, right: 2.1, bottom: 2.1, left: 2.1 },
+        cellPadding: {
+          top: TABLE_CELL_PADDING,
+          right: TABLE_CELL_PADDING,
+          bottom: TABLE_CELL_PADDING,
+          left: TABLE_CELL_PADDING,
+        },
         overflow: "linebreak",
         valign: "middle",
       },
