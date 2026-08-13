@@ -7,8 +7,8 @@
     primarySoft: "FFE9F1F7",
     surface: "FFF5F7F9",
     border: "FFDCE2E8",
-    warm: "FFE9F1F7",
-    input: "FFEFF2F5",
+    warm: "FFFBF1DF",
+    input: "FFFFF8E8",
     white: "FFFFFFFF",
   };
   const FONT = "Arial";
