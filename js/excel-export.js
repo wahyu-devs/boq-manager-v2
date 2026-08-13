@@ -27,6 +27,34 @@
     return result;
   }
 
+  function itemCategory(item) {
+    return item.category || "Uncategorized";
+  }
+
+  function orderedExportData(data) {
+    const items = Array.isArray(data.items) ? data.items : [];
+    const requestedCategories = Array.isArray(data.categories)
+      ? data.categories
+      : [];
+    const presentCategories = [...new Set(items.map(itemCategory))];
+    const categories = [
+      ...requestedCategories.filter((category, index) =>
+        presentCategories.includes(category) &&
+        requestedCategories.indexOf(category) === index
+      ),
+      ...presentCategories.filter((category) =>
+        !requestedCategories.includes(category)
+      ),
+    ];
+    return {
+      ...data,
+      categories,
+      items: categories.flatMap((category) =>
+        items.filter((item) => itemCategory(item) === category)
+      ),
+    };
+  }
+
   function currencyFormat(currency) {
     const symbols = { USD: "$", EUR: "€", GBP: "£", IDR: "Rp" };
     const symbol = String(symbols[currency] || currency).replaceAll('"', '""');
@@ -383,7 +411,7 @@
     sheet.getRow(8).height = 20;
   }
 
-  function addQuotationSheet(workbook, data, targetSheet, logo) {
+  function addQuotationSheet(workbook, data, targetSheet, logo, costing) {
     const { calculateItem } = window.BOQCalculations;
     const columns = quotationColumns(data.settings);
     const sheet = targetSheet || workbook.addWorksheet("BOQ");
@@ -403,7 +431,7 @@
       rowNumber += 1;
       sheet.getCell(rowNumber, 1).value = category;
       styleCategoryRow(sheet, rowNumber, columns.length);
-      data.items.filter((item) => item.category === category).forEach(
+      data.items.filter((item) => itemCategory(item) === category).forEach(
         (item) => {
           rowNumber += 1;
           itemIndex += 1;
@@ -436,6 +464,12 @@
               } else {
                 cell.value = calculation.totalSelling;
               }
+            } else if (column.key === "unitSelling" &&
+              costing?.itemRows?.[itemIndex - 1]) {
+              cell.value = {
+                formula: `='Costing'!I${costing.itemRows[itemIndex - 1]}`,
+                result: calculation.unitSelling,
+              };
             } else {
               cell.value = values[column.key];
             }
@@ -630,9 +664,11 @@
     const moneyFormat = currencyFormat(data.document.currency);
     const firstDataRow = 6;
     let rowNumber = 5;
+    const itemRows = [];
 
     data.items.forEach((item, index) => {
       rowNumber += 1;
+      itemRows.push(rowNumber);
       const calculation = calculateItem(item);
       const manualOverride = calculation.isManualSelling
         ? Number(item.sellingOverride)
@@ -789,7 +825,14 @@
     sheet.pageSetup.printArea = `A1:K${marginRow}`;
     sheet.pageSetup.printTitlesRow = "5:5";
     sheet.headerFooter.oddFooter = `&LInternal costing&RPage &P of &N`;
-    return { sheet, totalRow, commissionRow, profitRow, marginRow };
+    return {
+      sheet,
+      itemRows,
+      totalRow,
+      commissionRow,
+      profitRow,
+      marginRow,
+    };
   }
 
   function addOverviewSheet(workbook, data, costing, targetSheet, logo) {
@@ -1039,6 +1082,7 @@
   }
 
   async function download(data, mode, downloadBlob, safeFilename) {
+    data = orderedExportData(data);
     const workbook = new window.ExcelJS.Workbook();
     const logo = await prepareWorkbookLogo(data.settings);
     const projectName = data.document.projectName || "Bill of Quantities";
@@ -1059,7 +1103,7 @@
       const costingSheet = workbook.addWorksheet("Costing");
       const costing = addCostingSheet(workbook, data, costingSheet);
       addOverviewSheet(workbook, data, costing, overviewSheet, logo);
-      addQuotationSheet(workbook, data, quotationSheet, logo);
+      addQuotationSheet(workbook, data, quotationSheet, logo, costing);
     } else {
       addQuotationSheet(workbook, data, undefined, logo);
     }
