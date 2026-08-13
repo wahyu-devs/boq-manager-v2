@@ -23,7 +23,7 @@
 }
 
 .brand-name {
-  color: #f2f6f4;
+  color: #f5f7f9;
   font-size: 15px;
   font-weight: 680;
   letter-spacing: -0.01em;
@@ -68,12 +68,12 @@
 }
 
 .nav-link[aria-current="page"] {
-  background: #34463f;
+  background: #30445a;
   color: #fff;
 }
 
 [data-theme="dark"] .nav-link[aria-current="page"] {
-  background: #293a34;
+  background: #263a4d;
 }
 
 .nav-icon,
@@ -108,8 +108,8 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  background: #d6e6df;
-  color: #244f43;
+  background: #d9e7f1;
+  color: #2a526f;
   font-size: 11px;
   font-weight: 750;
   line-height: 1;
@@ -121,13 +121,18 @@
 }
 
 .user-card > div strong {
-  color: #eef3f1;
+  color: #eff2f5;
   font-size: 12px;
 }
 
 .user-card > div span {
   color: var(--color-sidebar-muted);
   font-size: 11px;
+}
+
+[data-theme="dark"] .avatar {
+  background: #294154;
+  color: #c1dced;
 }
 
 .app-column {

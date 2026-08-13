@@ -31,7 +31,7 @@
 }
 
 [data-theme="dark"] .button-primary {
-  color: #10241d;
+  color: #10202c;
 }
 
 .button-primary:hover {
@@ -1019,7 +1019,7 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(12, 17, 15, 0.52);
+  background: rgba(13, 19, 26, 0.52);
   animation: fade-in 150ms ease;
 }
 
@@ -1507,7 +1507,7 @@
 .pdf-company {
   display: block;
   margin-bottom: 8px;
-  color: #274c40;
+  color: #2d6089;
   font-size: 15px;
   letter-spacing: 0.06em;
 }
@@ -1536,7 +1536,7 @@
 
 .pdf-parties span {
   margin-bottom: 4px;
-  color: #68716d;
+  color: #697582;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1545,25 +1545,25 @@
 
 .pdf-parties small {
   margin-top: 3px;
-  color: #68716d;
+  color: #697582;
 }
 
 .pdf-notes {
   margin-top: 26px;
   padding-top: 14px;
-  border-top: 1px solid #d8ddda;
+  border-top: 1px solid #dce2e8;
 }
 
 .pdf-notes p {
   margin-top: 5px;
-  color: #4f5954;
+  color: #697582;
 }
 
 .pdf-footer {
   margin-top: 34px;
   padding-top: 10px;
-  border-top: 1px solid #d8ddda;
-  color: #737d78;
+  border-top: 1px solid #dce2e8;
+  color: #8a96a2;
   font-size: 9px;
   text-align: center;
 }
@@ -1671,7 +1671,7 @@
 .pdf-preview {
   padding: 34px;
   background: #fff;
-  color: #252a28;
+  color: #202832;
   font-size: 11px;
 }
 
@@ -1680,13 +1680,13 @@
   justify-content: space-between;
   gap: 24px;
   padding-bottom: 22px;
-  border-bottom: 2px solid #273f37;
+  border-bottom: 2px solid #2d6089;
 }
 
 .pdf-preview h2,
 .pdf-preview h3,
 .pdf-preview strong {
-  color: #202724;
+  color: #202832;
 }
 
 .pdf-preview-table {
@@ -1697,13 +1697,13 @@
 .pdf-preview-table th,
 .pdf-preview-table td {
   padding: 8px;
-  border-bottom: 1px solid #d8ddda;
+  border-bottom: 1px solid #dce2e8;
   text-align: left;
 }
 
 .pdf-preview-table th {
-  background: #edf1ef;
-  color: #4a554f;
+  background: #eff2f5;
+  color: #697582;
   font-size: 9px;
   text-transform: uppercase;
 }
@@ -1735,7 +1735,7 @@
 .pdf-preview-total .grand-total {
   margin-top: 5px;
   padding-top: 10px;
-  border-top: 2px solid #273f37;
+  border-top: 2px solid #2d6089;
   font-size: 14px;
   font-weight: 750;
 }

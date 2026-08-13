@@ -1,15 +1,15 @@
 (function definePdfExport() {
   const COLORS = {
-    ink: [32, 39, 36],
-    body: [37, 42, 40],
-    company: [39, 76, 64],
-    heading: [39, 63, 55],
-    muted: [104, 113, 109],
-    note: [79, 89, 84],
-    footer: [115, 125, 120],
-    tableHead: [237, 241, 239],
-    tableHeadText: [74, 85, 79],
-    border: [216, 221, 218],
+    ink: [32, 40, 50],
+    body: [32, 40, 50],
+    company: [45, 96, 137],
+    heading: [45, 96, 137],
+    muted: [105, 117, 130],
+    note: [105, 117, 130],
+    footer: [138, 150, 162],
+    tableHead: [239, 242, 245],
+    tableHeadText: [105, 117, 130],
+    border: [220, 226, 232],
     white: [255, 255, 255],
   };
   const PAGE_MARGIN = 12;
