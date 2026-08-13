@@ -260,23 +260,29 @@
     const lastColumn = columnLetter(columnCount);
     const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
       col: 0.05,
+      row: 0.05,
       width: 112,
       height: 52,
     });
-    const splitColumn = Math.max(hasLogo ? 4 : 3, columnCount - 2);
+    const splitColumn = Math.max(3, columnCount - 2);
     const splitLetter = columnLetter(splitColumn);
     const rightStart = columnLetter(splitColumn + 1);
-    const companyStart = hasLogo ? "C" : "A";
+    const companyNameRange = hasLogo
+      ? `A3:${splitLetter}3`
+      : `A1:${splitLetter}1`;
+    const companyDetailsRange = hasLogo
+      ? `A4:${splitLetter}4`
+      : `A2:${splitLetter}3`;
 
     mergeValue(
       sheet,
-      `${companyStart}1:${splitLetter}1`,
+      companyNameRange,
       data.settings.companyName || "Company information not configured",
       { bold: true, color: COLORS.primaryDark, size: 15 },
     );
     mergeValue(
       sheet,
-      `${companyStart}2:${splitLetter}3`,
+      companyDetailsRange,
       companyDetails(data.settings),
       { color: COLORS.muted, size: 8, vertical: "top" },
     );
@@ -305,7 +311,8 @@
     );
     sheet.getRow(1).height = 25;
     sheet.getRow(2).height = 18;
-    sheet.getRow(3).height = 24;
+    sheet.getRow(3).height = hasLogo ? 22 : 24;
+    if (hasLogo) sheet.getRow(4).height = 34;
     sheet.getRow(5).height = 4;
     for (let column = 1; column <= columnCount; column += 1) {
       sheet.getRow(5).getCell(column).fill = {
