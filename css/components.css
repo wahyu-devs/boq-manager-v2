@@ -1506,65 +1506,95 @@
 
 .pdf-company {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
   color: #2d6089;
   font-size: 15px;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .pdf-company-logo {
+  display: block;
   width: auto;
-  max-width: 150px;
-  height: 42px;
-  margin-bottom: 10px;
+  max-width: 144px;
+  height: auto;
+  max-height: 64px;
   object-fit: contain;
   object-position: left center;
 }
 
+.pdf-preview-logo-slot {
+  display: flex;
+  height: 70px;
+  align-items: flex-start;
+}
+
+.pdf-preview-company p {
+  margin: 0;
+  color: #697582;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
 .pdf-parties {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  padding: 20px 0 0;
+  min-height: 74px;
+  grid-template-columns: 24% 55% 21%;
+  background: #f5f7f9;
+}
+
+.pdf-parties > div {
+  min-width: 0;
+  padding: 8px 9px;
 }
 
 .pdf-parties span,
-.pdf-parties strong,
-.pdf-parties small {
+.pdf-parties strong {
   display: block;
 }
 
 .pdf-parties span {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: #697582;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.pdf-parties small {
-  margin-top: 3px;
-  color: #697582;
+.pdf-parties strong {
+  color: #202832;
+  font-size: 11px;
+  line-height: 1.25;
 }
 
 .pdf-notes {
-  margin-top: 26px;
-  padding-top: 14px;
-  border-top: 1px solid #dce2e8;
+  margin-top: 28px;
+  color: #697582;
+}
+
+.pdf-notes > strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #697582;
+  font-size: 8px;
+  text-transform: uppercase;
 }
 
 .pdf-notes p {
-  margin-top: 5px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px;
+  background: #f5f7f9;
   color: #697582;
+  line-height: 1.45;
 }
 
 .pdf-footer {
   margin-top: 34px;
-  padding-top: 10px;
+  padding-top: 7px;
   border-top: 1px solid #dce2e8;
   color: #8a96a2;
-  font-size: 9px;
+  font-size: 8px;
   text-align: center;
 }
 
@@ -1672,72 +1702,184 @@
   padding: 34px;
   background: #fff;
   color: #202832;
+  font-family: Arial, sans-serif;
   font-size: 11px;
 }
 
-.pdf-preview-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  padding-bottom: 22px;
-  border-bottom: 2px solid #2d6089;
+.pdf-preview-content {
+  width: 100%;
+  min-height: 760px;
 }
 
-.pdf-preview h2,
-.pdf-preview h3,
-.pdf-preview strong {
-  color: #202832;
+.pdf-preview-header {
+  display: grid;
+  min-height: 116px;
+  grid-template-columns: minmax(0, 1fr) 255px;
+  gap: 30px;
+}
+
+.pdf-preview-document {
+  text-align: right;
+}
+
+.pdf-preview-document h2 {
+  margin: 0 0 7px;
+  color: #2d6089;
+  font-size: 18px;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.pdf-preview-document > strong {
+  display: block;
+  margin-bottom: 11px;
+  font-size: 12px;
+}
+
+.pdf-preview-document > span {
+  display: block;
+  color: #9a641c;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.pdf-preview-divider {
+  height: 5px;
+  background: #356f9e;
 }
 
 .pdf-preview-table {
+  --pdf-no-width: 5.5%;
+  --pdf-part-number-width: 14.2%;
+  --pdf-item-width: 33.1%;
+  --pdf-qty-width: 7.9%;
+  --pdf-unit-width: 9.4%;
+  --pdf-unit-price-width: 14.2%;
+  --pdf-total-width: 15.7%;
   width: 100%;
   margin-top: 24px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.pdf-preview-table:not(.has-part-number) {
+  --pdf-no-width: 6.4%;
+  --pdf-item-width: 38.5%;
+  --pdf-qty-width: 9.2%;
+  --pdf-unit-width: 11%;
+  --pdf-unit-price-width: 16.5%;
+  --pdf-total-width: 18.4%;
+}
+
+.pdf-preview-table:not(.has-unit-price) {
+  --pdf-no-width: 6.4%;
+  --pdf-part-number-width: 16.5%;
+  --pdf-item-width: 38.6%;
+  --pdf-qty-width: 9.2%;
+  --pdf-unit-width: 11%;
+  --pdf-total-width: 18.3%;
+}
+
+.pdf-preview-table:not(.has-part-number):not(.has-unit-price) {
+  --pdf-no-width: 7.5%;
+  --pdf-item-width: 45.8%;
+  --pdf-qty-width: 10.9%;
+  --pdf-unit-width: 13.1%;
+  --pdf-total-width: 22.7%;
 }
 
 .pdf-preview-table th,
 .pdf-preview-table td {
-  padding: 8px;
+  height: 31px;
+  padding: 6px 8px;
   border-bottom: 1px solid #dce2e8;
   text-align: left;
+  vertical-align: middle;
 }
 
 .pdf-preview-table th {
-  background: #eff2f5;
-  color: #697582;
+  height: 34px;
+  background: #356f9e;
+  color: #fff;
   font-size: 9px;
-  text-transform: uppercase;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pdf-preview-table .pdf-column-no {
+  width: var(--pdf-no-width);
+  text-align: center;
+}
+
+.pdf-preview-table .pdf-column-part-number {
+  width: var(--pdf-part-number-width);
+}
+
+.pdf-preview-table .pdf-column-item {
+  width: var(--pdf-item-width);
+}
+
+.pdf-preview-table .pdf-column-qty {
+  width: var(--pdf-qty-width);
+}
+
+.pdf-preview-table .pdf-column-unit {
+  width: var(--pdf-unit-width);
+  text-align: center;
+}
+
+.pdf-preview-table .pdf-column-unit-price {
+  width: var(--pdf-unit-price-width);
+}
+
+.pdf-preview-table .pdf-total-column {
+  width: var(--pdf-total-width);
+}
+
+.pdf-preview-table .pdf-category td {
+  height: 30px;
+  background: #e9f1f7;
+  color: #2d6089;
+  text-align: left;
+}
+
+.pdf-preview-table .pdf-category strong {
+  color: #2d6089;
+}
+
+.pdf-preview-table .pdf-empty-row td {
+  height: 48px;
+  background: #f5f7f9;
+  color: #697582;
+  text-align: left;
 }
 
 .pdf-preview-table .align-right {
   text-align: right;
 }
 
-.pdf-preview-table .pdf-total-column {
-  width: 160px;
-}
-
 .pdf-preview-total {
-  width: 280px;
-  margin: 22px 0 0 auto;
+  display: grid;
+  width: 39.3%;
+  min-height: 40px;
+  grid-template-columns: 58.1% 41.9%;
+  align-items: center;
+  margin: 23px 0 0 auto;
+  background: #e9f1f7;
+  color: #2d6089;
+  font-weight: 700;
 }
 
-.pdf-preview-total div {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
+.pdf-preview-total > span {
+  padding: 0 10px;
+  text-align: right;
+  text-transform: uppercase;
 }
 
-.pdf-preview-total strong {
-  width: 144px;
-  margin-right: 8px;
-}
-
-.pdf-preview-total .grand-total {
-  margin-top: 5px;
-  padding-top: 10px;
-  border-top: 2px solid #2d6089;
+.pdf-preview-total > strong {
+  padding: 0 8px;
+  color: #2d6089;
   font-size: 14px;
-  font-weight: 750;
 }
 
 @media print {

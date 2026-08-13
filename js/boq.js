@@ -650,7 +650,7 @@
     const showUnitPricing = settings.showUnitPricing !== false;
     const columnCount = 5 + Number(showPartNumber) + Number(showUnitPricing);
     const contactDetails = [settings.email, settings.phone]
-      .filter(Boolean).map(escapeHtml).join(" · ");
+      .filter(Boolean).map(escapeHtml).join(" | ");
     const companyDetails = [
       settings.registrationNumber
         ? `Registration no.: ${escapeHtml(settings.registrationNumber)}`
@@ -664,12 +664,70 @@
       ? `<img class="pdf-company-logo" src="${settings.companyLogo}" alt="">`
       : "";
     const footerText = String(settings.footerText || "").trim();
-    const partNumberHeader = showPartNumber ? "<th>Part number</th>" : "";
-    const unitPriceHeader = showUnitPricing
-      ? '<th class="align-right">Unit price</th>'
+    const partNumberHeader = showPartNumber
+      ? '<th class="pdf-column-part-number">Part Number</th>'
       : "";
+    const unitPriceHeader = showUnitPricing
+      ? '<th class="align-right pdf-column-unit-price">Unit Price</th>'
+      : "";
+    const tableClasses = [
+      "pdf-preview-table",
+      showPartNumber ? "has-part-number" : "",
+      showUnitPricing ? "has-unit-price" : "",
+    ].filter(Boolean).join(" ");
     let rowIndex = 0;
-    host.innerHTML = `<div class="pdf-preview-content"><header class="pdf-preview-header"><div>${companyLogo}<strong class="pdf-company">${escapeHtml(settings.companyName || "Company information not configured")}</strong><p>${companyDetails}</p></div><div class="align-right"><h2>Bill of Quantities</h2><p><strong>${escapeHtml(payload.number)}</strong><br>Date: ${escapeHtml(payload.date)}<br>Valid until: ${escapeHtml(payload.validUntil)}</p></div></header><div class="pdf-parties"><div><span>Prepared for</span><strong>${escapeHtml(payload.customerName || "—")}</strong></div><div><span>Project</span><strong>${escapeHtml(payload.projectName || "—")}</strong></div></div><table class="pdf-preview-table"><thead><tr><th>#</th>${partNumberHeader}<th>Item</th><th class="align-right">Qty</th><th>Unit</th>${unitPriceHeader}<th class="align-right pdf-total-column">Total</th></tr></thead><tbody>${categories().map((category) => `<tr class="pdf-category"><td colspan="${columnCount}"><strong>${escapeHtml(category)}</strong></td></tr>${items.filter((item) => item.category === category).map((item) => { const calc = calculateItem(item); return `<tr><td>${++rowIndex}</td>${showPartNumber ? `<td>${escapeHtml(item.sku || "")}</td>` : ""}<td><strong>${escapeHtml(item.item)}</strong></td><td class="align-right">${item.qty}</td><td>${escapeHtml(item.unit)}</td>${showUnitPricing ? `<td class="align-right">${formatCurrencyMarkup(calc.unitSelling, currentCurrency())}</td>` : ""}<td class="align-right pdf-total-column"><strong>${formatCurrencyMarkup(calc.totalSelling, currentCurrency())}</strong></td></tr>`; }).join("")}`).join("")}</tbody></table><div class="pdf-preview-total"><div><span>Subtotal</span><strong>${formatCurrencyMarkup(payload.totalSelling, currentCurrency())}</strong></div><div class="grand-total"><span>Grand total</span><strong>${formatCurrencyMarkup(payload.totalSelling, currentCurrency())}</strong></div></div>${payload.notes ? `<div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div>` : ""}${footerText ? `<footer class="pdf-footer">${escapeHtml(footerText)}</footer>` : ""}</div>`;
+    const itemRows = categories().map((category) => {
+      const rows = items.filter((item) =>
+        (item.category || "Uncategorized") === category
+      ).map((item) => {
+        const calculation = calculateItem(item);
+        return `<tr><td class="pdf-column-no">${++rowIndex}</td>${
+          showPartNumber
+            ? `<td class="pdf-column-part-number">${escapeHtml(item.sku || "")}</td>`
+            : ""
+        }<td class="pdf-column-item">${escapeHtml(item.item)}</td><td class="align-right pdf-column-qty">${
+          escapeHtml(item.qty)
+        }</td><td class="pdf-column-unit">${escapeHtml(item.unit)}</td>${
+          showUnitPricing
+            ? `<td class="align-right pdf-column-unit-price">${
+              formatCurrencyMarkup(calculation.unitSelling, currentCurrency())
+            }</td>`
+            : ""
+        }<td class="align-right pdf-total-column">${
+          formatCurrencyMarkup(calculation.totalSelling, currentCurrency())
+        }</td></tr>`;
+      }).join("");
+      return `<tr class="pdf-category"><td colspan="${columnCount}"><strong>${
+        escapeHtml(category)
+      }</strong></td></tr>${rows}`;
+    }).join("");
+    const tableRows = itemRows ||
+      `<tr class="pdf-empty-row"><td colspan="${columnCount}">No BOQ items</td></tr>`;
+    host.innerHTML = `<div class="pdf-preview-content${companyLogo ? " has-company-logo" : ""}"><header class="pdf-preview-header"><div class="pdf-preview-company">${
+      companyLogo ? `<div class="pdf-preview-logo-slot">${companyLogo}</div>` : ""
+    }<strong class="pdf-company">${
+      escapeHtml(settings.companyName || "Company information not configured")
+    }</strong><p>${companyDetails}</p></div><div class="pdf-preview-document"><h2>Bill of Quantities</h2><strong>${
+      escapeHtml(payload.number || "BOQ")
+    }</strong><span>FOR CUSTOMER</span></div></header><div class="pdf-preview-divider" aria-hidden="true"></div><div class="pdf-parties"><div><span>Prepared for</span><strong>${
+      escapeHtml(payload.customerName || "-")
+    }</strong></div><div><span>Project</span><strong>${
+      escapeHtml(payload.projectName || "-")
+    }</strong></div><div><span>Issued / Valid Until</span><strong>${
+      escapeHtml(payload.date || "-")
+    }</strong><strong>${
+      escapeHtml(payload.validUntil || "-")
+    }</strong></div></div><table class="${tableClasses}"><thead><tr><th class="pdf-column-no">No</th>${partNumberHeader}<th class="pdf-column-item">Item</th><th class="align-right pdf-column-qty">Qty</th><th class="pdf-column-unit">Unit</th>${unitPriceHeader}<th class="align-right pdf-total-column">Total</th></tr></thead><tbody>${tableRows}</tbody></table><div class="pdf-preview-total"><span>Grand Total</span><strong>${
+      formatCurrencyMarkup(payload.totalSelling, currentCurrency())
+    }</strong></div>${
+      payload.notes
+        ? `<div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div>`
+        : ""
+    }${
+      footerText
+        ? `<footer class="pdf-footer">${escapeHtml(footerText)}</footer>`
+        : ""
+    }</div>`;
   }
 
   function updateCatalogHistory() {
