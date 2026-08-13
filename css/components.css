@@ -1142,6 +1142,133 @@
   padding: 18px;
 }
 
+.notice {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: var(--color-surface-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notice-warning {
+  border-color: color-mix(in srgb, var(--color-warning) 38%, var(--color-border));
+  color: var(--color-text);
+}
+
+.revision-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.revision-compare {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.revision-compare-controls {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 1fr) auto;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.revision-compare-result {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.revision-change {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+}
+
+.revision-change span,
+.revision-change strong {
+  display: block;
+}
+
+.revision-change span {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.revision-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.revision-entry-main,
+.revision-entry-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.revision-entry-main {
+  flex-wrap: wrap;
+}
+
+.revision-entry-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.revision-entry-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.revision-entry.is-voided {
+  background: var(--color-surface-secondary);
+}
+
+.revision-entry.is-voided .revision-entry-main > strong {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.editor-readonly .editor-table input,
+.editor-readonly .editor-table select,
+.editor-readonly .mobile-item-list input,
+.editor-readonly .mobile-item-list select {
+  color: var(--color-text);
+  cursor: default;
+}
+
+@media (max-width: 767px) {
+  .revision-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .revision-compare-controls,
+  .revision-compare-result {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .revision-entry-actions {
+    justify-content: flex-start;
+  }
+}
+
 .modal-footer {
   border-top: 1px solid var(--color-border);
 }

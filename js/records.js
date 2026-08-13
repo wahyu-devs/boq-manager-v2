@@ -23,6 +23,10 @@
   const table = document.querySelector("[data-records-table]");
   const empty = document.querySelector("[data-records-empty]");
 
+  function displayBoqs() {
+    return list("boqs").map(window.BOQStore.issuedBoqView);
+  }
+
   function statusClass(status) {
     const map = {
       Draft: "draft",
@@ -51,6 +55,7 @@
   }
 
   function renderBoq(record) {
+    record = window.BOQStore.issuedBoqView(record);
     record = {
       ...record,
       status: record.status === "Sent" ? "Sent" : "Draft",
@@ -64,6 +69,20 @@
       record.customerName,
     ].filter(Boolean).join(" ");
     const margin = formatPercent(record.marginPercent || 0);
+    const revision = record.activeRevisionNumber === null ||
+        record.activeRevisionNumber === undefined
+      ? ""
+      : window.BOQStore.revisionLabel(record.activeRevisionNumber);
+    const draftChanges = record.workingRevision !== null
+      ? `<span class="cell-secondary">${escapeHtml(
+        window.BOQStore.revisionLabel(record.workingRevision),
+      )} draft changes</span>`
+      : "";
+    const deleteAction = record.status === "Draft" && !record.revisions?.length
+      ? `<button class="menu-item danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete ${
+        escapeHtml(record.number || "this BOQ")
+      }?" data-confirm-message="This draft BOQ and its line items will be permanently removed.">Delete</button>`
+      : "";
     return {
       row: `<tr data-table-row data-record-id="${record.id}" data-search="${
         escapeHtml(search)
@@ -83,7 +102,7 @@
         encodeURIComponent(record.id)
       }">${
         escapeHtml(record.number || "Untitled")
-      }</a></td><td>${escapeHtml(record.projectName || "—")}</td><td>${
+      }</a>${revision ? `<span class="cell-secondary">${escapeHtml(revision)}</span>` : ""}</td><td>${escapeHtml(record.projectName || "—")}${draftChanges}</td><td>${
         escapeHtml(record.customerName || "—")
       }</td><td>${
         statusHtml(record.status)
@@ -97,9 +116,7 @@
         encodeURIComponent(record.id)
       }" aria-label="Edit ${
         escapeHtml(record.number || "BOQ")
-      }">✎</a><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-record-action="preview" data-record-id="${record.id}" data-open-modal="record-detail-modal">Preview</button><button class="menu-item" type="button" data-record-action="duplicate" data-record-id="${record.id}">Duplicate</button><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=excel">Export Excel</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=pdf">Download PDF</a><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete ${
-        escapeHtml(record.number || "this BOQ")
-      }?" data-confirm-message="This BOQ and its line items will be permanently removed.">Delete</button></div></div></div></td></tr>`,
+      }">✎</a><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-record-action="preview" data-record-id="${record.id}" data-open-modal="record-detail-modal">Preview</button><button class="menu-item" type="button" data-record-action="duplicate" data-record-id="${record.id}">Duplicate</button><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&history=1">Revision history</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=excel">Export Excel</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=pdf">Download PDF</a>${deleteAction}</div></div></div></td></tr>`,
       card:
         `<article class="record-card" data-record-card data-record-id="${record.id}" data-search="${
           escapeHtml(search)
@@ -113,7 +130,7 @@
           encodeURIComponent(record.id)
         }">${
           escapeHtml(record.number || "Untitled")
-        }</a><div class="muted text-sm">${
+        }</a>${revision ? `<div class="muted text-sm">${escapeHtml(revision)}</div>` : ""}<div class="muted text-sm">${
           escapeHtml(record.projectName || "No project")
         }</div></div>${
           statusHtml(record.status)
@@ -127,7 +144,7 @@
           dateText(record.updatedAt)
         }</span><a class="button button-secondary button-sm" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
-        }">Edit</a></div></article>`,
+        }">${record.status === "Sent" && record.workingRevision === null ? "View" : "Edit"}</a></div></article>`,
     };
   }
 
@@ -199,7 +216,7 @@
       record.email,
       record.phone,
     ].filter(Boolean).join(" ");
-    const customerBoqs = list("boqs").filter((boq) =>
+    const customerBoqs = displayBoqs().filter((boq) =>
       boq.customerId === record.id
     );
     const projectCount = new Set(customerBoqs.map((boq) =>
@@ -269,7 +286,7 @@
     const projectFilter = document.querySelector("[data-project-filter]");
     if (projectFilter) {
       const current = projectFilter.value;
-      const projectNames = [...new Set(list("boqs").map((record) =>
+      const projectNames = [...new Set(displayBoqs().map((record) =>
         record.projectName
       ).filter(Boolean))].sort((a, b) => a.localeCompare(b));
       projectFilter.innerHTML = '<option value="">All projects</option>' +
@@ -382,6 +399,11 @@
     const host = document.querySelector("[data-record-detail]");
     if (!host || !record) return;
     if (collection === "boqs") {
+      record = window.BOQStore.issuedBoqView(record);
+      const revision = record.activeRevisionNumber === null ||
+          record.activeRevisionNumber === undefined
+        ? ""
+        : window.BOQStore.revisionLabel(record.activeRevisionNumber);
       const summary = window.BOQCalculations.calculateSummary(
         record.items || [],
         { commission: record.commission },
@@ -395,13 +417,15 @@
           escapeHtml(record.customerName || "—")
         }</dd></div><div class="cluster space-between"><dt class="muted">Status</dt><dd>${
           statusHtml(record.status)
+        }</dd></div><div class="cluster space-between"><dt class="muted">Revision</dt><dd>${
+          escapeHtml(revision || "Not issued")
         }</dd></div><div class="cluster space-between"><dt class="muted">Items</dt><dd>${
           record.items?.length || 0
         }</dd></div><div class="cluster space-between"><dt class="muted">Total selling</dt><dd class="text-medium">${
           formatCurrencyMarkup(summary.totalSelling, record.currency || defaultCurrency)
         }</dd></div></dl></div>`;
     } else if (collection === "customers") {
-      const relatedBoqs = list("boqs").filter((boq) =>
+      const relatedBoqs = displayBoqs().filter((boq) =>
         boq.customerId === record.id
       );
       const projectCount = new Set(relatedBoqs.map((boq) =>
@@ -464,6 +488,11 @@
         updatedAt: undefined,
         number: nextNumber("boqs", "BOQ"),
         status: "Draft",
+        revisions: [],
+        activeRevisionNumber: null,
+        workingRevision: null,
+        hasDraftChanges: false,
+        issuedAt: undefined,
       };
       save(collection, duplicate);
       render();
@@ -473,6 +502,15 @@
   });
 
   document.addEventListener("records:delete", (event) => {
+    const record = get(collection, event.detail.targetId);
+    if (collection === "boqs" &&
+        (record?.status === "Sent" || record?.revisions?.length)) {
+      window.BOQApp.showToast(
+        "Issued BOQs cannot be deleted. Void the latest revision instead.",
+        "error",
+      );
+      return;
+    }
     remove(collection, event.detail.targetId);
     render();
     document.dispatchEvent(new CustomEvent("records:changed"));

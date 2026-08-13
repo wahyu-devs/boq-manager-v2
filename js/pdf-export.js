@@ -20,6 +20,17 @@
   const TABLE_CELL_PADDING = 2.1;
   const TOTAL_COLUMN_WIDTH = 31;
 
+  function documentReference(documentValue) {
+    return [documentValue.number || "BOQ", documentValue.revisionLabel]
+      .filter(Boolean).join(" · ");
+  }
+
+  function documentBanner(documentValue) {
+    if (documentValue.revisionState === "Draft") return "DRAFT - NOT ISSUED";
+    if (documentValue.revisionState === "Voided") return "VOIDED REVISION";
+    return "FOR CUSTOMER";
+  }
+
   function imageType(source) {
     return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
   }
@@ -96,12 +107,12 @@
     });
     doc.setFontSize(8.25);
     doc.setTextColor(...COLORS.ink);
-    doc.text(data.document.number || "BOQ", rightX, headerTop + 10, {
+    doc.text(documentReference(data.document), rightX, headerTop + 10, {
       align: "right",
     });
     doc.setFontSize(7);
     doc.setTextColor(154, 100, 28);
-    doc.text("FOR CUSTOMER", rightX, headerTop + 16, {
+    doc.text(documentBanner(data.document), rightX, headerTop + 16, {
       align: "right",
     });
     const rightBottom = headerTop + 16;
@@ -184,11 +195,16 @@
     return { content: content ?? "", styles };
   }
 
-  function currencyBodyCell(value, currency, styles = {}) {
+  function currencyBodyCell(value, currency, styles = {}, numberFormat) {
     return {
       content: "",
       styles,
-      accounting: window.BOQUtils.formatCurrencyParts(value, currency),
+      accounting: window.BOQUtils.formatCurrencyParts(
+        value,
+        currency,
+        undefined,
+        numberFormat,
+      ),
     };
   }
 
@@ -242,7 +258,9 @@
         (item.category || "Uncategorized") === category
       ).forEach(
         (item) => {
-          const calculation = calculateItem(item);
+          const calculation = calculateItem(item, {
+            rounding: data.settings.rounding,
+          });
           const values = {
             index: bodyCell(++index),
             sku: bodyCell(item.sku || ""),
@@ -252,10 +270,14 @@
             unitSelling: currencyBodyCell(
               calculation.unitSelling,
               data.document.currency,
+              {},
+              data.settings.numberFormat,
             ),
             totalSelling: currencyBodyCell(
               calculation.totalSelling,
               data.document.currency,
+              {},
+              data.settings.numberFormat,
             ),
           };
           rows.push(columns.map((column) => values[column.key]));
@@ -314,7 +336,7 @@
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6.5);
       doc.setTextColor(...COLORS.footer);
-      doc.text(data.document.number || "BOQ", PAGE_MARGIN, pageHeight - 5);
+      doc.text(documentReference(data.document), PAGE_MARGIN, pageHeight - 5);
       doc.text(
         `Page ${page} of ${pageCount}`,
         pageWidth - PAGE_MARGIN,
@@ -339,6 +361,8 @@
     const total = formatCurrencyParts(
       data.document.totalSelling,
       data.document.currency,
+      undefined,
+      data.settings.numberFormat,
     );
 
     doc.setFillColor(...COLORS.primarySoft);
@@ -413,7 +437,7 @@
     });
     const projectName = data.document.projectName || "Bill of Quantities";
     doc.setProperties({
-      title: `${data.document.number || "BOQ"} - ${projectName}`,
+      title: `${documentReference(data.document)} - ${projectName}`,
       subject: "Customer Bill of Quantities",
       author: data.settings.companyName || "BOQ Manager",
       creator: "BOQ Manager",
@@ -493,7 +517,11 @@
 
   function download(data, safeFilename) {
     const doc = create(data);
-    const filename = [data.document.number, data.document.projectName]
+    const filename = [
+      data.document.number,
+      data.document.revisionLabel,
+      data.document.projectName,
+    ]
       .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
     doc.save(`${filename}.pdf`);
   }

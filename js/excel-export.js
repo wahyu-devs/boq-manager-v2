@@ -16,6 +16,17 @@
   const HEADER_LOGO_WIDTH = 144;
   const HEADER_LOGO_HEIGHT = 64;
 
+  function documentReference(documentValue) {
+    return [documentValue.number || "BOQ", documentValue.revisionLabel]
+      .filter(Boolean).join(" · ");
+  }
+
+  function documentBanner(documentValue) {
+    if (documentValue.revisionState === "Draft") return "DRAFT - NOT ISSUED";
+    if (documentValue.revisionState === "Voided") return "VOIDED REVISION";
+    return "FOR CUSTOMER";
+  }
+
   function columnLetter(index) {
     let number = index;
     let result = "";
@@ -325,13 +336,13 @@
     mergeValue(
       sheet,
       `${rightStart}2:${lastColumn}2`,
-      data.document.number || "BOQ",
+      documentReference(data.document),
       { bold: true, size: 10, align: "right" },
     );
     mergeValue(
       sheet,
       `${rightStart}3:${lastColumn}3`,
-      "FOR CUSTOMER",
+      documentBanner(data.document),
       {
         bold: true,
         color: "FF9A641C",
@@ -436,7 +447,9 @@
           rowNumber += 1;
           itemIndex += 1;
           itemRows.push(rowNumber);
-          const calculation = calculateItem(item);
+          const calculation = calculateItem(item, {
+            rounding: data.settings.rounding,
+          });
           const values = {
             index: itemIndex,
             sku: item.sku || "",
@@ -579,7 +592,7 @@
     }${rowNumber}`;
     sheet.pageSetup.printTitlesRow = `${headerRow}:${headerRow}`;
     sheet.headerFooter.oddFooter = `&L${
-      data.document.number || "BOQ"
+      documentReference(data.document)
     }&RPage &P of &N`;
     return sheet;
   }
@@ -622,7 +635,7 @@
     mergeValue(
       sheet,
       "A2:H2",
-      `${data.document.number || "BOQ"} | ${data.document.projectName || "-"}`,
+      `${documentReference(data.document)} | ${data.document.projectName || "-"}`,
       { bold: true, size: 10 },
     );
     mergeValue(
@@ -669,7 +682,9 @@
     data.items.forEach((item, index) => {
       rowNumber += 1;
       itemRows.push(rowNumber);
-      const calculation = calculateItem(item);
+      const calculation = calculateItem(item, {
+        rounding: data.settings.rounding,
+      });
       const manualOverride = calculation.isManualSelling
         ? Number(item.sellingOverride)
         : null;
@@ -737,6 +752,7 @@
     const lastDataRow = rowNumber;
     const summary = calculateSummary(data.items, {
       commission: data.document.commission,
+      rounding: data.settings.rounding,
     });
     const totalRow = rowNumber + 2;
     mergeValue(sheet, `A${totalRow}:I${totalRow}`, "TOTALS", {
@@ -873,7 +889,7 @@
       size: 14,
       align: "right",
     });
-    mergeValue(sheet, "E2:F2", data.document.number || "BOQ", {
+    mergeValue(sheet, "E2:F2", documentReference(data.document), {
       bold: true,
       size: 10,
       align: "right",
@@ -935,6 +951,7 @@
     });
     const summary = calculateSummary(data.items, {
       commission: data.document.commission,
+      rounding: data.settings.rounding,
     });
     const summaryRows = [
       ["Total selling", `'Costing'!K${costing.totalRow}`, summary.totalSelling],
@@ -972,6 +989,7 @@
 
     const details = [
       ["Status", data.document.status || "Draft"],
+      ["Revision", data.document.revisionLabel || "Not issued"],
       ["Date", excelDate(data.document.date)],
       ["Valid until", excelDate(data.document.validUntil)],
       ["Currency", data.document.currency],
@@ -1018,7 +1036,9 @@
     let categoryRow = categoryHeaderRow;
     data.categories.forEach((category) => {
       categoryRow += 1;
-      const categorySummary = calculateCategorySummary(data.items, category);
+      const categorySummary = calculateCategorySummary(data.items, category, {
+        rounding: data.settings.rounding,
+      });
       setCell(sheet.getCell(`A${categoryRow}`), category, {
         border: thinBottomBorder(),
         size: 9,
@@ -1089,7 +1109,7 @@
     workbook.creator = "BOQ Manager";
     workbook.lastModifiedBy = "BOQ Manager";
     workbook.company = data.settings.companyName || "";
-    workbook.title = `${data.document.number || "BOQ"} - ${projectName}`;
+    workbook.title = `${documentReference(data.document)} - ${projectName}`;
     workbook.subject = mode === "all"
       ? "BOQ estimation workbook"
       : "Customer BOQ";
@@ -1111,7 +1131,11 @@
     workbook.calcProperties.fullCalcOnLoad = true;
     workbook.calcProperties.forceFullCalc = true;
     const buffer = await workbook.xlsx.writeBuffer();
-    const filename = [data.document.number, data.document.projectName]
+    const filename = [
+      data.document.number,
+      data.document.revisionLabel,
+      data.document.projectName,
+    ]
       .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
     const suffix = mode === "all" ? "" : " - Quotation";
     downloadBlob(

@@ -268,7 +268,7 @@
     }
   }
 
-  function simulateSave(button) {
+  async function simulateSave(button, options = {}) {
     const form = button.closest("form") ||
       (button.getAttribute("form")
         ? document.getElementById(button.getAttribute("form"))
@@ -278,18 +278,38 @@
       showToast("Please review the highlighted fields.", "error");
       return;
     }
+    if (!options.confirmed) {
+      const request = new CustomEvent("boq:before-save", {
+        cancelable: true,
+        detail: {
+          button,
+          resume: () => simulateSave(button, { confirmed: true }),
+        },
+      });
+      if (!document.dispatchEvent(request)) return;
+    }
     const original = button.innerHTML;
     button.classList.add("is-loading");
     button.disabled = true;
     button.innerHTML =
       '<svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/></svg><span>Saving…</span>';
-    window.setTimeout(() => {
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 150));
+      const detail = { promise: null, successMessage: "" };
+      document.dispatchEvent(new CustomEvent("boq:saved", { detail }));
+      if (detail.promise) await detail.promise;
+      showToast(
+        detail.successMessage || button.dataset.successMessage ||
+          "Changes saved successfully.",
+      );
+    } catch (error) {
+      console.error(error);
+      showToast(error?.message || "Unable to save changes.", "error");
+    } finally {
       button.classList.remove("is-loading");
       button.disabled = false;
       button.innerHTML = original;
-      showToast(button.dataset.successMessage || "Changes saved successfully.");
-      document.dispatchEvent(new CustomEvent("boq:saved"));
-    }, 650);
+    }
   }
 
   ensureGlobalUi();
@@ -319,7 +339,7 @@
     const saveButton = event.target.closest("[data-save]");
     if (saveButton) {
       event.preventDefault();
-      simulateSave(saveButton);
+      void simulateSave(saveButton);
     }
 
     const refreshButton = event.target.closest("[data-refresh]");

@@ -21,6 +21,7 @@
   let settings = store.getSettings();
   const editorPreferences = store.getLocalPreference("boq-editor", {});
   let currentRecordId = new URLSearchParams(location.search).get("id");
+  let currentRecord = null;
   let items = [];
   let commission = 0;
   let categoryOrder = [];
@@ -35,6 +36,8 @@
   let currentView = "all";
   let reorderMode = false;
   let activeDrag = null;
+  let pendingIssueNote = "";
+  let pendingSaveContinuation = null;
 
   const desktopBody = editor.querySelector("[data-items-body]");
   const mobileList = editor.querySelector("[data-mobile-items]");
@@ -134,9 +137,23 @@
   function initializeDocument() {
     populateRecordOptions();
     const record = currentRecordId ? store.get("boqs", currentRecordId) : null;
+    currentRecord = record;
     if (record) {
+      if (record.id !== currentRecordId) {
+        currentRecordId = record.id;
+        const params = new URLSearchParams(location.search);
+        params.set("id", record.id);
+        history.replaceState(null, "", `boq-editor.html?${params.toString()}`);
+      }
       setFormValue("#boq-number", record.number);
-      setFormValue("#boq-status", record.status === "Sent" ? "Sent" : "Draft");
+      setFormValue(
+        "#boq-status",
+        record.workingRevision !== null
+          ? "Draft"
+          : record.status === "Sent"
+          ? "Sent"
+          : "Draft",
+      );
       setFormValue("#boq-project", record.projectName);
       setFormValue("#boq-customer", record.customerId);
       setFormValue("#boq-currency", record.currency || settings.defaultCurrency || "IDR");
@@ -149,12 +166,17 @@
         ? record.categoryOrder.slice()
         : [];
       document.querySelector("[data-save-state]").textContent =
-        "All changes saved";
+        record.workingRevision !== null
+          ? `Draft changes for ${store.revisionLabel(record.workingRevision)}`
+          : record.status === "Sent"
+          ? `${store.revisionLabel(record.activeRevisionNumber)} issued and locked`
+          : "All changes saved";
     } else {
       currentRecordId = null;
       items = [];
       commission = 0;
       categoryOrder = [];
+      currentRecord = null;
       const today = new Date();
       const validUntil = new Date(today);
       validUntil.setDate(
@@ -167,12 +189,17 @@
     }
     updateCommissionInput();
     updateEditorHeader();
+    applyEditorMode();
   }
 
   function updateEditorHeader() {
     const projectName = document.querySelector("#boq-project").value.trim();
     const number = document.querySelector("#boq-number").value.trim();
-    const status = document.querySelector("#boq-status").value;
+    const selectedStatus = document.querySelector("#boq-status").value;
+    const status = currentRecord?.activeRevisionNumber !== null &&
+        currentRecord?.activeRevisionNumber !== undefined
+      ? "Sent"
+      : selectedStatus;
     document.querySelector("[data-editor-title]").textContent = projectName ||
       "New BOQ";
     document.querySelector("[data-editor-number]").textContent = number ||
@@ -180,6 +207,246 @@
     const statusNode = document.querySelector("[data-editor-status]");
     statusNode.textContent = status;
     statusNode.className = `status status-${status.toLowerCase()}`;
+    const revisionNode = document.querySelector("[data-editor-revision]");
+    const revisionNumber = currentRecord?.workingRevision ??
+      currentRecord?.activeRevisionNumber;
+    if (revisionNode) {
+      revisionNode.hidden = revisionNumber === null || revisionNumber === undefined;
+      revisionNode.textContent = revisionNumber === null ||
+          revisionNumber === undefined
+        ? ""
+        : `${store.revisionLabel(revisionNumber)}${
+          currentRecord && currentRecord.workingRevision !== null ? " draft" : ""
+        }`;
+    }
+  }
+
+  function isSentLocked() {
+    return Boolean(
+      currentRecord?.status === "Sent" && currentRecord.workingRevision === null,
+    );
+  }
+
+  function applyEditorMode() {
+    const locked = isSentLocked();
+    editor.classList.toggle("editor-readonly", locked);
+    document.querySelectorAll("#boq-info input, #boq-info select, #boq-info textarea")
+      .forEach((control) => control.disabled = locked);
+    const numberInput = document.querySelector("#boq-number");
+    if (numberInput && currentRecord?.revisions?.length) {
+      numberInput.disabled = true;
+    }
+    editor.querySelectorAll(
+      "[data-item-input], [data-item-action], [data-drag-handle], " +
+        "[data-category-drag-handle], [data-commission]",
+    ).forEach((control) => control.disabled = locked);
+    editor.querySelectorAll('[data-confirm-event="boq:delete-item"]')
+      .forEach((control) => control.disabled = locked);
+    editor.querySelectorAll("[data-add-custom], [data-open-modal=\"catalog-modal\"]")
+      .forEach((control) => control.disabled = locked);
+    document.querySelectorAll("[data-save]").forEach((button) =>
+      button.hidden = locked
+    );
+    document.querySelectorAll("[data-create-revision]").forEach((button) =>
+      button.hidden = !locked
+    );
+    document.querySelectorAll("[data-open-revision-history]").forEach((button) =>
+      button.hidden = !currentRecord?.revisions?.length
+    );
+    document.querySelectorAll("[data-discard-revision]").forEach((button) =>
+      button.hidden = !(currentRecord?.workingRevision !== null &&
+        currentRecord?.revisions?.length)
+    );
+    if (locked && reorderMode) {
+      reorderMode = false;
+      applyReorderState();
+    }
+  }
+
+  function revisionDate(value) {
+    if (!value) return "Unknown date";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Unknown date";
+    return new Intl.DateTimeFormat("en-GB", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date);
+  }
+
+  function revisionExportData(number) {
+    const revision = store.getRevision(currentRecord, number);
+    if (!revision) return null;
+    let documentValue = {
+      ...revision.document,
+      status: "Sent",
+      revisionNumber: revision.number,
+      revisionLabel: revision.label,
+      revisionState: revision.state,
+      revisionNote: revision.note,
+      issuedAt: revision.issuedAt,
+    };
+    const revisionItems = (documentValue.items || []).map(normalizeItem);
+    documentValue = {
+      ...documentValue,
+      ...calculateSummary(revisionItems, {
+        commission: documentValue.commission,
+        rounding: revision.calculation?.rounding ||
+          revision.companySettings?.rounding || settings.rounding,
+      }),
+    };
+    const presentCategories = [...new Set(revisionItems.map((item) =>
+      item.category || "Uncategorized"
+    ))];
+    const savedOrder = Array.isArray(documentValue.categoryOrder)
+      ? documentValue.categoryOrder
+      : [];
+    return {
+      document: documentValue,
+      items: revisionItems,
+      categories: [
+        ...savedOrder.filter((category) => presentCategories.includes(category)),
+        ...presentCategories.filter((category) => !savedOrder.includes(category)),
+      ],
+      settings: {
+        ...settings,
+        ...(revision.companySettings || {}),
+        rounding: revision.calculation?.rounding ||
+          revision.companySettings?.rounding || settings.rounding,
+        numberFormat: revision.calculation?.numberFormat ||
+          revision.companySettings?.numberFormat || settings.numberFormat,
+      },
+    };
+  }
+
+  function currentExportData() {
+    if (isSentLocked() && currentRecord?.activeRevisionNumber !== null) {
+      return revisionExportData(currentRecord.activeRevisionNumber);
+    }
+    const documentValue = documentPayload();
+    return {
+      document: documentValue,
+      items: items.map((item) => ({ ...item })),
+      categories: categories().slice(),
+      settings: { ...settings },
+    };
+  }
+
+  function renderRevisionHistory() {
+    const host = document.querySelector("[data-revision-list]");
+    if (!host) return;
+    const revisions = currentRecord?.revisions || [];
+    const latest = revisions.at(-1);
+    host.innerHTML = revisions.length
+      ? [...revisions].reverse().map((revision) => {
+        const canVoid = latest?.id === revision.id && revision.state === "Sent" &&
+          currentRecord?.workingRevision === null;
+        const canCreateDraft = isSentLocked() && revision.state === "Sent";
+        const reason = revision.state === "Voided"
+          ? `Voided ${revisionDate(revision.voidedAt)} · ${revision.voidReason}`
+          : revision.note || "No revision note";
+        return `<article class="revision-entry${
+          revision.state === "Voided" ? " is-voided" : ""
+        }"><div class="revision-entry-main"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
+          revision.state === "Voided" ? "inactive" : "sent"
+        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-secondary button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-secondary button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button>${
+          canVoid
+            ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
+            : ""
+        }${
+          canCreateDraft
+            ? `<button class="button button-ghost button-sm" type="button" data-create-revision-from="${revision.number}">Use as Draft</button>`
+            : ""
+        }</div></article>`;
+      }).join("")
+      : '<div class="empty-state"><div class="empty-state-content"><h3>No Issued Revisions</h3><p>Revision history begins when this BOQ is sent.</p></div></div>';
+    const compare = document.querySelector("[data-revision-compare]");
+    const from = document.querySelector("[data-compare-from]");
+    const to = document.querySelector("[data-compare-to]");
+    if (compare) compare.hidden = revisions.length < 2;
+    if (revisions.length >= 2 && from && to) {
+      const options = revisions.map((revision) =>
+        `<option value="${revision.number}">${escapeHtml(revision.label)} · ${escapeHtml(revision.state)}</option>`
+      ).join("");
+      from.innerHTML = options;
+      to.innerHTML = options;
+      from.value = String(revisions.at(-2).number);
+      to.value = String(revisions.at(-1).number);
+      renderRevisionComparison(from.value, to.value);
+    }
+  }
+
+  function comparisonItemKey(item) {
+    const partNumber = String(item.sku || "").trim().toLowerCase();
+    if (partNumber) return `part:${partNumber}`;
+    return `item:${String(item.item || "").trim().replace(/\s+/g, " ").toLowerCase()}`;
+  }
+
+  function comparisonItemValue(item) {
+    return JSON.stringify({
+      item: String(item.item || "").trim(),
+      category: item.category || "Uncategorized",
+      qty: Number(item.qty || 0),
+      unit: item.unit || "",
+      unitCogs: Number(item.unitCogs || 0),
+      margin: Number(item.margin || 0),
+      sellingOverride: item.sellingOverride === null ||
+          item.sellingOverride === undefined
+        ? null
+        : Number(item.sellingOverride),
+    });
+  }
+
+  function renderRevisionComparison(fromNumber, toNumber) {
+    const host = document.querySelector("[data-revision-compare-result]");
+    const fromRevision = store.getRevision(currentRecord, fromNumber);
+    const toRevision = store.getRevision(currentRecord, toNumber);
+    if (!host || !fromRevision || !toRevision) return;
+    const fromItems = fromRevision.document.items || [];
+    const toItems = toRevision.document.items || [];
+    const matchedIndexes = new Set();
+    let removed = 0;
+    let changed = 0;
+    fromItems.forEach((item) => {
+      const key = comparisonItemKey(item);
+      const matchIndex = toItems.findIndex((candidate, index) =>
+        !matchedIndexes.has(index) && comparisonItemKey(candidate) === key
+      );
+      if (matchIndex < 0) {
+        removed += 1;
+        return;
+      }
+      matchedIndexes.add(matchIndex);
+      if (comparisonItemValue(item) !== comparisonItemValue(toItems[matchIndex])) {
+        changed += 1;
+      }
+    });
+    const added = toItems.length - matchedIndexes.size;
+    const fromSummary = calculateSummary(fromItems, {
+      commission: fromRevision.document.commission,
+      rounding: fromRevision.calculation?.rounding,
+    });
+    const toSummary = calculateSummary(toItems, {
+      commission: toRevision.document.commission,
+      rounding: toRevision.calculation?.rounding,
+    });
+    const currency = toRevision.document.currency || currentCurrency();
+    const numberFormat = toRevision.calculation?.numberFormat ||
+      settings.numberFormat;
+    const marginChange = toSummary.marginPercent - fromSummary.marginPercent;
+    host.hidden = false;
+    host.innerHTML = `<div class="revision-change"><span>Item changes</span><strong>+${added} / −${removed} / ${changed} updated</strong></div><div class="revision-change"><span>Total selling change</span><strong>${formatCurrencyMarkup(
+      toSummary.totalSelling - fromSummary.totalSelling,
+      currency,
+      undefined,
+      numberFormat,
+    )}</strong></div><div class="revision-change"><span>Total COGS change</span><strong>${formatCurrencyMarkup(
+      toSummary.totalCogs - fromSummary.totalCogs,
+      currency,
+      undefined,
+      numberFormat,
+    )}</strong></div><div class="revision-change"><span>Gross margin change</span><strong>${
+      marginChange > 0 ? "+" : ""
+    }${formatPercent(marginChange, numberFormat)}</strong></div>`;
   }
 
   function unitOptions(value) {
@@ -296,6 +563,7 @@
       `${items.length} item${items.length === 1 ? "" : "s"}`;
     applyViewState();
     updateSummary();
+    applyEditorMode();
   }
 
   function syncItem(item) {
@@ -369,6 +637,8 @@
     const projectName = document.querySelector("#boq-project").value.trim();
     const customerSelect = document.querySelector("#boq-customer");
     const summary = calculateSummary(items, { commission });
+    const revisionNumber = currentRecord?.workingRevision ??
+      currentRecord?.activeRevisionNumber;
     return {
       number: document.querySelector("#boq-number").value.trim(),
       status: document.querySelector("#boq-status").value,
@@ -384,6 +654,13 @@
       items: items.map(({ id, ...item }) => ({ ...item })),
       commission,
       categoryOrder: categoryOrder.slice(),
+      revisionNumber,
+      revisionLabel: revisionNumber === null || revisionNumber === undefined
+        ? ""
+        : store.revisionLabel(revisionNumber),
+      revisionState: document.querySelector("#boq-status").value === "Sent"
+        ? "Sent"
+        : "Draft",
       ...summary,
     };
   }
@@ -643,27 +920,32 @@
     });
   }
 
-  function buildPdfPreview() {
+  function buildPdfPreview(exportData = currentExportData()) {
     const host = document.querySelector("[data-pdf-preview]");
-    const payload = documentPayload();
-    const showPartNumber = settings.showSku === true;
-    const showUnitPricing = settings.showUnitPricing !== false;
+    const payload = exportData.document;
+    const previewItems = exportData.items;
+    const previewCategories = exportData.categories;
+    const previewSettings = exportData.settings;
+    const previewCurrency = payload.currency || previewSettings.defaultCurrency ||
+      "IDR";
+    const showPartNumber = previewSettings.showSku === true;
+    const showUnitPricing = previewSettings.showUnitPricing !== false;
     const columnCount = 5 + Number(showPartNumber) + Number(showUnitPricing);
-    const contactDetails = [settings.email, settings.phone]
+    const contactDetails = [previewSettings.email, previewSettings.phone]
       .filter(Boolean).map(escapeHtml).join(" | ");
     const companyDetails = [
-      settings.registrationNumber
-        ? `Registration no.: ${escapeHtml(settings.registrationNumber)}`
+      previewSettings.registrationNumber
+        ? `Registration no.: ${escapeHtml(previewSettings.registrationNumber)}`
         : "",
-      settings.address
-        ? escapeHtml(settings.address).replace(/\r?\n/g, "<br>")
+      previewSettings.address
+        ? escapeHtml(previewSettings.address).replace(/\r?\n/g, "<br>")
         : "",
       contactDetails,
     ].filter(Boolean).join("<br>");
-    const companyLogo = settings.companyLogo
-      ? `<img class="pdf-company-logo" src="${settings.companyLogo}" alt="">`
+    const companyLogo = previewSettings.companyLogo
+      ? `<img class="pdf-company-logo" src="${previewSettings.companyLogo}" alt="">`
       : "";
-    const footerText = String(settings.footerText || "").trim();
+    const footerText = String(previewSettings.footerText || "").trim();
     const partNumberHeader = showPartNumber
       ? '<th class="pdf-column-part-number">Part Number</th>'
       : "";
@@ -676,11 +958,13 @@
       showUnitPricing ? "has-unit-price" : "",
     ].filter(Boolean).join(" ");
     let rowIndex = 0;
-    const itemRows = categories().map((category) => {
-      const rows = items.filter((item) =>
+    const itemRows = previewCategories.map((category) => {
+      const rows = previewItems.filter((item) =>
         (item.category || "Uncategorized") === category
       ).map((item) => {
-        const calculation = calculateItem(item);
+        const calculation = calculateItem(item, {
+          rounding: previewSettings.rounding,
+        });
         return `<tr><td class="pdf-column-no">${++rowIndex}</td>${
           showPartNumber
             ? `<td class="pdf-column-part-number">${escapeHtml(item.sku || "")}</td>`
@@ -690,11 +974,21 @@
         }</td><td class="pdf-column-unit">${escapeHtml(item.unit)}</td>${
           showUnitPricing
             ? `<td class="align-right pdf-column-unit-price">${
-              formatCurrencyMarkup(calculation.unitSelling, currentCurrency())
+              formatCurrencyMarkup(
+                calculation.unitSelling,
+                previewCurrency,
+                undefined,
+                previewSettings.numberFormat,
+              )
             }</td>`
             : ""
         }<td class="align-right pdf-total-column">${
-          formatCurrencyMarkup(calculation.totalSelling, currentCurrency())
+          formatCurrencyMarkup(
+            calculation.totalSelling,
+            previewCurrency,
+            undefined,
+            previewSettings.numberFormat,
+          )
         }</td></tr>`;
       }).join("");
       return `<tr class="pdf-category"><td colspan="${columnCount}"><strong>${
@@ -706,10 +1000,16 @@
     host.innerHTML = `<div class="pdf-preview-content${companyLogo ? " has-company-logo" : ""}"><header class="pdf-preview-header"><div class="pdf-preview-company">${
       companyLogo ? `<div class="pdf-preview-logo-slot">${companyLogo}</div>` : ""
     }<strong class="pdf-company">${
-      escapeHtml(settings.companyName || "Company information not configured")
+      escapeHtml(previewSettings.companyName || "Company information not configured")
     }</strong><p>${companyDetails}</p></div><div class="pdf-preview-document"><h2>Bill of Quantities</h2><strong>${
-      escapeHtml(payload.number || "BOQ")
-    }</strong><span>FOR CUSTOMER</span></div></header><div class="pdf-preview-divider" aria-hidden="true"></div><div class="pdf-parties"><div><span>Prepared for</span><strong>${
+      escapeHtml([payload.number || "BOQ", payload.revisionLabel].filter(Boolean).join(" · "))
+    }</strong><span>${escapeHtml(
+      payload.revisionState === "Draft"
+        ? "DRAFT - NOT ISSUED"
+        : payload.revisionState === "Voided"
+        ? "VOIDED REVISION"
+        : "FOR CUSTOMER",
+    )}</span></div></header><div class="pdf-preview-divider" aria-hidden="true"></div><div class="pdf-parties"><div><span>Prepared for</span><strong>${
       escapeHtml(payload.customerName || "-")
     }</strong></div><div><span>Project</span><strong>${
       escapeHtml(payload.projectName || "-")
@@ -718,7 +1018,12 @@
     }</strong><strong>${
       escapeHtml(payload.validUntil || "-")
     }</strong></div></div><table class="${tableClasses}"><thead><tr><th class="pdf-column-no">No</th>${partNumberHeader}<th class="pdf-column-item">Item</th><th class="align-right pdf-column-qty">Qty</th><th class="pdf-column-unit">Unit</th>${unitPriceHeader}<th class="align-right pdf-total-column">Total</th></tr></thead><tbody>${tableRows}</tbody></table><div class="pdf-preview-total"><span>Grand Total</span><strong>${
-      formatCurrencyMarkup(payload.totalSelling, currentCurrency())
+      formatCurrencyMarkup(
+        payload.totalSelling,
+        previewCurrency,
+        undefined,
+        previewSettings.numberFormat,
+      )
     }</strong></div>${
       payload.notes
         ? `<div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div>`
@@ -751,23 +1056,50 @@
     });
   }
 
-  function saveDocument() {
+  async function saveDocument() {
     const informationForm = document.querySelector("#boq-info");
     if (!informationForm.checkValidity()) {
       informationForm.reportValidity();
       return null;
     }
     const existing = currentRecordId ? store.get("boqs", currentRecordId) : null;
-    const record = store.save("boqs", {
+    const payload = {
       ...documentPayload(),
       id: currentRecordId || undefined,
       createdAt: existing?.createdAt,
-    });
+    };
+    const issuing = payload.status === "Sent";
+    const selectedCustomer = payload.customerId
+      ? store.get("customers", payload.customerId)
+      : null;
+    const record = issuing
+      ? store.issueBoq(payload, {
+        note: pendingIssueNote,
+        issuedBy: store.getUserId() || "",
+        companySettings: settings,
+        customer: selectedCustomer || {},
+        rounding: settings.rounding || "2",
+        numberFormat: settings.numberFormat || "comma",
+      })
+      : store.saveBoqDraft(payload);
+    pendingIssueNote = "";
     currentRecordId = record.id;
+    currentRecord = record;
     store.setCurrentBoqId(record.id);
     updateCatalogHistory();
     history.replaceState(null, "", `boq-editor.html?id=${encodeURIComponent(record.id)}`);
     updateEditorHeader();
+    applyEditorMode();
+    renderRevisionHistory();
+    if (issuing && window.BOQAuth?.push) {
+      document.querySelectorAll("[data-save-state]").forEach((element) =>
+        element.textContent = "Saving issued revision to cloud…"
+      );
+      const synced = await window.BOQAuth.push();
+      if (!synced) {
+        record.cloudSyncPending = true;
+      }
+    }
     return record;
   }
 
@@ -929,7 +1261,86 @@
       if (product) addItem(catalogItem(product));
       window.BOQModal.close(document.getElementById("catalog-modal"));
     }
-    if (event.target.closest("[data-preview-pdf]")) buildPdfPreview();
+    if (event.target.closest("[data-preview-pdf]")) {
+      buildPdfPreview();
+      document.querySelector("#pdf-modal [data-download-pdf]")?.removeAttribute(
+        "data-export-revision",
+      );
+    }
+    if (event.target.closest("[data-create-revision]")) {
+      const record = store.createRevisionDraft(currentRecordId);
+      if (!record) return;
+      currentRecord = record;
+      dirty = false;
+      initializeDocument();
+      renderItems();
+      window.BOQApp.showToast(
+        `${store.revisionLabel(record.workingRevision)} draft created.`,
+      );
+    }
+    const revisionSource = event.target.closest("[data-create-revision-from]");
+    if (revisionSource) {
+      const record = store.createRevisionDraft(
+        currentRecordId,
+        revisionSource.dataset.createRevisionFrom,
+      );
+      if (!record) return;
+      currentRecord = record;
+      dirty = false;
+      window.BOQModal.close(document.getElementById("revision-history-modal"));
+      initializeDocument();
+      renderItems();
+      window.BOQApp.showToast(
+        `${store.revisionLabel(record.workingRevision)} draft created from ${
+          store.revisionLabel(record.draftBaseRevisionNumber)
+        }.`,
+      );
+    }
+    if (event.target.closest("[data-open-revision-history]")) {
+      renderRevisionHistory();
+      window.BOQModal.open("revision-history-modal");
+    }
+    if (event.target.closest("[data-compare-revisions]")) {
+      renderRevisionComparison(
+        document.querySelector("[data-compare-from]").value,
+        document.querySelector("[data-compare-to]").value,
+      );
+    }
+    const previewRevision = event.target.closest("[data-preview-revision]");
+    if (previewRevision) {
+      const data = revisionExportData(previewRevision.dataset.previewRevision);
+      if (!data) return;
+      buildPdfPreview(data);
+      document.querySelector("#pdf-modal [data-download-pdf]")?.setAttribute(
+        "data-export-revision",
+        String(data.document.revisionNumber),
+      );
+      window.BOQModal.close(document.getElementById("revision-history-modal"));
+      window.BOQModal.open("pdf-modal");
+    }
+    const revisionExcel = event.target.closest("[data-download-revision-excel]");
+    if (revisionExcel) {
+      document.dispatchEvent(new CustomEvent("boq:export-revision", {
+        detail: { type: "excel", number: revisionExcel.dataset.downloadRevisionExcel },
+      }));
+    }
+    const revisionPdf = event.target.closest("[data-download-revision-pdf]");
+    if (revisionPdf) {
+      document.dispatchEvent(new CustomEvent("boq:export-revision", {
+        detail: { type: "pdf", number: revisionPdf.dataset.downloadRevisionPdf },
+      }));
+    }
+    const voidRevision = event.target.closest("[data-void-revision]");
+    if (voidRevision) {
+      const revision = store.getRevision(currentRecord, voidRevision.dataset.voidRevision);
+      if (!revision) return;
+      const form = document.querySelector("[data-void-revision-form]");
+      form.reset();
+      form.dataset.revisionNumber = String(revision.number);
+      document.querySelector("[data-void-revision-message]").textContent =
+        `${revision.label} will be marked void. The previous sent revision will become active.`;
+      window.BOQModal.open("void-revision-modal");
+    }
     if (event.target.closest("[data-toggle-subtotals]")) {
       showCategorySubtotals = !showCategorySubtotals;
       saveEditorPreferences();
@@ -963,6 +1374,87 @@
     });
   });
 
+  document.addEventListener("boq:discard-revision", () => {
+    const result = store.discardBoqDraft(currentRecordId);
+    if (!result) return;
+    if (result.removed) {
+      location.href = "boqs.html";
+      return;
+    }
+    currentRecord = result;
+    dirty = false;
+    initializeDocument();
+    renderItems();
+    window.BOQApp.showToast("Draft revision discarded.");
+  });
+
+  document.querySelector("[data-void-revision-form]")?.addEventListener(
+    "submit",
+    (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!form.checkValidity()) return form.reportValidity();
+      const record = store.voidLatestRevision(
+        currentRecordId,
+        form.elements.reason.value,
+      );
+      if (!record) {
+        window.BOQApp.showToast(
+          "Only the latest issued revision can be voided.",
+          "error",
+        );
+        return;
+      }
+      currentRecord = record;
+      dirty = false;
+      window.BOQModal.close(document.getElementById("void-revision-modal"));
+      window.BOQModal.close(document.getElementById("revision-history-modal"));
+      initializeDocument();
+      renderItems();
+      window.BOQApp.showToast("Latest revision voided.");
+    },
+  );
+
+  document.addEventListener("boq:before-save", (event) => {
+    const status = document.querySelector("#boq-status").value;
+    if (status !== "Sent" || isSentLocked()) return;
+    event.preventDefault();
+    pendingSaveContinuation = event.detail.resume;
+    const revisionNumber = currentRecord?.workingRevision ??
+      store.nextRevisionNumber(currentRecord);
+    const form = document.querySelector("[data-issue-revision-form]");
+    form.reset();
+    document.querySelector("[data-issue-revision-message]").textContent =
+      `${store.revisionLabel(revisionNumber)} will become an official, locked customer revision.`;
+    window.BOQModal.open("issue-revision-modal");
+  });
+
+  document.querySelector("[data-issue-revision-form]")?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      button.textContent = "Checking cloud…";
+      const conflict = await window.BOQAuth?.checkIssueConflict?.(
+        currentRecordId,
+        currentRecord?.updatedAt,
+      ) || { ok: true };
+      button.disabled = false;
+      button.textContent = "Issue Revision";
+      if (!conflict.ok) {
+        window.BOQApp.showToast(conflict.message, "error");
+        return;
+      }
+      pendingIssueNote = form.elements.note.value.trim();
+      const continuation = pendingSaveContinuation;
+      pendingSaveContinuation = null;
+      window.BOQModal.close(document.getElementById("issue-revision-modal"));
+      continuation?.();
+    },
+  );
+
   document.querySelector("[data-catalog-search]")?.addEventListener("input", updateCatalogResults);
   document.querySelector("[data-editor-view]")?.addEventListener("change", (event) => {
     currentView = event.target.value;
@@ -986,12 +1478,30 @@
     renderItems();
     markDirty();
   });
-  document.addEventListener("boq:saved", () => {
-    if (!saveDocument()) return;
-    dirty = false;
-    document.querySelectorAll("[data-save-state]").forEach((element) =>
-      element.textContent = "All changes saved"
-    );
+  document.addEventListener("boq:saved", (event) => {
+    const issuing = document.querySelector("#boq-status").value === "Sent";
+    event.detail.promise = (async () => {
+      const record = await saveDocument();
+      if (!record) throw new Error("Unable to save this BOQ.");
+      dirty = false;
+      document.querySelectorAll("[data-save-state]").forEach((element) =>
+        element.textContent = record.cloudSyncPending
+          ? `${store.revisionLabel(record.activeRevisionNumber)} issued locally · cloud sync pending`
+          : issuing
+          ? `${store.revisionLabel(record.activeRevisionNumber)} issued and locked`
+          : record.workingRevision !== null
+          ? `Draft changes saved for ${store.revisionLabel(record.workingRevision)}`
+          : "All changes saved"
+      );
+      event.detail.successMessage = issuing
+        ? `${store.revisionLabel(record.activeRevisionNumber)} issued.`
+        : "BOQ saved.";
+      if (record.cloudSyncPending) {
+        throw new Error(
+          "Revision issued locally, but cloud confirmation is pending.",
+        );
+      }
+    })();
   });
   window.addEventListener("beforeunload", (event) => {
     if (!dirty) return;
@@ -1015,9 +1525,16 @@
     getView: () => currentView,
     getSettings: () => ({ ...settings }),
     buildPdfPreview,
+    getExportData: currentExportData,
+    getRevisionExportData: revisionExportData,
   };
 
   initializeDocument();
   renderItems();
   updateCatalogResults();
+  if (new URLSearchParams(location.search).get("history") === "1" &&
+      currentRecord?.revisions?.length) {
+    renderRevisionHistory();
+    window.setTimeout(() => window.BOQModal.open("revision-history-modal"), 0);
+  }
 })();

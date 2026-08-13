@@ -11,7 +11,7 @@
   let client = null;
   let currentSession = null;
   let syncTimer = null;
-  let syncInFlight = false;
+  let syncPromise = null;
   let refreshInFlight = null;
   let lastRefreshAt = 0;
   let signingOut = false;
@@ -172,6 +172,13 @@
     );
   }
 
+  function timestampValue(value) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric > 0) return numeric;
+    const parsed = Date.parse(value || "");
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
   async function fetchCloudState(userId) {
     const { data, error } = await client.from(stateTable)
       .select("*")
@@ -180,37 +187,45 @@
     return data || null;
   }
 
-  async function pushCloudState() {
-    if (!currentSession?.user || syncInFlight) return false;
-    syncInFlight = true;
+  async function pushCloudState(ensureLatest = false) {
+    if (!currentSession?.user) return false;
+    if (syncPromise) {
+      const result = await syncPromise;
+      return ensureLatest ? pushCloudState(false) : result;
+    }
+    syncPromise = (async () => {
+      try {
+        const state = store.exportState();
+        const clientUpdatedAt = Number(state.meta.clientUpdatedAt || Date.now());
+        state.meta.clientUpdatedAt = clientUpdatedAt;
+        const { error } = await client.from(stateTable).upsert({
+          user_id: currentSession.user.id,
+          state,
+          client_updated_at: new Date(clientUpdatedAt).toISOString(),
+          app_version: "snapshot-v5",
+        }, { onConflict: "user_id" });
+        if (error) throw error;
+        const meta = store.getMeta();
+        localStorage.setItem(
+          `boq-manager-v2:${currentSession.user.id}:meta`,
+          JSON.stringify({
+            ...meta,
+            lastSyncedAt: Date.now(),
+            lastSyncedClientUpdatedAt: clientUpdatedAt,
+          }),
+        );
+        document.dispatchEvent(new CustomEvent("boq:sync-complete"));
+        return true;
+      } catch (error) {
+        console.error("Cloud sync failed:", error);
+        document.dispatchEvent(new CustomEvent("boq:sync-error"));
+        return false;
+      }
+    })();
     try {
-      const state = store.exportState();
-      const clientUpdatedAt = Number(state.meta.clientUpdatedAt || Date.now());
-      state.meta.clientUpdatedAt = clientUpdatedAt;
-      const { error } = await client.from(stateTable).upsert({
-        user_id: currentSession.user.id,
-        state,
-        client_updated_at: new Date(clientUpdatedAt).toISOString(),
-        app_version: "snapshot-v4",
-      }, { onConflict: "user_id" });
-      if (error) throw error;
-      const meta = store.getMeta();
-      localStorage.setItem(
-        `boq-manager-v2:${currentSession.user.id}:meta`,
-        JSON.stringify({
-          ...meta,
-          lastSyncedAt: Date.now(),
-          lastSyncedClientUpdatedAt: clientUpdatedAt,
-        }),
-      );
-      document.dispatchEvent(new CustomEvent("boq:sync-complete"));
-      return true;
-    } catch (error) {
-      console.error("Cloud sync failed:", error);
-      document.dispatchEvent(new CustomEvent("boq:sync-error"));
-      return false;
+      return await syncPromise;
     } finally {
-      syncInFlight = false;
+      syncPromise = null;
     }
   }
 
@@ -249,14 +264,15 @@
       const backfilledPartNumbers = store.backfillBoqPartNumbers({
         silent: true,
       });
+      const migratedBoqRevisions = store.migrateBoqRevisions({ silent: true });
       if (
         migratedBoqs || migratedPartNumbers || migratedBoqNumbers ||
-        backfilledPartNumbers
+        backfilledPartNumbers || migratedBoqRevisions
       ) {
         changed = true;
         shouldPush = true;
       }
-      if (shouldPush) await pushCloudState();
+      if (shouldPush) await pushCloudState(true);
       if (changed && options.notify !== false) {
         notifyWorkspaceUpdated({ source: "cloud" });
       }
@@ -453,7 +469,7 @@
     }
     if (!event.target.closest("[data-logout]")) return;
     signingOut = true;
-    await pushCloudState();
+    await pushCloudState(true);
     sessionStorage.removeItem(workspaceReadyKey);
     await client.auth.signOut();
     store.setUser(null);
@@ -474,15 +490,39 @@
     if (event.persisted) void refreshInBackground({ force: true });
   });
   window.addEventListener("pagehide", () => {
-    if (syncTimer) void pushCloudState();
+    if (syncTimer) void pushCloudState(true);
   });
 
   window.BOQAuth = {
     client: null,
-    push: pushCloudState,
+    push: () => pushCloudState(true),
     refresh: async () => {
       if (!currentSession?.user) return false;
       return reconcileCloud(currentSession, { notify: true });
+    },
+    checkIssueConflict: async (boqId, knownUpdatedAt) => {
+      if (!currentSession?.user || !boqId) return { ok: true };
+      try {
+        const cloud = await fetchCloudState(currentSession.user.id);
+        const remote = cloud?.state?.collections?.boqs?.find((boq) =>
+          boq.id === boqId
+        );
+        if (remote && timestampValue(remote.updatedAt) >
+            timestampValue(knownUpdatedAt)) {
+          return {
+            ok: false,
+            message:
+              "A newer cloud version is available. Refresh before issuing this revision.",
+          };
+        }
+        return { ok: true };
+      } catch (_error) {
+        return {
+          ok: false,
+          message:
+            "Cloud verification failed. Check your connection before issuing this revision.",
+        };
+      }
     },
   };
   initialize();

@@ -1,13 +1,12 @@
 (function initializeDocumentExports() {
   if (!document.querySelector("[data-boq-editor]")) return;
 
-  function editorData() {
-    return {
-      document: window.BOQEditor.getDocument(),
-      items: window.BOQEditor.getItems(),
-      categories: window.BOQEditor.getCategories(),
-      settings: window.BOQEditor.getSettings(),
-    };
+  function editorData(revisionNumber) {
+    if (revisionNumber !== undefined && revisionNumber !== null &&
+        revisionNumber !== "") {
+      return window.BOQEditor.getRevisionExportData(revisionNumber);
+    }
+    return window.BOQEditor.getExportData();
   }
 
   function safeFilename(value) {
@@ -24,7 +23,7 @@
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  async function exportExcel(mode) {
+  async function exportExcel(mode, revisionNumber) {
     if (!window.ExcelJS || !window.BOQExcelExport) {
       window.BOQApp.showToast(
         "Excel export library is unavailable.",
@@ -34,7 +33,7 @@
     }
     try {
       await window.BOQExcelExport.download(
-        editorData(),
+        editorData(revisionNumber),
         mode,
         downloadBlob,
         safeFilename,
@@ -46,13 +45,13 @@
     }
   }
 
-  function exportPdf() {
+  function exportPdf(revisionNumber) {
     if (!window.jspdf?.jsPDF || !window.BOQPdfExport) {
       window.BOQApp.showToast("PDF export library is unavailable.", "error");
       return;
     }
     try {
-      window.BOQPdfExport.download(editorData(), safeFilename);
+      window.BOQPdfExport.download(editorData(revisionNumber), safeFilename);
       window.BOQApp.showToast("PDF downloaded.");
     } catch (error) {
       console.error(error);
@@ -69,7 +68,16 @@
       window.BOQModal.close(document.getElementById("excel-modal"));
       void exportExcel(modeButton.dataset.excelMode);
     }
-    if (event.target.closest("[data-download-pdf]")) exportPdf();
+    const pdfButton = event.target.closest("[data-download-pdf]");
+    if (pdfButton) exportPdf(pdfButton.dataset.exportRevision);
+  });
+
+  document.addEventListener("boq:export-revision", (event) => {
+    if (event.detail.type === "excel") {
+      void exportExcel("selling", event.detail.number);
+    } else if (event.detail.type === "pdf") {
+      exportPdf(event.detail.number);
+    }
   });
 
   const requestedExport = new URLSearchParams(location.search).get("export");

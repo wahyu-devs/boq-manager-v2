@@ -32,7 +32,7 @@
                   class="subtle"
                 >/</span><span class="mono text-sm" data-editor-number
                 >New</span><span class="status status-draft" data-editor-status
-                >Draft</span>
+                >Draft</span><span class="badge" data-editor-revision hidden></span>
               </div>
               <h1 data-editor-title>New BOQ</h1>
               <p><span data-save-state>Not saved yet</span></p>
@@ -48,6 +48,14 @@
                   <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
                   <circle cx="12" cy="12" r="2.5" />
                 </svg>Preview
+              </button>
+              <button
+                class="button button-primary"
+                type="button"
+                data-create-revision
+                hidden
+              >
+                Create Revision
               </button>
               <button
                 class="button button-primary"
@@ -78,6 +86,23 @@
                   <button class="menu-item" type="button" data-download-pdf>
                     Download PDF
                   </button>
+                  <button
+                    class="menu-item"
+                    type="button"
+                    data-open-revision-history
+                    hidden
+                  >Revision History</button>
+                  <button
+                    class="menu-item danger-text"
+                    type="button"
+                    data-discard-revision
+                    data-confirm
+                    data-confirm-event="boq:discard-revision"
+                    data-confirm-title="Discard Draft Revision?"
+                    data-confirm-message="All unsent changes in this draft revision will be permanently removed."
+                    data-confirm-label="Discard Draft"
+                    hidden
+                  >Discard Draft Revision</button>
                 </div>
               </div>
             </div>
@@ -397,12 +422,102 @@
       <button
         class="button button-primary"
         type="button"
+        data-create-revision
+        hidden
+      >
+        Create Revision
+      </button>
+      <button
+        class="button button-primary"
+        type="button"
         form="boq-info"
         data-save
         data-success-message="BOQ saved."
       >
         Save BOQ
       </button>
+    </div>
+    <div class="modal-backdrop" id="revision-history-modal" hidden>
+      <section
+        class="modal modal-lg"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="revision-history-title"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="revision-history-title">Revision History</h2>
+            <p class="muted text-sm">Issued revisions are retained as locked snapshots.</p>
+          </div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Close revision history">×</button>
+        </header>
+        <div class="modal-body">
+          <section class="revision-compare" data-revision-compare hidden>
+            <div class="revision-compare-controls">
+              <label class="field"><span class="field-label">From</span><select class="select select-sm" data-compare-from></select></label>
+              <label class="field"><span class="field-label">To</span><select class="select select-sm" data-compare-to></select></label>
+              <button class="button button-secondary button-sm" type="button" data-compare-revisions>Compare</button>
+            </div>
+            <div class="revision-compare-result" data-revision-compare-result hidden></div>
+          </section>
+          <div class="revision-list" data-revision-list></div>
+        </div>
+        <footer class="modal-footer">
+          <button class="button button-secondary" type="button" data-close-modal>Close</button>
+        </footer>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="issue-revision-modal" hidden>
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="issue-revision-title"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="issue-revision-title">Issue Revision</h2>
+            <p class="muted text-sm">The issued snapshot will be locked and retained in history.</p>
+          </div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Close issue confirmation">×</button>
+        </header>
+        <form data-issue-revision-form>
+          <div class="modal-body stack-md">
+            <div class="notice notice-warning" data-issue-revision-message></div>
+            <label class="field"><span class="field-label">Revision note <span class="subtle">(optional)</span></span><textarea class="textarea" name="note" rows="3" placeholder="Summarize the changes in this revision"></textarea></label>
+          </div>
+          <footer class="modal-footer">
+            <button class="button button-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="button button-primary" type="submit">Issue Revision</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="void-revision-modal" hidden>
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="void-revision-title"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="void-revision-title">Void Latest Revision</h2>
+            <p class="muted text-sm">The revision remains visible for audit purposes.</p>
+          </div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Close void confirmation">×</button>
+        </header>
+        <form data-void-revision-form>
+          <div class="modal-body stack-md">
+            <div class="notice notice-warning" data-void-revision-message></div>
+            <label class="field"><span class="field-label">Reason for voiding</span><textarea class="textarea" name="reason" rows="3" required placeholder="Explain why this issued revision is being voided"></textarea></label>
+          </div>
+          <footer class="modal-footer">
+            <button class="button button-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="button button-danger" type="submit">Void Revision</button>
+          </footer>
+        </form>
+      </section>
     </div>
     <div class="modal-backdrop" id="catalog-modal" hidden>
       <section

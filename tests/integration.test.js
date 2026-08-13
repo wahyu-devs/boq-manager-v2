@@ -151,7 +151,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
 
   const backup = store.exportState();
   equal(backup.application, "BOQ Manager", "backup application metadata");
-  equal(backup.meta.schemaVersion, 4, "backup schema version");
+  equal(backup.meta.schemaVersion, 5, "backup schema version");
   equal(
     backup.collections.projects,
     undefined,
@@ -280,6 +280,12 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   store.saveSettings({ ...store.getSettings(), numberFormat: "dot" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1.234,50", "dot number format");
   equal(window.BOQUtils.formatPercent(12.5), "12,5%", "dot percentage format");
+  equal(
+    window.BOQUtils.formatCurrencyParts(1234567, "IDR", undefined, "comma")
+      .value,
+    "1,234,567",
+    "explicit snapshot number format",
+  );
   equal(
     window.BOQUtils.formatNumberInput(1234567.5),
     "1.234.567,5",
@@ -571,4 +577,164 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "2024-12-01T08:30:00.000Z",
     "BOQ creation timestamp preserved on update",
   );
+
+  store.setUser("revision-user");
+  localStorage.setItem(
+    "boq-manager-v2:revision-user:boqs",
+    JSON.stringify([{
+      id: "alpha-rev-2",
+      number: "BOQ-250203",
+      projectName: "Project Alpha - Revision 2",
+      customerId: "customer-alpha",
+      customerName: "Alpha Ltd",
+      status: "Sent",
+      items: [{ item: "Revision 2 item", qty: 1, unitCogs: 300 }],
+      createdAt: "2025-02-03T08:00:00.000Z",
+      updatedAt: "2025-02-04T08:00:00.000Z",
+    }, {
+      id: "alpha-base",
+      number: "BOQ-250201",
+      projectName: "Project Alpha",
+      customerId: "customer-alpha",
+      customerName: "Alpha Ltd",
+      status: "Sent",
+      items: [{ item: "Original item", qty: 1, unitCogs: 100 }],
+      createdAt: "2025-02-01T08:00:00.000Z",
+      updatedAt: "2025-02-01T09:00:00.000Z",
+    }, {
+      id: "alpha-rev-1",
+      number: "BOQ-250202",
+      projectName: "Project Alpha Rev1",
+      status: "Sent",
+      items: [{ item: "Revision 1 item", qty: 1, unitCogs: 200 }],
+      createdAt: "2025-02-02T08:00:00.000Z",
+      updatedAt: "2025-02-02T09:00:00.000Z",
+    }, {
+      id: "standalone",
+      number: "BOQ-250204",
+      projectName: "Standalone Project",
+      status: "Sent",
+      items: [],
+      createdAt: "2025-02-05T08:00:00.000Z",
+      updatedAt: "2025-02-05T09:00:00.000Z",
+    }]),
+  );
+  store.setCurrentBoqId("alpha-rev-2");
+  equal(
+    store.migrateBoqRevisions({ silent: true }),
+    true,
+    "BOQ revision migration applied",
+  );
+  const revisionBoqs = store.list("boqs");
+  equal(revisionBoqs.length, 2, "legacy revision BOQs grouped");
+  const migratedRevisions = revisionBoqs.find((boq) =>
+    boq.id === "alpha-base"
+  );
+  equal(migratedRevisions.projectName, "Project Alpha", "revision suffix removed");
+  equal(migratedRevisions.number, "BOQ-250201", "base BOQ number retained");
+  equal(
+    store.get("boqs", "alpha-rev-2").id,
+    "alpha-base",
+    "legacy revision link resolves to grouped BOQ",
+  );
+  equal(
+    store.getCurrentBoqId(),
+    "alpha-base",
+    "current BOQ link updated after revision grouping",
+  );
+  equal(migratedRevisions.revisions.length, 3, "revision snapshots retained");
+  equal(
+    migratedRevisions.revisions.map((revision) => revision.label).join(","),
+    "R00,R01,R02",
+    "legacy revision labels mapped",
+  );
+  equal(
+    migratedRevisions.revisions[1].document.items[0].item,
+    "Revision 1 item",
+    "historical revision data retained",
+  );
+  equal(
+    revisionBoqs.find((boq) => boq.id === "standalone").revisions[0].label,
+    "R00",
+    "existing sent BOQ receives baseline revision",
+  );
+  equal(
+    store.migrateBoqRevisions({ silent: true }),
+    false,
+    "BOQ revision migration only runs once",
+  );
+
+  let lockedSaveFailed = false;
+  try {
+    store.saveBoqDraft({ ...migratedRevisions, projectName: "Not allowed" });
+  } catch (_error) {
+    lockedSaveFailed = true;
+  }
+  equal(lockedSaveFailed, true, "issued revision cannot be edited directly");
+  const revisionDraft = store.createRevisionDraft("alpha-base");
+  equal(revisionDraft.workingRevision, 3, "next revision draft created");
+  const savedRevisionDraft = store.saveBoqDraft({
+    ...revisionDraft,
+    projectName: "Project Alpha Updated",
+  });
+  equal(savedRevisionDraft.status, "Sent", "parent remains sent during draft");
+  equal(savedRevisionDraft.hasDraftChanges, true, "draft changes tracked");
+  equal(savedRevisionDraft.revisions.length, 3, "draft save creates no snapshot");
+  equal(
+    store.issuedBoqView(savedRevisionDraft).projectName,
+    "Project Alpha",
+    "register view remains on latest issued revision",
+  );
+  const issuedRevision = store.issueBoq(savedRevisionDraft, {
+    note: "Updated scope",
+    companySettings: { companyName: "Example Company" },
+  });
+  equal(issuedRevision.revisions.length, 4, "new sent revision added");
+  equal(issuedRevision.revisions[3].label, "R03", "new revision label");
+  equal(issuedRevision.workingRevision, null, "issued revision locked");
+  const voidedRevision = store.voidLatestRevision(
+    "alpha-base",
+    "Issued with incorrect scope",
+  );
+  equal(voidedRevision.activeRevisionNumber, 2, "previous revision reactivated");
+  equal(voidedRevision.revisions[3].state, "Voided", "latest revision voided");
+  equal(
+    store.voidLatestRevision("alpha-base", "Cannot void an older revision"),
+    null,
+    "older revision cannot be voided after a later revision",
+  );
+  const nextDraft = store.createRevisionDraft("alpha-base", 0);
+  equal(nextDraft.workingRevision, 4, "voided revision number is not reused");
+  equal(
+    nextDraft.items[0].item,
+    "Original item",
+    "draft can be based on an earlier sent revision",
+  );
+  const discardedDraft = store.discardBoqDraft("alpha-base");
+  equal(discardedDraft.workingRevision, null, "draft revision discarded");
+  equal(discardedDraft.activeRevisionNumber, 2, "active revision restored");
+
+  const firstDraft = store.saveBoqDraft({
+    id: "first-issue",
+    number: "BOQ-250205",
+    projectName: "First Issue",
+    status: "Draft",
+    items: [],
+  });
+  const firstIssue = store.issueBoq(firstDraft);
+  equal(firstIssue.revisions[0].label, "R00", "first issue starts at R00");
+  equal(store.remove("boqs", "first-issue"), false, "issued BOQ cannot be deleted");
+  const voidedFirstIssue = store.voidLatestRevision(
+    "first-issue",
+    "First issue withdrawn",
+  );
+  equal(voidedFirstIssue.status, "Draft", "voided R00 returns BOQ to draft");
+  equal(voidedFirstIssue.workingRevision, 1, "next draft advances to R01");
+  const discardedAfterVoid = store.discardBoqDraft("first-issue");
+  equal(
+    discardedAfterVoid.revisions[0].state,
+    "Voided",
+    "discarding draft preserves voided audit record",
+  );
+  equal(discardedAfterVoid.workingRevision, null, "numbered draft removed");
 });

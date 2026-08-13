@@ -4,6 +4,7 @@
   const sessionUserKey = "boq-manager-session-user";
   const collections = ["boqs", "products", "customers"];
   const defaultBoqNumberingFormat = "BOQ-{YY}{MM}{NN}";
+  const schemaVersion = 5;
   let activeUserId = localStorage.getItem(sessionUserKey) || "guest";
 
   function namespace(userId = activeUserId) {
@@ -57,6 +58,97 @@
     }));
   }
 
+  function cloneValue(value) {
+    if (value === undefined) return undefined;
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function revisionLabel(number) {
+    return `R${String(Math.max(0, Number(number) || 0)).padStart(2, "0")}`;
+  }
+
+  function revisionDocument(record) {
+    const value = record || {};
+    return cloneValue({
+      number: value.number || "",
+      status: value.status === "Sent" ? "Sent" : "Draft",
+      projectName: value.projectName || "",
+      customerId: value.customerId || "",
+      customerName: value.customerName || "",
+      currency: value.currency || "IDR",
+      date: value.date || "",
+      validUntil: value.validUntil || "",
+      notes: value.notes || "",
+      items: Array.isArray(value.items) ? value.items : [],
+      commission: Number(value.commission || 0),
+      categoryOrder: Array.isArray(value.categoryOrder)
+        ? value.categoryOrder
+        : [],
+      totalCogs: Number(value.totalCogs || 0),
+      totalSelling: Number(value.totalSelling || 0),
+      marginValue: Number(value.marginValue || 0),
+      marginPercent: Number(value.marginPercent || 0),
+    });
+  }
+
+  function normalizeRevision(revision, index = 0) {
+    const number = Math.max(0, Number(revision?.number ?? index) || 0);
+    const issuedAt = isoTimestamp(revision?.issuedAt) ||
+      isoTimestamp(revision?.snapshot?.updatedAt) ||
+      isoTimestamp(revision?.snapshot?.date);
+    return {
+      id: revision?.id || createId(),
+      number,
+      label: revisionLabel(number),
+      state: revision?.state === "Voided" ? "Voided" : "Sent",
+      issuedAt,
+      issuedBy: String(revision?.issuedBy || ""),
+      note: String(revision?.note || ""),
+      voidedAt: isoTimestamp(revision?.voidedAt),
+      voidReason: String(revision?.voidReason || ""),
+      sourceRecordId: String(revision?.sourceRecordId || ""),
+      sourceNumber: String(revision?.sourceNumber || ""),
+      document: revisionDocument(revision?.document || revision?.snapshot || {}),
+      companySettings: cloneValue(revision?.companySettings || {}),
+      customer: cloneValue(revision?.customer || {}),
+      calculation: cloneValue(revision?.calculation || {
+        version: 1,
+        marginMethod: "gross-margin",
+      }),
+    };
+  }
+
+  function latestSentRevision(record) {
+    const revisions = Array.isArray(record?.revisions) ? record.revisions : [];
+    return [...revisions].reverse().find((revision) =>
+      revision.state === "Sent"
+    ) || null;
+  }
+
+  function issuedBoqView(record) {
+    const normalized = normalizeBoq(record || {});
+    const revision = latestSentRevision(normalized);
+    if (normalized.workingRevision === null || !revision) return normalized;
+    return {
+      ...normalized,
+      ...cloneValue(revision.document),
+      status: "Sent",
+      revisions: normalized.revisions,
+      activeRevisionNumber: revision.number,
+      workingRevision: normalized.workingRevision,
+      hasDraftChanges: true,
+      createdAt: normalized.createdAt,
+      updatedAt: normalized.updatedAt,
+    };
+  }
+
+  function nextRevisionNumber(record) {
+    const revisions = Array.isArray(record?.revisions) ? record.revisions : [];
+    return revisions.reduce((highest, revision) =>
+      Math.max(highest, Number(revision.number) || 0), -1
+    ) + 1;
+  }
+
   function normalizeBoq(record, legacyProjects = [], timestampFallbacks = {}) {
     const {
       title: legacyTitle,
@@ -79,9 +171,22 @@
       isoTimestamp(linkedProject?.lastSaved) ||
       isoTimestamp(timestampFallbacks.updatedAt) ||
       isoTimestamp(timestampFallbacks.clientUpdatedAt) || createdAt;
+    const revisions = Array.isArray(value.revisions)
+      ? value.revisions.map(normalizeRevision).sort((left, right) =>
+        left.number - right.number ||
+        timestampValue(left.issuedAt) - timestampValue(right.issuedAt)
+      )
+      : [];
+    const activeRevision = [...revisions].reverse().find((revision) =>
+      revision.state === "Sent"
+    );
+    const workingRevision = value.workingRevision === null ||
+        value.workingRevision === undefined || value.workingRevision === ""
+      ? null
+      : Math.max(0, Number(value.workingRevision) || 0);
     return {
       ...value,
-      status: value.status === "Sent" ? "Sent" : "Draft",
+      status: activeRevision || value.status === "Sent" ? "Sent" : "Draft",
       projectName,
       ...(createdAt ? { createdAt } : {}),
       ...(updatedAt ? { updatedAt } : {}),
@@ -90,6 +195,10 @@
       categoryOrder: Array.isArray(value.categoryOrder)
         ? value.categoryOrder
         : [],
+      revisions,
+      activeRevisionNumber: activeRevision?.number ?? null,
+      workingRevision,
+      hasDraftChanges: Boolean(value.hasDraftChanges && workingRevision !== null),
     };
   }
 
@@ -109,7 +218,13 @@
   }
 
   function get(collection, id) {
-    return list(collection).find((record) => record.id === id) || null;
+    const records = list(collection);
+    const direct = records.find((record) => record.id === id);
+    if (direct || collection !== "boqs") return direct || null;
+    const alias = read("meta", {}).boqRevisionAliases?.[id];
+    return alias
+      ? records.find((record) => record.id === alias) || null
+      : null;
   }
 
   function save(collection, record, options = {}) {
@@ -141,8 +256,176 @@
   }
 
   function remove(collection, id) {
-    if (!collections.includes(collection)) return;
+    if (!collections.includes(collection)) return false;
+    if (collection === "boqs") {
+      const record = get("boqs", id);
+      if (record?.status === "Sent" || record?.revisions?.length) return false;
+    }
     write(collection, list(collection).filter((record) => record.id !== id));
+    return true;
+  }
+
+  function saveBoqDraft(record) {
+    const existing = record?.id ? get("boqs", record.id) : null;
+    const activeRevision = latestSentRevision(existing);
+    if (activeRevision && existing?.workingRevision === null) {
+      throw new Error("Create a revision before editing a sent BOQ.");
+    }
+    return save("boqs", {
+      ...existing,
+      ...record,
+      status: activeRevision ? "Sent" : "Draft",
+      revisions: existing?.revisions || [],
+      activeRevisionNumber: activeRevision?.number ?? null,
+      workingRevision: existing?.workingRevision ?? null,
+      hasDraftChanges: Boolean(activeRevision),
+      createdAt: existing?.createdAt || record?.createdAt,
+    });
+  }
+
+  function issueBoq(record, metadata = {}) {
+    const existing = record?.id ? get("boqs", record.id) : null;
+    const activeRevision = latestSentRevision(existing);
+    if (activeRevision && existing?.workingRevision === null) {
+      throw new Error("This issued revision is locked.");
+    }
+    const number = existing?.workingRevision ?? nextRevisionNumber(existing);
+    const issuedAt = new Date().toISOString();
+    const documentValue = revisionDocument({ ...existing, ...record, status: "Sent" });
+    const revision = normalizeRevision({
+      id: createId(),
+      number,
+      state: "Sent",
+      issuedAt,
+      issuedBy: metadata.issuedBy || "",
+      note: metadata.note || "",
+      document: documentValue,
+      companySettings: metadata.companySettings || {},
+      customer: metadata.customer || {},
+      calculation: {
+        version: 1,
+        marginMethod: "gross-margin",
+        rounding: metadata.rounding || "2",
+        numberFormat: metadata.numberFormat || "comma",
+      },
+    });
+    return save("boqs", {
+      ...existing,
+      ...documentValue,
+      id: existing?.id || record?.id,
+      status: "Sent",
+      revisions: [...(existing?.revisions || []), revision],
+      activeRevisionNumber: number,
+      workingRevision: null,
+      draftBaseRevisionNumber: null,
+      hasDraftChanges: false,
+      issuedAt,
+      createdAt: existing?.createdAt || record?.createdAt,
+    });
+  }
+
+  function createRevisionDraft(id, sourceNumber) {
+    const record = get("boqs", id);
+    const activeRevision = latestSentRevision(record);
+    const sourceRevision = sourceNumber === undefined || sourceNumber === null
+      ? activeRevision
+      : getRevision(record, sourceNumber);
+    if (!record || !activeRevision || record.workingRevision !== null) {
+      return null;
+    }
+    if (!sourceRevision || sourceRevision.state !== "Sent") return null;
+    return save("boqs", {
+      ...record,
+      ...cloneValue(sourceRevision.document),
+      id: record.id,
+      status: "Sent",
+      revisions: record.revisions,
+      activeRevisionNumber: activeRevision.number,
+      workingRevision: nextRevisionNumber(record),
+      draftBaseRevisionNumber: sourceRevision.number,
+      hasDraftChanges: true,
+      createdAt: record.createdAt,
+    });
+  }
+
+  function discardBoqDraft(id) {
+    const record = get("boqs", id);
+    if (!record) return null;
+    if (!record.revisions.length) {
+      remove("boqs", id);
+      return { removed: true };
+    }
+    if (record.workingRevision === null) return null;
+    const activeRevision = latestSentRevision(record);
+    if (!activeRevision) {
+      const lastRevision = record.revisions.at(-1);
+      return save("boqs", {
+        ...record,
+        ...cloneValue(lastRevision.document),
+        id: record.id,
+        status: "Draft",
+        revisions: record.revisions,
+        activeRevisionNumber: null,
+        workingRevision: null,
+        draftBaseRevisionNumber: null,
+        hasDraftChanges: false,
+        createdAt: record.createdAt,
+      });
+    }
+    return save("boqs", {
+      ...record,
+      ...cloneValue(activeRevision.document),
+      id: record.id,
+      status: "Sent",
+      revisions: record.revisions,
+      activeRevisionNumber: activeRevision.number,
+      workingRevision: null,
+      draftBaseRevisionNumber: null,
+      hasDraftChanges: false,
+      createdAt: record.createdAt,
+    });
+  }
+
+  function voidLatestRevision(id, reason) {
+    const record = get("boqs", id);
+    const explanation = String(reason || "").trim();
+    if (!record || !explanation || record.workingRevision !== null) return null;
+    const revisions = record.revisions.slice();
+    const latest = revisions.at(-1);
+    if (!latest || latest.state !== "Sent") return null;
+    revisions[revisions.length - 1] = normalizeRevision({
+      ...latest,
+      state: "Voided",
+      voidedAt: new Date().toISOString(),
+      voidReason: explanation,
+    });
+    const previous = [...revisions].reverse().find((revision) =>
+      revision.state === "Sent"
+    );
+    const restoredDocument = cloneValue(
+      previous?.document || latest.document,
+    );
+    return save("boqs", {
+      ...record,
+      ...restoredDocument,
+      id: record.id,
+      status: previous ? "Sent" : "Draft",
+      revisions,
+      activeRevisionNumber: previous?.number ?? null,
+      workingRevision: previous ? null : nextRevisionNumber({ revisions }),
+      draftBaseRevisionNumber: previous ? null : latest.number,
+      hasDraftChanges: !previous,
+      createdAt: record.createdAt,
+    });
+  }
+
+  function getRevision(recordOrId, number) {
+    const record = typeof recordOrId === "string"
+      ? get("boqs", recordOrId)
+      : normalizeBoq(recordOrId || {});
+    return record?.revisions.find((revision) =>
+      revision.number === Number(number)
+    ) || null;
   }
 
   function escapePattern(value) {
@@ -505,7 +788,7 @@
       },
       currentBoqId: currentName ? stableId("boq", currentName) : "",
       meta: {
-        schemaVersion: 4,
+        schemaVersion,
         clientUpdatedAt: legacyUpdatedAt,
         importedFromPreviousVersion: true,
       },
@@ -523,7 +806,7 @@
       currentBoqId: read("currentBoqId", ""),
       meta: {
         ...read("meta", {}),
-        schemaVersion: 4,
+        schemaVersion,
       },
     };
   }
@@ -576,7 +859,7 @@
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
       ...converted.meta,
-      schemaVersion: 4,
+      schemaVersion,
       clientUpdatedAt: incomingTs,
     }));
     document.dispatchEvent(new CustomEvent("boq:store-ready"));
@@ -706,7 +989,7 @@
     const clientUpdatedAt = Date.now();
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...meta,
-      schemaVersion: 4,
+      schemaVersion,
       existingBoqMigrationVersion: migrationVersion,
       clientUpdatedAt,
     }));
@@ -749,7 +1032,7 @@
     const clientUpdatedAt = Date.now();
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...meta,
-      schemaVersion: 4,
+      schemaVersion,
       partNumberMigrationVersion: migrationVersion,
       clientUpdatedAt,
     }));
@@ -815,7 +1098,7 @@
     const clientUpdatedAt = Date.now();
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...meta,
-      schemaVersion: 4,
+      schemaVersion,
       boqNumberingMigrationVersion: migrationVersion,
       clientUpdatedAt,
     }));
@@ -868,7 +1151,196 @@
     const clientUpdatedAt = Date.now();
     localStorage.setItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
-      schemaVersion: 4,
+      schemaVersion,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
+  function parseLegacyRevisionProject(value) {
+    const projectName = String(value || "").trim();
+    const match = projectName.match(
+      /^(.*?)(?:\s*[-–—_/]\s*|\s+|\s*\(\s*)rev(?:ision)?\.?\s*[-_.]?\s*(\d+)\s*\)?\s*$/i,
+    );
+    if (!match || !String(match[1] || "").trim()) {
+      return { projectName, baseName: projectName, revision: null };
+    }
+    return {
+      projectName,
+      baseName: String(match[1]).trim().replace(/[\s\-–—_/]+$/g, "").trim(),
+      revision: Math.max(0, Number(match[2]) || 0),
+    };
+  }
+
+  function revisionProjectKey(parsed) {
+    return String(parsed.baseName || "").trim().replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+
+  function revisionCustomerKey(record) {
+    return String(record.customerName || record.customerId || "").trim()
+      .replace(/\s+/g, " ").toLowerCase();
+  }
+
+  function migratedRevisionRecord(members, baseName) {
+    const sorted = members.map((entry, index) => ({ ...entry, sourceIndex: index }))
+      .sort((left, right) => {
+        const leftRevision = left.parsed.revision ?? 0;
+        const rightRevision = right.parsed.revision ?? 0;
+        return leftRevision - rightRevision ||
+          timestampValue(left.record.updatedAt || left.record.date) -
+            timestampValue(right.record.updatedAt || right.record.date) ||
+          left.sourceIndex - right.sourceIndex;
+      });
+    const usedNumbers = new Set();
+    const settings = getSettings();
+    const customers = list("customers");
+    const canonicalSource = sorted.find((entry) =>
+      entry.parsed.revision === null
+    ) || sorted[0];
+    const canonicalNumber = canonicalSource.record.number ||
+      sorted[0].record.number || "";
+    const revisions = sorted.map((entry) => {
+      let number = entry.parsed.revision ?? 0;
+      while (usedNumbers.has(number)) number += 1;
+      usedNumbers.add(number);
+      const customer = customers.find((candidate) =>
+        candidate.id === entry.record.customerId
+      ) || {};
+      return normalizeRevision({
+        id: stableId(
+          "revision",
+          `${canonicalSource.record.id}:${entry.record.id}:${number}`,
+        ),
+        number,
+        state: "Sent",
+        issuedAt: entry.record.updatedAt || entry.record.date ||
+          entry.record.createdAt,
+        note: "Migrated from an existing BOQ.",
+        sourceRecordId: entry.record.id,
+        sourceNumber: entry.record.number,
+        document: {
+          ...entry.record,
+          number: canonicalNumber,
+          status: "Sent",
+          projectName: baseName,
+        },
+        companySettings: settings,
+        customer,
+        calculation: {
+          version: 1,
+          marginMethod: "gross-margin",
+          rounding: settings.rounding || "2",
+          numberFormat: settings.numberFormat || "comma",
+        },
+      });
+    });
+    const latest = revisions.at(-1);
+    const createdAt = new Date(Math.min(...members.map((entry) =>
+      timestampValue(entry.record.createdAt || entry.record.date ||
+        entry.record.updatedAt) || Date.now()
+    ))).toISOString();
+    const updatedAt = new Date(Math.max(...members.map((entry) =>
+      timestampValue(entry.record.updatedAt || entry.record.date ||
+        entry.record.createdAt) || 0
+    ), timestampValue(createdAt))).toISOString();
+    return normalizeBoq({
+      ...canonicalSource.record,
+      ...cloneValue(latest.document),
+      id: canonicalSource.record.id,
+      number: canonicalNumber,
+      projectName: baseName,
+      status: "Sent",
+      revisions,
+      activeRevisionNumber: latest.number,
+      workingRevision: null,
+      hasDraftChanges: false,
+      createdAt,
+      updatedAt,
+    });
+  }
+
+  function migrateBoqRevisions(options = {}) {
+    const migrationVersion = 1;
+    const meta = read("meta", {});
+    if (Number(meta.boqRevisionMigrationVersion || 0) >= migrationVersion) {
+      return false;
+    }
+    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (!Array.isArray(raw)) return false;
+    const entries = raw.map((record) => {
+      const normalized = normalizeBoq(record);
+      const parsed = parseLegacyRevisionProject(normalized.projectName);
+      return {
+        record: normalized,
+        parsed,
+        projectKey: revisionProjectKey(parsed),
+        customerKey: revisionCustomerKey(normalized),
+      };
+    });
+    const customersByProject = new Map();
+    entries.forEach((entry) => {
+      if (!entry.customerKey) return;
+      const customers = customersByProject.get(entry.projectKey) || new Set();
+      customers.add(entry.customerKey);
+      customersByProject.set(entry.projectKey, customers);
+    });
+    entries.forEach((entry) => {
+      const customers = customersByProject.get(entry.projectKey) || new Set();
+      entry.key = customers.size <= 1
+        ? entry.projectKey
+        : `${entry.projectKey}::${entry.customerKey || "no-customer"}`;
+    });
+    const explicitKeys = new Set(entries.filter((entry) =>
+      entry.parsed.revision !== null && !entry.record.revisions.length
+    ).map((entry) => entry.key));
+    const processedKeys = new Set();
+    const revisionAliases = { ...(meta.boqRevisionAliases || {}) };
+    const migrated = [];
+
+    entries.forEach((entry) => {
+      if (entry.record.revisions.length || entry.record.status !== "Sent") {
+        migrated.push(entry.record);
+        return;
+      }
+      if (explicitKeys.has(entry.key)) {
+        if (processedKeys.has(entry.key)) return;
+        processedKeys.add(entry.key);
+        const members = entries.filter((candidate) =>
+          candidate.key === entry.key && !candidate.record.revisions.length &&
+          candidate.record.status === "Sent"
+        );
+        const grouped = migratedRevisionRecord(members, entry.parsed.baseName);
+        members.forEach((member) => {
+          if (member.record.id !== grouped.id) {
+            revisionAliases[member.record.id] = grouped.id;
+          }
+        });
+        migrated.push(grouped);
+        return;
+      }
+      migrated.push(migratedRevisionRecord([entry], entry.record.projectName));
+    });
+
+    localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
+    const currentBoqId = read("currentBoqId", "");
+    if (revisionAliases[currentBoqId]) {
+      localStorage.setItem(
+        storageKey("currentBoqId"),
+        JSON.stringify(revisionAliases[currentBoqId]),
+      );
+    }
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...meta,
+      schemaVersion,
+      boqRevisionMigrationVersion: migrationVersion,
+      boqRevisionAliases: revisionAliases,
       clientUpdatedAt,
     }));
     if (!options.silent) {
@@ -899,7 +1371,7 @@
     if (changed || hadProjectCollection) {
       localStorage.setItem(storageKey("meta"), JSON.stringify({
         ...read("meta", {}),
-        schemaVersion: 4,
+        schemaVersion,
       }));
     }
   }
@@ -913,6 +1385,16 @@
     get,
     save,
     remove,
+    saveBoqDraft,
+    issueBoq,
+    createRevisionDraft,
+    discardBoqDraft,
+    voidLatestRevision,
+    getRevision,
+    latestSentRevision,
+    issuedBoqView,
+    nextRevisionNumber,
+    revisionLabel,
     nextNumber,
     formatDocumentNumber,
     isValidNumberingFormat,
@@ -927,6 +1409,7 @@
     migrateExistingBoqs,
     migrateLegacyPartNumbers,
     migrateBoqNumbers,
+    migrateBoqRevisions,
     backfillBoqPartNumbers,
     exportState,
     applyState,

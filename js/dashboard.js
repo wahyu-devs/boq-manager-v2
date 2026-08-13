@@ -2,7 +2,7 @@
   const { list } = window.BOQStore;
   const { formatCurrencyMarkup, formatPercent, escapeHtml, debounce } =
     window.BOQUtils;
-  const boqs = list("boqs").map((boq) => ({
+  const boqs = list("boqs").map(window.BOQStore.issuedBoqView).map((boq) => ({
     ...boq,
     status: boq.status === "Sent" ? "Sent" : "Draft",
     ...window.BOQCalculations.calculateSummary(boq.items || [], {

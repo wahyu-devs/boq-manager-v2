@@ -1,13 +1,14 @@
 (function defineUtilities() {
   const currencySymbols = { USD: "$", EUR: "€", GBP: "£", IDR: "Rp" };
 
-  function numberFormatPreference() {
-    return window.BOQStore?.getSettings?.().numberFormat || "comma";
+  function numberFormatPreference(preference) {
+    return preference || window.BOQStore?.getSettings?.().numberFormat ||
+      "comma";
   }
 
-  function formatNumber(value, decimals = 2) {
+  function formatNumber(value, decimals = 2, numberFormat) {
     const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
-    const preference = numberFormatPreference();
+    const preference = numberFormatPreference(numberFormat);
     const locale = preference === "comma"
       ? "en-US"
       : preference === "dot"
@@ -72,7 +73,7 @@
     return numberFormatPreference() === "comma" ? text : text.replace(".", ",");
   }
 
-  function formatCurrency(value, currency = "USD", decimals) {
+  function formatCurrency(value, currency = "USD", decimals, numberFormat) {
     const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
     const fractionDigits = decimals ?? (currency === "IDR" ? 0 : 2);
     const sign = amount < 0 ? "-" : "";
@@ -83,10 +84,16 @@
     return `${sign}${symbol}${separator}${formatNumber(
       Math.abs(amount),
       fractionDigits,
+      numberFormat,
     )}`;
   }
 
-  function formatCurrencyParts(value, currency = "USD", decimals) {
+  function formatCurrencyParts(
+    value,
+    currency = "USD",
+    decimals,
+    numberFormat,
+  ) {
     const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
     const fractionDigits = decimals ?? (currency === "IDR" ? 0 : 2);
     return {
@@ -94,14 +101,20 @@
       value: `${amount < 0 ? "-" : ""}${formatNumber(
         Math.abs(amount),
         fractionDigits,
+        numberFormat,
       )}`,
     };
   }
 
-  function formatCurrencyMarkup(value, currency = "USD", decimals) {
-    const parts = formatCurrencyParts(value, currency, decimals);
+  function formatCurrencyMarkup(
+    value,
+    currency = "USD",
+    decimals,
+    numberFormat,
+  ) {
+    const parts = formatCurrencyParts(value, currency, decimals, numberFormat);
     return `<span class="currency-accounting" aria-label="${
-      escapeHtml(formatCurrency(value, currency, decimals))
+      escapeHtml(formatCurrency(value, currency, decimals, numberFormat))
     }"><span class="currency-accounting-symbol" aria-hidden="true">${
       escapeHtml(parts.symbol)
     }</span><span class="currency-accounting-value" aria-hidden="true">${
@@ -109,8 +122,8 @@
     }</span></span>`;
   }
 
-  function formatPercent(value) {
-    return `${formatNumber(value, 1)}%`;
+  function formatPercent(value, numberFormat) {
+    return `${formatNumber(value, 1, numberFormat)}%`;
   }
 
   function debounce(callback, wait = 160) {
