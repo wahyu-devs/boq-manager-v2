@@ -13,6 +13,8 @@
     white: "FFFFFFFF",
   };
   const FONT = "Arial";
+  const HEADER_LOGO_WIDTH = 144;
+  const HEADER_LOGO_HEIGHT = 64;
 
   function columnLetter(index) {
     let number = index;
@@ -261,8 +263,8 @@
     const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
       col: 0.05,
       row: 0.05,
-      width: 112,
-      height: 52,
+      width: HEADER_LOGO_WIDTH,
+      height: HEADER_LOGO_HEIGHT,
     });
     const splitColumn = Math.max(3, columnCount - 2);
     const splitLetter = columnLetter(splitColumn);
@@ -309,8 +311,8 @@
         align: "right",
       },
     );
-    sheet.getRow(1).height = 25;
-    sheet.getRow(2).height = 18;
+    sheet.getRow(1).height = hasLogo ? 30 : 25;
+    sheet.getRow(2).height = hasLogo ? 24 : 18;
     sheet.getRow(3).height = hasLogo ? 22 : 24;
     if (hasLogo) sheet.getRow(4).height = 34;
     sheet.getRow(5).height = 4;
@@ -804,25 +806,28 @@
       { width: 12 },
     ];
     const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
-      width: 108,
-      height: 52,
+      col: 0.05,
+      row: 0.05,
+      width: HEADER_LOGO_WIDTH,
+      height: HEADER_LOGO_HEIGHT,
     });
-    const companyStart = hasLogo ? "B" : "A";
+    const companyNameRange = hasLogo ? "A3:D3" : "A1:D1";
+    const companyDetailsRange = hasLogo ? "A4:D4" : "A2:D3";
     mergeValue(
       sheet,
-      `${companyStart}1:C1`,
+      companyNameRange,
       data.settings.companyName || "BOQ Manager",
-      { bold: true, color: COLORS.primaryDark, size: 12 },
+      { bold: true, color: COLORS.primaryDark, size: 15 },
     );
-    mergeValue(sheet, `${companyStart}2:C3`, companyDetails(data.settings), {
+    mergeValue(sheet, companyDetailsRange, companyDetails(data.settings), {
       color: COLORS.muted,
-      size: 7.5,
+      size: 8,
       vertical: "top",
     });
     mergeValue(sheet, "E1:F1", "ESTIMATION OVERVIEW", {
       bold: true,
       color: COLORS.primaryDark,
-      size: 13,
+      size: 14,
       align: "right",
     });
     mergeValue(sheet, "E2:F2", data.document.number || "BOQ", {
@@ -836,8 +841,10 @@
       size: 8,
       align: "right",
     });
-    sheet.getRow(1).height = 30;
-    sheet.getRow(3).height = 22;
+    sheet.getRow(1).height = hasLogo ? 30 : 25;
+    sheet.getRow(2).height = hasLogo ? 24 : 18;
+    sheet.getRow(3).height = hasLogo ? 22 : 24;
+    if (hasLogo) sheet.getRow(4).height = 34;
     sheet.getRow(5).height = 4;
     for (let column = 1; column <= 6; column += 1) {
       sheet.getRow(5).getCell(column).fill = {
