@@ -7,8 +7,9 @@
     primarySoft: "FFE9F1F7",
     surface: "FFF5F7F9",
     border: "FFDCE2E8",
-    warm: "FFFBF1DF",
-    input: "FFFFF8E8",
+    borderStrong: "FFC8D1DA",
+    highlight: "FFE9F1F7",
+    input: "FFEFF2F5",
     white: "FFFFFFFF",
   };
   const FONT = "Arial";
@@ -51,6 +52,11 @@
     };
   }
 
+  function inputCellBorder() {
+    const edge = { style: "thin", color: { argb: COLORS.borderStrong } };
+    return { top: edge, right: edge, bottom: edge, left: edge };
+  }
+
   function setCell(cell, value, options = {}) {
     cell.value = value;
     cell.font = {
@@ -83,21 +89,72 @@
     setCell(sheet.getCell(range.split(":")[0]), value, options);
   }
 
-  function addWorkbookLogo(workbook, sheet, settings, options = {}) {
+  function prepareWorkbookLogo(settings) {
     const source = String(settings.companyLogo || "");
     const match = source.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
-    if (!match) return false;
+    if (!match || typeof window.Image !== "function") {
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      const image = new window.Image();
+      image.onload = () => {
+        const width = Number(image.naturalWidth || image.width);
+        const height = Number(image.naturalHeight || image.height);
+        if (!width || !height) {
+          resolve(null);
+          return;
+        }
+        resolve({
+          source,
+          extension: match[1].toLowerCase() === "png" ? "png" : "jpeg",
+          width,
+          height,
+        });
+      };
+      image.onerror = () => resolve(null);
+      image.src = source;
+    });
+  }
+
+  function fittedLogoSize(logo, maxWidth, maxHeight) {
+    const scale = Math.min(maxWidth / logo.width, maxHeight / logo.height);
+    return {
+      width: Math.max(1, Math.round(logo.width * scale * 100) / 100),
+      height: Math.max(1, Math.round(logo.height * scale * 100) / 100),
+    };
+  }
+
+  function columnPixelWidth(sheet, columnIndex) {
+    const width = Number(sheet.getColumn(columnIndex).width || 8.43);
+    return Math.max(1, Math.floor(width * 7 + 5));
+  }
+
+  function rowPixelHeight(sheet, rowIndex) {
+    const height = Number(
+      sheet.getRow(rowIndex).height || sheet.properties.defaultRowHeight || 15,
+    );
+    return Math.max(1, height * 4 / 3);
+  }
+
+  function addWorkbookLogo(workbook, sheet, logo, options = {}) {
+    if (!logo) return false;
     try {
       const imageId = workbook.addImage({
-        base64: source,
-        extension: match[1].toLowerCase() === "png" ? "png" : "jpeg",
+        base64: logo.source,
+        extension: logo.extension,
       });
+      const maxWidth = options.width || 58;
+      const maxHeight = options.height || 42;
+      const size = fittedLogoSize(logo, maxWidth, maxHeight);
+      const baseCol = options.col ?? 0.15;
+      const baseRow = options.row ?? 0.2;
+      const colOffset = (maxWidth - size.width) / 2 /
+        columnPixelWidth(sheet, Math.floor(baseCol) + 1);
+      const rowOffset = (maxHeight - size.height) / 2 /
+        rowPixelHeight(sheet, Math.floor(baseRow) + 1);
       sheet.addImage(imageId, {
-        tl: { col: options.col ?? 0.15, row: options.row ?? 0.2 },
-        ext: {
-          width: options.width || 58,
-          height: options.height || 42,
-        },
+        tl: { col: baseCol + colOffset, row: baseRow + rowOffset },
+        ext: size,
       });
       return true;
     } catch (_error) {
@@ -199,12 +256,16 @@
     };
   }
 
-  function addQuotationHeader(workbook, sheet, data, columnCount) {
+  function addQuotationHeader(workbook, sheet, data, columnCount, logo) {
     const lastColumn = columnLetter(columnCount);
     const splitColumn = Math.max(3, columnCount - 2);
     const splitLetter = columnLetter(splitColumn);
     const rightStart = columnLetter(splitColumn + 1);
-    const hasLogo = addWorkbookLogo(workbook, sheet, data.settings);
+    const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
+      col: 0.05,
+      width: 46,
+      height: 42,
+    });
     const companyStart = hasLogo ? "B" : "A";
 
     mergeValue(
@@ -313,13 +374,13 @@
     sheet.getRow(8).height = 20;
   }
 
-  function addQuotationSheet(workbook, data, targetSheet) {
+  function addQuotationSheet(workbook, data, targetSheet, logo) {
     const { calculateItem } = window.BOQCalculations;
     const columns = quotationColumns(data.settings);
     const sheet = targetSheet || workbook.addWorksheet("BOQ");
     configureSheet(sheet, { freezeRows: 10, orientation: "portrait" });
     sheet.columns = columns.map((column) => ({ width: column.width }));
-    addQuotationHeader(workbook, sheet, data, columns.length);
+    addQuotationHeader(workbook, sheet, data, columns.length, logo);
 
     const headerRow = 10;
     sheet.getRow(headerRow).values = columns.map((column) => column.header);
@@ -403,7 +464,7 @@
       "GRAND TOTAL",
       {
         bold: true,
-        fill: COLORS.warm,
+        fill: COLORS.highlight,
         color: COLORS.primaryDark,
         align: "right",
         size: 10,
@@ -420,7 +481,7 @@
       : 0;
     setCell(totalCell, totalCell.value, {
       bold: true,
-      fill: COLORS.warm,
+      fill: COLORS.highlight,
       color: COLORS.primaryDark,
       align: "right",
       size: 12,
@@ -524,7 +585,7 @@
     mergeValue(
       sheet,
       "A3:H3",
-      "Input cells are highlighted in warm yellow. Calculated values use green shading.",
+      "Input cells use neutral shading. Calculated values use blue shading.",
       { color: COLORS.muted, size: 8 },
     );
     mergeValue(sheet, "I1:K1", "INTERNAL - NOT FOR CUSTOMER", {
@@ -608,7 +669,7 @@
             : isCalculation
             ? COLORS.primarySoft
             : undefined,
-          border: thinBottomBorder(),
+          border: isInput ? inputCellBorder() : thinBottomBorder(),
           numFmt: [7, 9, 10, 11, 12].includes(column)
             ? moneyFormat
             : column === 8
@@ -635,7 +696,7 @@
     const totalRow = rowNumber + 2;
     mergeValue(sheet, `A${totalRow}:I${totalRow}`, "TOTALS", {
       bold: true,
-      fill: COLORS.warm,
+      fill: COLORS.highlight,
       color: COLORS.primaryDark,
       align: "right",
       size: 10,
@@ -649,7 +710,7 @@
       : 0;
     setCell(cogsTotal, cogsTotal.value, {
       bold: true,
-      fill: COLORS.warm,
+      fill: COLORS.highlight,
       align: "right",
       numFmt: moneyFormat,
     });
@@ -662,7 +723,7 @@
       : 0;
     setCell(sellingTotal, sellingTotal.value, {
       bold: true,
-      fill: COLORS.warm,
+      fill: COLORS.highlight,
       align: "right",
       numFmt: moneyFormat,
     });
@@ -677,6 +738,7 @@
       align: "right",
       numFmt: moneyFormat,
       fill: COLORS.input,
+      border: inputCellBorder(),
       size: 9,
     });
     const profitRow = totalRow + 2;
@@ -721,7 +783,7 @@
     return { sheet, totalRow, commissionRow, profitRow, marginRow };
   }
 
-  function addOverviewSheet(workbook, data, costing, targetSheet) {
+  function addOverviewSheet(workbook, data, costing, targetSheet, logo) {
     const { calculateCategorySummary, calculateSummary } =
       window.BOQCalculations;
     const sheet = targetSheet || workbook.addWorksheet("Overview");
@@ -734,7 +796,7 @@
       { width: 15 },
       { width: 12 },
     ];
-    const hasLogo = addWorkbookLogo(workbook, sheet, data.settings, {
+    const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
       width: 54,
       height: 38,
     });
@@ -834,7 +896,7 @@
       mergeValue(sheet, `A${row}:B${row}`, label, {
         bold: index === 0 || index === 3,
         color: index === 0 ? COLORS.primaryDark : COLORS.muted,
-        fill: index === 0 ? COLORS.warm : COLORS.surface,
+        fill: index === 0 ? COLORS.highlight : COLORS.surface,
         size: 9,
       });
       mergeValue(sheet, `C${row}:D${row}`, {
@@ -842,7 +904,7 @@
         result,
       }, {
         bold: index === 0 || index >= 3,
-        fill: index === 0 ? COLORS.warm : COLORS.surface,
+        fill: index === 0 ? COLORS.highlight : COLORS.surface,
         color: COLORS.primaryDark,
         align: "right",
         numFmt: index === 4 ? "0.0%" : moneyFormat,
@@ -964,6 +1026,7 @@
 
   async function download(data, mode, downloadBlob, safeFilename) {
     const workbook = new window.ExcelJS.Workbook();
+    const logo = await prepareWorkbookLogo(data.settings);
     const projectName = data.document.projectName || "Bill of Quantities";
     workbook.creator = "BOQ Manager";
     workbook.lastModifiedBy = "BOQ Manager";
@@ -981,10 +1044,10 @@
       const quotationSheet = workbook.addWorksheet("BOQ");
       const costingSheet = workbook.addWorksheet("Costing");
       const costing = addCostingSheet(workbook, data, costingSheet);
-      addOverviewSheet(workbook, data, costing, overviewSheet);
-      addQuotationSheet(workbook, data, quotationSheet);
+      addOverviewSheet(workbook, data, costing, overviewSheet, logo);
+      addQuotationSheet(workbook, data, quotationSheet, logo);
     } else {
-      addQuotationSheet(workbook, data);
+      addQuotationSheet(workbook, data, undefined, logo);
     }
 
     workbook.calcProperties.fullCalcOnLoad = true;
