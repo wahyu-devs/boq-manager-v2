@@ -258,15 +258,15 @@
 
   function addQuotationHeader(workbook, sheet, data, columnCount, logo) {
     const lastColumn = columnLetter(columnCount);
-    const splitColumn = Math.max(3, columnCount - 2);
-    const splitLetter = columnLetter(splitColumn);
-    const rightStart = columnLetter(splitColumn + 1);
     const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
       col: 0.05,
-      width: 46,
-      height: 42,
+      width: 112,
+      height: 52,
     });
-    const companyStart = hasLogo ? "B" : "A";
+    const splitColumn = Math.max(hasLogo ? 4 : 3, columnCount - 2);
+    const splitLetter = columnLetter(splitColumn);
+    const rightStart = columnLetter(splitColumn + 1);
+    const companyStart = hasLogo ? "C" : "A";
 
     mergeValue(
       sheet,
@@ -797,8 +797,8 @@
       { width: 12 },
     ];
     const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
-      width: 54,
-      height: 38,
+      width: 108,
+      height: 52,
     });
     const companyStart = hasLogo ? "B" : "A";
     mergeValue(
