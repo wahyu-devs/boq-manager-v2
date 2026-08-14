@@ -253,6 +253,10 @@
   background: var(--color-surface);
 }
 
+.boq-items-panel {
+  overflow: hidden;
+}
+
 .panel-header {
   display: flex;
   min-height: 54px;
