@@ -77,7 +77,7 @@
           boq.displayRevisionNumber === undefined
         ? ""
         : window.BOQStore.revisionLabel(boq.displayRevisionNumber);
-      return `<tr><td><a class="cell-primary" href="boq-editor.html?id=${
+      return `<tr><td class="boq-number-cell"><a class="cell-primary" href="boq-editor.html?id=${
         encodeURIComponent(boq.id)
       }">${
         escapeHtml(boq.number || "Untitled")
