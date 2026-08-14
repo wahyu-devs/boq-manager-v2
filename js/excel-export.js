@@ -1135,19 +1135,17 @@
     workbook.calcProperties.fullCalcOnLoad = true;
     workbook.calcProperties.forceFullCalc = true;
     const buffer = await workbook.xlsx.writeBuffer();
-    const filename = [
-      data.document.number,
-      revisionLabel(data.document),
-      data.document.projectName,
-    ]
-      .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
-    const suffix = mode === "all" ? "" : " - Quotation";
     downloadBlob(
       new Blob([buffer], {
         type:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `${filename}${suffix}.xlsx`,
+      window.BOQCustomerDocument.filename(
+        data,
+        safeFilename,
+        "xlsx",
+        mode === "all" ? [] : ["Quotation"],
+      ),
     );
   }
 

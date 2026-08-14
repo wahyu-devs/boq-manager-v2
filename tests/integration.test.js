@@ -120,8 +120,30 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
         projectName: "Office Upgrade",
       },
     }, (value) => value, "docx"),
-    "BOQ-260801 - R01 - Office Upgrade.docx",
-    "Word export uses the customer document filename",
+    "BOQ-260801 - Office Upgrade - R01.docx",
+    "customer document filename places revision last",
+  );
+  equal(
+    window.BOQCustomerDocument.filename({
+      document: {
+        number: "BOQ-260801",
+        revisionLabel: "R01",
+        projectName: "Office Upgrade",
+      },
+    }, (value) => value, "xlsx", ["Quotation"]),
+    "BOQ-260801 - Office Upgrade - Quotation - R01.xlsx",
+    "customer Excel filename places quotation before the final revision",
+  );
+  equal(
+    window.BOQCustomerDocument.filename({
+      document: {
+        number: "BOQ-260801",
+        revisionLabel: "R00",
+        projectName: "Office Upgrade",
+      },
+    }, (value) => value, "pdf"),
+    "BOQ-260801 - Office Upgrade.pdf",
+    "hidden R00 does not leave a trailing filename separator",
   );
 
   equal(store.list("projects").length, 0, "project collection removed");

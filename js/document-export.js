@@ -79,11 +79,12 @@
     return values;
   }
 
-  function filename(data, safeFilename, extension) {
+  function filename(data, safeFilename, extension, descriptors = []) {
     const basename = [
       data.document.number,
-      revisionLabel(data.document),
       data.document.projectName,
+      ...descriptors,
+      revisionLabel(data.document),
     ].filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
     return `${basename}.${extension}`;
   }
