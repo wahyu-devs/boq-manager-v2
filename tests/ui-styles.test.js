@@ -37,7 +37,7 @@ Deno.test("uses the application icon as favicon on every page", async () => {
 });
 
 Deno.test("shows an icon on every Create Revision action", () => {
-  const revisionIcon = '<path d="M14 3v5h4M12 11v6M9 14h6" />';
+  const revisionIcon = '<path d="M15 12v6M12 15h6" />';
   const iconCount = editorHtml.split(revisionIcon).length - 1;
   if (iconCount !== 2) {
     throw new Error(`expected 2 Create Revision icons, received ${iconCount}`);
