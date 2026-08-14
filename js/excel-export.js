@@ -17,7 +17,7 @@
   const HEADER_LOGO_HEIGHT = 64;
 
   function revisionLabel(documentValue) {
-    return window.BOQUtils.documentRevisionLabel(documentValue.revisionLabel);
+    return window.BOQUtils.visibleRevisionLabel(documentValue.revisionLabel);
   }
 
   function documentReference(documentValue) {

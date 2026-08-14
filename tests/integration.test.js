@@ -78,12 +78,12 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const products = store.list("products");
 
   equal(
-    window.BOQUtils.documentRevisionLabel("R00"),
+    window.BOQUtils.visibleRevisionLabel("R00"),
     "",
     "R00 is hidden from document output",
   );
   equal(
-    window.BOQUtils.documentRevisionLabel("R01"),
+    window.BOQUtils.visibleRevisionLabel("R01"),
     "R01",
     "later revision labels remain visible in document output",
   );

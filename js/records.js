@@ -15,6 +15,7 @@
     formatCurrencyMarkup,
     formatPercent,
     collectUniqueTextValues,
+    visibleRevisionLabel,
   } = window.BOQUtils;
   let defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -72,7 +73,9 @@
     const revision = record.displayRevisionNumber === null ||
         record.displayRevisionNumber === undefined
       ? ""
-      : window.BOQStore.revisionLabel(record.displayRevisionNumber);
+      : visibleRevisionLabel(
+        window.BOQStore.revisionLabel(record.displayRevisionNumber),
+      );
     const deleteAction = record.status === "Draft" && !record.revisions?.length
       ? `<button class="menu-item danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete ${
         escapeHtml(record.number || "this BOQ")
@@ -398,7 +401,9 @@
       const revision = record.displayRevisionNumber === null ||
           record.displayRevisionNumber === undefined
         ? ""
-        : window.BOQStore.revisionLabel(record.displayRevisionNumber);
+        : visibleRevisionLabel(
+          window.BOQStore.revisionLabel(record.displayRevisionNumber),
+        );
       const summary = window.BOQCalculations.calculateSummary(
         record.items || [],
         { commission: record.commission },

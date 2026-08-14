@@ -13,7 +13,7 @@
     parseNumberInput,
     numberInputEditingValue,
     escapeHtml,
-    documentRevisionLabel,
+    visibleRevisionLabel,
     collectUniqueTextValues,
     reorderItemsWithinCategory,
     reorderValues,
@@ -320,7 +320,7 @@
       ...revision.document,
       status: "Issued",
       revisionNumber: revision.number,
-      revisionLabel: documentRevisionLabel(revision.label),
+      revisionLabel: visibleRevisionLabel(revision.label),
       revisionState: revision.state,
       revisionNote: revision.note,
       issuedAt: revision.issuedAt,
@@ -699,7 +699,7 @@
       revisionNumber,
       revisionLabel: revisionNumber === null || revisionNumber === undefined
         ? ""
-        : documentRevisionLabel(store.revisionLabel(revisionNumber)),
+        : visibleRevisionLabel(store.revisionLabel(revisionNumber)),
       revisionState: document.querySelector("#boq-status").value === "Issued"
         ? "Issued"
         : "Draft",
@@ -1046,7 +1046,7 @@
     }</strong><p>${companyDetails}</p></div><div class="pdf-preview-document"><h2>Bill of Quantities</h2><strong>${
       escapeHtml([
         payload.number || "BOQ",
-        documentRevisionLabel(payload.revisionLabel),
+        visibleRevisionLabel(payload.revisionLabel),
       ].filter(Boolean).join(" · "))
     }</strong><span>${escapeHtml(
       payload.revisionState === "Draft"

@@ -143,7 +143,7 @@
       .replaceAll("'", "&#039;");
   }
 
-  function documentRevisionLabel(value) {
+  function visibleRevisionLabel(value) {
     const label = String(value || "").trim();
     return /^R0+$/i.test(label) ? "" : label;
   }
@@ -215,7 +215,7 @@
     formatPercent,
     debounce,
     escapeHtml,
-    documentRevisionLabel,
+    visibleRevisionLabel,
     collectUniqueTextValues,
     reorderItemsWithinCategory,
     reorderValues,
