@@ -335,7 +335,7 @@
   background: var(--color-success-soft);
   color: var(--color-success);
 }
-.status-sent {
+.status-issued {
   border-color: color-mix(in srgb, var(--color-info) 28%, var(--color-border));
   background: var(--color-info-soft);
   color: var(--color-info);

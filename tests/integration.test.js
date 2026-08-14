@@ -87,7 +87,22 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(boqs[0].title, undefined, "BOQ title removed");
   equal(boqs[0].items[0].sellingOverride, 125, "stored selling price");
   equal(boqs[0].commission, 10, "commission");
-  equal(boqs[0].status, "Sent", "migrated BOQ status");
+  equal(boqs[0].status, "Issued", "migrated BOQ status");
+  equal(
+    store.migrateIssuedStatuses({ silent: true }),
+    true,
+    "issued terminology migration applied",
+  );
+  equal(
+    store.getMeta().issuedStatusMigrationVersion,
+    1,
+    "issued terminology migration version stored",
+  );
+  equal(
+    store.migrateIssuedStatuses({ silent: true }),
+    false,
+    "issued terminology migration is idempotent",
+  );
   equal(
     boqs[0].createdAt,
     "2025-01-01T00:00:00.000Z",
@@ -394,7 +409,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   });
   const migratedBoq = store.list("boqs")[0];
   equal(migrated, true, "existing BOQ migration applied");
-  equal(migratedBoq.status, "Sent", "existing BOQ marked sent");
+  equal(migratedBoq.status, "Issued", "existing BOQ marked issued");
   equal(
     migratedBoq.createdAt,
     "2024-12-01T08:30:00.000Z",
@@ -425,7 +440,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       id: "february-second",
       number: "OLD-003",
       projectName: "February Second",
-      status: "Sent",
+      status: "Issued",
       items: [],
       createdAt: "2025-02-20T08:00:00.000Z",
       updatedAt: "2025-03-02T08:00:00.000Z",
@@ -433,7 +448,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       id: "february-first",
       number: "OLD-001",
       projectName: "February First",
-      status: "Sent",
+      status: "Issued",
       items: [],
       createdAt: "2025-02-01T08:00:00.000Z",
       updatedAt: "2025-02-03T08:00:00.000Z",
@@ -587,7 +602,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       projectName: "Project Alpha - Revision 2",
       customerId: "customer-alpha",
       customerName: "Alpha Ltd",
-      status: "Sent",
+      status: "Issued",
       items: [{ item: "Revision 2 item", qty: 1, unitCogs: 300 }],
       createdAt: "2025-02-03T08:00:00.000Z",
       updatedAt: "2025-02-04T08:00:00.000Z",
@@ -597,7 +612,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       projectName: "Project Alpha",
       customerId: "customer-alpha",
       customerName: "Alpha Ltd",
-      status: "Sent",
+      status: "Issued",
       items: [{ item: "Original item", qty: 1, unitCogs: 100 }],
       createdAt: "2025-02-01T08:00:00.000Z",
       updatedAt: "2025-02-01T09:00:00.000Z",
@@ -605,7 +620,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       id: "alpha-rev-1",
       number: "BOQ-250202",
       projectName: "Project Alpha Rev1",
-      status: "Sent",
+      status: "Issued",
       items: [{ item: "Revision 1 item", qty: 1, unitCogs: 200 }],
       createdAt: "2025-02-02T08:00:00.000Z",
       updatedAt: "2025-02-02T09:00:00.000Z",
@@ -613,7 +628,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       id: "standalone",
       number: "BOQ-250204",
       projectName: "Standalone Project",
-      status: "Sent",
+      status: "Issued",
       items: [],
       createdAt: "2025-02-05T08:00:00.000Z",
       updatedAt: "2025-02-05T09:00:00.000Z",
@@ -656,7 +671,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(
     revisionBoqs.find((boq) => boq.id === "standalone").revisions[0].label,
     "R00",
-    "existing sent BOQ receives baseline revision",
+    "existing issued BOQ receives baseline revision",
   );
   equal(
     store.migrateBoqRevisions({ silent: true }),
@@ -684,7 +699,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     ...revisionDraft,
     projectName: "Project Alpha Updated",
   });
-  equal(savedRevisionDraft.status, "Sent", "parent remains sent during draft");
+  equal(savedRevisionDraft.status, "Issued", "parent remains issued during draft");
   equal(savedRevisionDraft.hasDraftChanges, true, "draft changes tracked");
   equal(savedRevisionDraft.revisions.length, 3, "draft save creates no snapshot");
   equal(
@@ -696,13 +711,13 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     note: "Updated scope",
     companySettings: { companyName: "Example Company" },
   });
-  equal(issuedRevision.revisions.length, 4, "new sent revision added");
+  equal(issuedRevision.revisions.length, 4, "new issued revision added");
   equal(issuedRevision.revisions[3].label, "R03", "new revision label");
   equal(issuedRevision.workingRevision, null, "issued revision locked");
-  const sentRegisterView = store.registerBoqView(issuedRevision);
-  equal(sentRegisterView.status, "Sent", "register restores sent status");
+  const issuedRegisterView = store.registerBoqView(issuedRevision);
+  equal(issuedRegisterView.status, "Issued", "register restores issued status");
   equal(
-    sentRegisterView.displayRevisionNumber,
+    issuedRegisterView.displayRevisionNumber,
     3,
     "register shows issued revision number",
   );
@@ -722,7 +737,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(
     nextDraft.items[0].item,
     "Original item",
-    "draft can be based on an earlier sent revision",
+    "draft can be based on an earlier issued revision",
   );
   const discardedDraft = store.discardBoqDraft("alpha-base");
   equal(discardedDraft.workingRevision, null, "draft revision discarded");
@@ -780,8 +795,10 @@ Deno.test("creates a revision draft for a legacy sent BOQ", () => {
 
   const draft = store.createRevisionDraft("legacy-sent-boq");
   equal(Boolean(draft), true, "legacy revision draft created");
+  equal(draft.status, "Issued", "legacy Sent status normalized to Issued");
   equal(draft.revisions.length, 1, "legacy R00 baseline created once");
   equal(draft.revisions[0].label, "R00", "legacy baseline labeled R00");
+  equal(draft.revisions[0].state, "Issued", "legacy revision state normalized");
   equal(draft.activeRevisionNumber, 0, "legacy R00 remains active");
   equal(draft.workingRevision, 1, "new revision draft starts at R01");
   equal(draft.items[0].item, "Legacy item", "legacy BOQ content preserved");

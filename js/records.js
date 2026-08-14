@@ -30,7 +30,7 @@
   function statusClass(status) {
     const map = {
       Draft: "draft",
-      Sent: "sent",
+      Issued: "issued",
       Active: "active",
       Prospect: "review",
       Inactive: "inactive",
@@ -58,7 +58,7 @@
     record = window.BOQStore.registerBoqView(record);
     record = {
       ...record,
-      status: record.status === "Sent" ? "Sent" : "Draft",
+      status: record.status === "Issued" ? "Issued" : "Draft",
       ...window.BOQCalculations.calculateSummary(record.items || [], {
         commission: record.commission,
       }),
@@ -139,7 +139,7 @@
           dateText(record.updatedAt)
         }</span><a class="button button-secondary button-sm" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
-        }">${record.status === "Sent" && record.workingRevision === null ? "View" : "Edit"}</a></div></article>`,
+        }">${record.status === "Issued" && record.workingRevision === null ? "View" : "Edit"}</a></div></article>`,
     };
   }
 
@@ -499,7 +499,7 @@
   document.addEventListener("records:delete", (event) => {
     const record = get(collection, event.detail.targetId);
     if (collection === "boqs" &&
-        (record?.status === "Sent" || record?.revisions?.length)) {
+        (record?.status === "Issued" || record?.revisions?.length)) {
       window.BOQApp.showToast(
         "Issued BOQs cannot be deleted. Void the latest revision instead.",
         "error",

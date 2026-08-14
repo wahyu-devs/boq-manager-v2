@@ -150,8 +150,8 @@
         "#boq-status",
         record.workingRevision !== null
           ? "Draft"
-          : record.status === "Sent"
-          ? "Sent"
+          : record.status === "Issued"
+          ? "Issued"
           : "Draft",
       );
       setFormValue("#boq-project", record.projectName);
@@ -168,7 +168,7 @@
       document.querySelector("[data-save-state]").textContent =
         record.workingRevision !== null
           ? `Draft changes for ${store.revisionLabel(record.workingRevision)}`
-          : record.status === "Sent"
+          : record.status === "Issued"
           ? `${store.revisionLabel(record.activeRevisionNumber)} issued and locked`
           : "All changes saved";
     } else {
@@ -198,7 +198,7 @@
     const selectedStatus = document.querySelector("#boq-status").value;
     const status = currentRecord?.activeRevisionNumber !== null &&
         currentRecord?.activeRevisionNumber !== undefined
-      ? "Sent"
+      ? "Issued"
       : selectedStatus;
     document.querySelector("[data-editor-title]").textContent = projectName ||
       "New BOQ";
@@ -221,14 +221,15 @@
     }
   }
 
-  function isSentLocked() {
+  function isIssuedLocked() {
     return Boolean(
-      currentRecord?.status === "Sent" && currentRecord.workingRevision === null,
+      currentRecord?.status === "Issued" &&
+        currentRecord.workingRevision === null,
     );
   }
 
   function applyEditorMode() {
-    const locked = isSentLocked();
+    const locked = isIssuedLocked();
     editor.classList.toggle("editor-readonly", locked);
     document.querySelectorAll("#boq-info input, #boq-info select, #boq-info textarea")
       .forEach((control) => control.disabled = locked);
@@ -278,7 +279,7 @@
     if (!revision) return null;
     let documentValue = {
       ...revision.document,
-      status: "Sent",
+      status: "Issued",
       revisionNumber: revision.number,
       revisionLabel: revision.label,
       revisionState: revision.state,
@@ -319,7 +320,7 @@
   }
 
   function currentExportData() {
-    if (isSentLocked() && currentRecord?.activeRevisionNumber !== null) {
+    if (isIssuedLocked() && currentRecord?.activeRevisionNumber !== null) {
       return revisionExportData(currentRecord.activeRevisionNumber);
     }
     const documentValue = documentPayload();
@@ -338,16 +339,18 @@
     const latest = revisions.at(-1);
     host.innerHTML = revisions.length
       ? [...revisions].reverse().map((revision) => {
-        const canVoid = latest?.id === revision.id && revision.state === "Sent" &&
+        const canVoid = latest?.id === revision.id &&
+          revision.state === "Issued" &&
           currentRecord?.workingRevision === null;
-        const canCreateDraft = isSentLocked() && revision.state === "Sent";
+        const canCreateDraft = isIssuedLocked() &&
+          revision.state === "Issued";
         const reason = revision.state === "Voided"
           ? `Voided ${revisionDate(revision.voidedAt)} · ${revision.voidReason}`
           : revision.note || "No revision note";
         return `<article class="revision-entry${
           revision.state === "Voided" ? " is-voided" : ""
         }"><div class="revision-entry-main"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
-          revision.state === "Voided" ? "inactive" : "sent"
+          revision.state === "Voided" ? "inactive" : "issued"
         }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-secondary button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-secondary button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button>${
           canVoid
             ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
@@ -358,7 +361,7 @@
             : ""
         }</div></article>`;
       }).join("")
-      : '<div class="empty-state"><div class="empty-state-content"><h3>No Issued Revisions</h3><p>Revision history begins when this BOQ is sent.</p></div></div>';
+      : '<div class="empty-state"><div class="empty-state-content"><h3>No Issued Revisions</h3><p>Revision history begins when this BOQ is issued.</p></div></div>';
     const compare = document.querySelector("[data-revision-compare]");
     const from = document.querySelector("[data-compare-from]");
     const to = document.querySelector("[data-compare-to]");
@@ -658,8 +661,8 @@
       revisionLabel: revisionNumber === null || revisionNumber === undefined
         ? ""
         : store.revisionLabel(revisionNumber),
-      revisionState: document.querySelector("#boq-status").value === "Sent"
-        ? "Sent"
+      revisionState: document.querySelector("#boq-status").value === "Issued"
+        ? "Issued"
         : "Draft",
       ...summary,
     };
@@ -1068,7 +1071,7 @@
       id: currentRecordId || undefined,
       createdAt: existing?.createdAt,
     };
-    const issuing = payload.status === "Sent";
+    const issuing = payload.status === "Issued";
     const selectedCustomer = payload.customerId
       ? store.get("customers", payload.customerId)
       : null;
@@ -1345,7 +1348,7 @@
       form.reset();
       form.dataset.revisionNumber = String(revision.number);
       document.querySelector("[data-void-revision-message]").textContent =
-        `${revision.label} will be marked void. The previous sent revision will become active.`;
+        `${revision.label} will be marked void. The previous issued revision will become active.`;
       window.BOQModal.open("void-revision-modal");
     }
     if (event.target.closest("[data-toggle-subtotals]")) {
@@ -1424,7 +1427,7 @@
 
   document.addEventListener("boq:before-save", (event) => {
     const status = document.querySelector("#boq-status").value;
-    if (status !== "Sent" || isSentLocked()) return;
+    if (status !== "Issued" || isIssuedLocked()) return;
     event.preventDefault();
     pendingSaveContinuation = event.detail.resume;
     const revisionNumber = currentRecord?.workingRevision ??
@@ -1486,7 +1489,7 @@
     markDirty();
   });
   document.addEventListener("boq:saved", (event) => {
-    const issuing = document.querySelector("#boq-status").value === "Sent";
+    const issuing = document.querySelector("#boq-status").value === "Issued";
     event.detail.promise = (async () => {
       const record = await saveDocument();
       if (!record) throw new Error("Unable to save this BOQ.");

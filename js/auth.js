@@ -257,6 +257,9 @@
         cloudCreatedAt: cloud?.created_at,
         cloudUpdatedAt: cloud?.updated_at,
       });
+      const migratedIssuedStatuses = store.migrateIssuedStatuses({
+        silent: true,
+      });
       const migratedPartNumbers = store.migrateLegacyPartNumbers({
         silent: true,
       });
@@ -266,7 +269,8 @@
       });
       const migratedBoqRevisions = store.migrateBoqRevisions({ silent: true });
       if (
-        migratedBoqs || migratedPartNumbers || migratedBoqNumbers ||
+        migratedBoqs || migratedIssuedStatuses || migratedPartNumbers ||
+        migratedBoqNumbers ||
         backfilledPartNumbers || migratedBoqRevisions
       ) {
         changed = true;

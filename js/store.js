@@ -67,11 +67,19 @@
     return `R${String(Math.max(0, Number(number) || 0)).padStart(2, "0")}`;
   }
 
+  function isIssuedStatus(value) {
+    return value === "Issued" || value === "Sent";
+  }
+
+  function isIssuedRevision(revision) {
+    return revision?.state === "Issued" || revision?.state === "Sent";
+  }
+
   function revisionDocument(record) {
     const value = record || {};
     return cloneValue({
       number: value.number || "",
-      status: value.status === "Sent" ? "Sent" : "Draft",
+      status: isIssuedStatus(value.status) ? "Issued" : "Draft",
       projectName: value.projectName || "",
       customerId: value.customerId || "",
       customerName: value.customerName || "",
@@ -100,7 +108,7 @@
       id: revision?.id || createId(),
       number,
       label: revisionLabel(number),
-      state: revision?.state === "Voided" ? "Voided" : "Sent",
+      state: revision?.state === "Voided" ? "Voided" : "Issued",
       issuedAt,
       issuedBy: String(revision?.issuedBy || ""),
       note: String(revision?.note || ""),
@@ -118,21 +126,21 @@
     };
   }
 
-  function latestSentRevision(record) {
+  function latestIssuedRevision(record) {
     const revisions = Array.isArray(record?.revisions) ? record.revisions : [];
     return [...revisions].reverse().find((revision) =>
-      revision.state === "Sent"
+      isIssuedRevision(revision)
     ) || null;
   }
 
   function issuedBoqView(record) {
     const normalized = normalizeBoq(record || {});
-    const revision = latestSentRevision(normalized);
+    const revision = latestIssuedRevision(normalized);
     if (normalized.workingRevision === null || !revision) return normalized;
     return {
       ...normalized,
       ...cloneValue(revision.document),
-      status: "Sent",
+      status: "Issued",
       revisions: normalized.revisions,
       activeRevisionNumber: revision.number,
       workingRevision: normalized.workingRevision,
@@ -190,7 +198,7 @@
       )
       : [];
     const activeRevision = [...revisions].reverse().find((revision) =>
-      revision.state === "Sent"
+      isIssuedRevision(revision)
     );
     const workingRevision = value.workingRevision === null ||
         value.workingRevision === undefined || value.workingRevision === ""
@@ -198,7 +206,9 @@
       : Math.max(0, Number(value.workingRevision) || 0);
     return {
       ...value,
-      status: activeRevision || value.status === "Sent" ? "Sent" : "Draft",
+      status: activeRevision || isIssuedStatus(value.status)
+        ? "Issued"
+        : "Draft",
       projectName,
       ...(createdAt ? { createdAt } : {}),
       ...(updatedAt ? { updatedAt } : {}),
@@ -271,7 +281,7 @@
     if (!collections.includes(collection)) return false;
     if (collection === "boqs") {
       const record = get("boqs", id);
-      if (record?.status === "Sent" || record?.revisions?.length) return false;
+      if (record?.status === "Issued" || record?.revisions?.length) return false;
     }
     write(collection, list(collection).filter((record) => record.id !== id));
     return true;
@@ -279,14 +289,14 @@
 
   function saveBoqDraft(record) {
     const existing = record?.id ? get("boqs", record.id) : null;
-    const activeRevision = latestSentRevision(existing);
+    const activeRevision = latestIssuedRevision(existing);
     if (activeRevision && existing?.workingRevision === null) {
-      throw new Error("Create a revision before editing a sent BOQ.");
+      throw new Error("Create a revision before editing an issued BOQ.");
     }
     return save("boqs", {
       ...existing,
       ...record,
-      status: activeRevision ? "Sent" : "Draft",
+      status: activeRevision ? "Issued" : "Draft",
       revisions: existing?.revisions || [],
       activeRevisionNumber: activeRevision?.number ?? null,
       workingRevision: existing?.workingRevision ?? null,
@@ -297,17 +307,21 @@
 
   function issueBoq(record, metadata = {}) {
     const existing = record?.id ? get("boqs", record.id) : null;
-    const activeRevision = latestSentRevision(existing);
+    const activeRevision = latestIssuedRevision(existing);
     if (activeRevision && existing?.workingRevision === null) {
       throw new Error("This issued revision is locked.");
     }
     const number = existing?.workingRevision ?? nextRevisionNumber(existing);
     const issuedAt = new Date().toISOString();
-    const documentValue = revisionDocument({ ...existing, ...record, status: "Sent" });
+    const documentValue = revisionDocument({
+      ...existing,
+      ...record,
+      status: "Issued",
+    });
     const revision = normalizeRevision({
       id: createId(),
       number,
-      state: "Sent",
+      state: "Issued",
       issuedAt,
       issuedBy: metadata.issuedBy || "",
       note: metadata.note || "",
@@ -325,7 +339,7 @@
       ...existing,
       ...documentValue,
       id: existing?.id || record?.id,
-      status: "Sent",
+      status: "Issued",
       revisions: [...(existing?.revisions || []), revision],
       activeRevisionNumber: number,
       workingRevision: null,
@@ -338,13 +352,13 @@
 
   function createRevisionDraft(id, sourceNumber) {
     let record = get("boqs", id);
-    let activeRevision = latestSentRevision(record);
-    if (record?.status === "Sent" && !record.revisions.length) {
+    let activeRevision = latestIssuedRevision(record);
+    if (record?.status === "Issued" && !record.revisions.length) {
       record = migratedRevisionRecord([{
         record,
         parsed: { revision: null },
       }], record.projectName);
-      activeRevision = latestSentRevision(record);
+      activeRevision = latestIssuedRevision(record);
     }
     const sourceRevision = sourceNumber === undefined || sourceNumber === null
       ? activeRevision
@@ -352,12 +366,12 @@
     if (!record || !activeRevision || record.workingRevision !== null) {
       return null;
     }
-    if (!sourceRevision || sourceRevision.state !== "Sent") return null;
+    if (!sourceRevision || !isIssuedRevision(sourceRevision)) return null;
     return save("boqs", {
       ...record,
       ...cloneValue(sourceRevision.document),
       id: record.id,
-      status: "Sent",
+      status: "Issued",
       revisions: record.revisions,
       activeRevisionNumber: activeRevision.number,
       workingRevision: nextRevisionNumber(record),
@@ -375,7 +389,7 @@
       return { removed: true };
     }
     if (record.workingRevision === null) return null;
-    const activeRevision = latestSentRevision(record);
+    const activeRevision = latestIssuedRevision(record);
     if (!activeRevision) {
       const lastRevision = record.revisions.at(-1);
       return save("boqs", {
@@ -395,7 +409,7 @@
       ...record,
       ...cloneValue(activeRevision.document),
       id: record.id,
-      status: "Sent",
+      status: "Issued",
       revisions: record.revisions,
       activeRevisionNumber: activeRevision.number,
       workingRevision: null,
@@ -411,7 +425,7 @@
     if (!record || !explanation || record.workingRevision !== null) return null;
     const revisions = record.revisions.slice();
     const latest = revisions.at(-1);
-    if (!latest || latest.state !== "Sent") return null;
+    if (!latest || !isIssuedRevision(latest)) return null;
     revisions[revisions.length - 1] = normalizeRevision({
       ...latest,
       state: "Voided",
@@ -419,7 +433,7 @@
       voidReason: explanation,
     });
     const previous = [...revisions].reverse().find((revision) =>
-      revision.state === "Sent"
+      isIssuedRevision(revision)
     );
     const restoredDocument = cloneValue(
       previous?.document || latest.document,
@@ -428,7 +442,7 @@
       ...record,
       ...restoredDocument,
       id: record.id,
-      status: previous ? "Sent" : "Draft",
+      status: previous ? "Issued" : "Draft",
       revisions,
       activeRevisionNumber: previous?.number ?? null,
       workingRevision: previous ? null : nextRevisionNumber({ revisions }),
@@ -710,7 +724,7 @@
       boqRecords.push({
         id: stableId("boq", name),
         number: `BOQ-${String(index + 1).padStart(3, "0")}`,
-        status: "Sent",
+        status: "Issued",
         projectName: name,
         customerId: "",
         customerName: "",
@@ -750,7 +764,7 @@
       boqRecords.unshift({
         id: stableId("boq", `working-${updatedAt}`),
         number: `BOQ-${String(boqRecords.length + 1).padStart(3, "0")}`,
-        status: "Sent",
+        status: "Issued",
         projectName: "Imported Project",
         customerId: "",
         customerName: "",
@@ -1001,7 +1015,7 @@
         : record;
       return {
         ...normalizeBoq(source, [], timestampFallbacks),
-        status: "Sent",
+        status: "Issued",
       };
     });
     localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
@@ -1010,6 +1024,31 @@
       ...meta,
       schemaVersion,
       existingBoqMigrationVersion: migrationVersion,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
+  function migrateIssuedStatuses(options = {}) {
+    const migrationVersion = 1;
+    const meta = read("meta", {});
+    if (Number(meta.issuedStatusMigrationVersion || 0) >= migrationVersion) {
+      return false;
+    }
+    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    if (!Array.isArray(raw) || !raw.length) return false;
+    const migrated = raw.map(normalizeBoq);
+    localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...meta,
+      schemaVersion,
+      issuedStatusMigrationVersion: migrationVersion,
       clientUpdatedAt,
     }));
     if (!options.silent) {
@@ -1237,7 +1276,7 @@
           `${canonicalSource.record.id}:${entry.record.id}:${number}`,
         ),
         number,
-        state: "Sent",
+        state: "Issued",
         issuedAt: entry.record.updatedAt || entry.record.date ||
           entry.record.createdAt,
         note: "Migrated from an existing BOQ.",
@@ -1246,7 +1285,7 @@
         document: {
           ...entry.record,
           number: canonicalNumber,
-          status: "Sent",
+          status: "Issued",
           projectName: baseName,
         },
         companySettings: settings,
@@ -1274,7 +1313,7 @@
       id: canonicalSource.record.id,
       number: canonicalNumber,
       projectName: baseName,
-      status: "Sent",
+      status: "Issued",
       revisions,
       activeRevisionNumber: latest.number,
       workingRevision: null,
@@ -1323,7 +1362,7 @@
     const migrated = [];
 
     entries.forEach((entry) => {
-      if (entry.record.revisions.length || entry.record.status !== "Sent") {
+      if (entry.record.revisions.length || entry.record.status !== "Issued") {
         migrated.push(entry.record);
         return;
       }
@@ -1332,7 +1371,7 @@
         processedKeys.add(entry.key);
         const members = entries.filter((candidate) =>
           candidate.key === entry.key && !candidate.record.revisions.length &&
-          candidate.record.status === "Sent"
+          candidate.record.status === "Issued"
         );
         const grouped = migratedRevisionRecord(members, entry.parsed.baseName);
         members.forEach((member) => {
@@ -1410,7 +1449,7 @@
     discardBoqDraft,
     voidLatestRevision,
     getRevision,
-    latestSentRevision,
+    latestIssuedRevision,
     issuedBoqView,
     registerBoqView,
     nextRevisionNumber,
@@ -1427,6 +1466,7 @@
     getLocalPreference,
     saveLocalPreference,
     migrateExistingBoqs,
+    migrateIssuedStatuses,
     migrateLegacyPartNumbers,
     migrateBoqNumbers,
     migrateBoqRevisions,

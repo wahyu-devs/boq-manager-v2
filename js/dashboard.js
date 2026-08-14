@@ -4,7 +4,7 @@
     window.BOQUtils;
   const boqs = list("boqs").map(window.BOQStore.issuedBoqView).map((boq) => ({
     ...boq,
-    status: boq.status === "Sent" ? "Sent" : "Draft",
+    status: boq.status === "Issued" ? "Issued" : "Draft",
     ...window.BOQCalculations.calculateSummary(boq.items || [], {
       commission: boq.commission,
     }),
@@ -13,13 +13,13 @@
   const customers = list("customers");
   const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
   const draftBoqs = boqs.filter((boq) => boq.status === "Draft");
-  const sentBoqs = boqs.filter((boq) => boq.status === "Sent");
+  const issuedBoqs = boqs.filter((boq) => boq.status === "Issued");
   const today = startOfDay(new Date());
-  const expiringSoon = sentBoqs.filter((boq) => {
+  const expiringSoon = issuedBoqs.filter((boq) => {
     const days = daysUntil(boq.validUntil, today);
     return days !== null && days >= 0 && days <= 7;
   });
-  const expired = sentBoqs.filter((boq) => {
+  const expired = issuedBoqs.filter((boq) => {
     const days = daysUntil(boq.validUntil, today);
     return days !== null && days < 0;
   });
@@ -48,7 +48,7 @@
   });
   const metricDetails = {
     boqCount: boqs.length
-      ? `${plural(draftBoqs.length, "draft")} · ${plural(sentBoqs.length, "sent")}`
+      ? `${plural(draftBoqs.length, "draft")} · ${plural(issuedBoqs.length, "issued")}`
       : "No documents yet",
     productCount: products.length
       ? `${plural(activeProducts.length, "active product")}`
@@ -100,13 +100,13 @@
   const attentionItems = [
     {
       count: expired.length,
-      title: `${plural(expired.length, "sent BOQ")} expired`,
+      title: `${plural(expired.length, "issued BOQ")} expired`,
       detail: "Review validity before customer follow-up.",
       tone: "danger",
     },
     {
       count: expiringSoon.length,
-      title: `${plural(expiringSoon.length, "sent BOQ")} ${expiryVerb} soon`,
+      title: `${plural(expiringSoon.length, "issued BOQ")} ${expiryVerb} soon`,
       detail: "Validity ends within the next seven days.",
       tone: "warning",
     },
