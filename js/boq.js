@@ -196,8 +196,13 @@
     const projectName = document.querySelector("#boq-project").value.trim();
     const number = document.querySelector("#boq-number").value.trim();
     const selectedStatus = document.querySelector("#boq-status").value;
-    const status = currentRecord?.activeRevisionNumber !== null &&
-        currentRecord?.activeRevisionNumber !== undefined
+    const hasWorkingRevision = currentRecord?.workingRevision !== null &&
+      currentRecord?.workingRevision !== undefined;
+    const hasIssuedRevision = currentRecord?.activeRevisionNumber !== null &&
+      currentRecord?.activeRevisionNumber !== undefined;
+    const status = hasWorkingRevision
+      ? "Draft"
+      : hasIssuedRevision
       ? "Issued"
       : selectedStatus;
     document.querySelector("[data-editor-title]").textContent = projectName ||
