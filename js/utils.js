@@ -148,6 +148,15 @@
     return /^R0+$/i.test(label) ? "" : label;
   }
 
+  function greetingForHour(value) {
+    const hour = Number(value);
+    if (!Number.isFinite(hour) || hour < 0 || hour > 23) return "Welcome";
+    if (hour >= 5 && hour < 12) return "Good morning";
+    if (hour >= 12 && hour < 17) return "Good afternoon";
+    if (hour >= 17 && hour < 21) return "Good evening";
+    return "Good night";
+  }
+
   function collectUniqueTextValues(...groups) {
     const seen = new Set();
     const values = [];
@@ -216,6 +225,7 @@
     debounce,
     escapeHtml,
     visibleRevisionLabel,
+    greetingForHour,
     collectUniqueTextValues,
     reorderItemsWithinCategory,
     reorderValues,

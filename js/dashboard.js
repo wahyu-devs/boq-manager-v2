@@ -6,7 +6,9 @@
     escapeHtml,
     debounce,
     visibleRevisionLabel,
+    greetingForHour,
   } = window.BOQUtils;
+  updateGreeting();
   const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
     ...boq,
     status: boq.status === "Issued" ? "Issued" : "Draft",
@@ -170,6 +172,13 @@
     }).format(new Date(value));
   }
 
+  function updateGreeting() {
+    const greeting = greetingForHour(new Date().getHours());
+    document.querySelectorAll("[data-dashboard-greeting]").forEach((node) => {
+      node.textContent = greeting;
+    });
+  }
+
   function recentBoqRowLimit() {
     if (!window.matchMedia("(min-width: 992px)").matches) return 6;
     const panel = document.querySelector("[data-recent-boqs-panel]");
@@ -205,6 +214,10 @@
 
   if (!event) {
     document.addEventListener("boq:workspace-updated", renderDashboard);
+    window.setInterval(updateGreeting, 60000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") updateGreeting();
+    });
     window.addEventListener(
       "resize",
       debounce(() => renderDashboard({ type: "resize" }), 160),

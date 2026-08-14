@@ -89,6 +89,26 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "later revision labels remain visible in document output",
   );
   equal(
+    window.BOQUtils.greetingForHour(5),
+    "Good morning",
+    "morning greeting starts at 05:00",
+  );
+  equal(
+    window.BOQUtils.greetingForHour(12),
+    "Good afternoon",
+    "afternoon greeting starts at 12:00",
+  );
+  equal(
+    window.BOQUtils.greetingForHour(17),
+    "Good evening",
+    "evening greeting starts at 17:00",
+  );
+  equal(
+    window.BOQUtils.greetingForHour(21),
+    "Good night",
+    "night greeting starts at 21:00",
+  );
+  equal(
     window.BOQCustomerDocument.documentReference({
       number: "BOQ-260801",
       revisionLabel: "R00",
