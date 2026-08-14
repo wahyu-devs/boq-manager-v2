@@ -802,6 +802,22 @@ Deno.test("marks valid drafts as issued exactly once", () => {
     }],
   });
   equal(
+    store.registerBoqView(draft).displayRevisionNumber,
+    0,
+    "draft without a revision number displays R00 in the register",
+  );
+  equal(
+    store.registerBoqView({
+      ...draft,
+      status: "Issued",
+      revisions: [],
+      activeRevisionNumber: null,
+      workingRevision: null,
+    }).displayRevisionNumber,
+    0,
+    "issued BOQ without a revision number displays R00 in the register",
+  );
+  equal(
     store.validateBoqForIssue(draft).valid,
     true,
     "valid draft passes issue validation",

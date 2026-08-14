@@ -153,12 +153,13 @@
   function registerBoqView(record) {
     const normalized = normalizeBoq(record || {});
     const isDraftRevision = normalized.workingRevision !== null;
+    const displayRevisionNumber = isDraftRevision
+      ? normalized.workingRevision
+      : normalized.activeRevisionNumber;
     return {
       ...normalized,
       status: isDraftRevision ? "Draft" : normalized.status,
-      displayRevisionNumber: isDraftRevision
-        ? normalized.workingRevision
-        : normalized.activeRevisionNumber,
+      displayRevisionNumber: displayRevisionNumber ?? 0,
     };
   }
 
