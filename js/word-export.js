@@ -255,12 +255,12 @@
           ? `Registration no.: ${settings.registrationNumber}`
           : "",
       },
-      { text: settings.address, isAddress: true },
+      { text: settings.address },
       { text: contact },
     ].filter((entry) => entry.text);
     return entries.map((entry) =>
       paragraph([run(entry.text, { color: COLORS.muted, size: 15 })], {
-        after: entry.isAddress && contact ? 70 : 0,
+        after: 0,
       })
     );
   }
@@ -671,6 +671,7 @@
     const header = await documentHeader(data);
     const children = [
       header,
+      spacer(2.2),
       divider(),
       partiesTable(data),
       spacer(7),

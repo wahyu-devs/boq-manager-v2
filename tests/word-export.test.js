@@ -72,10 +72,10 @@ Deno.test("keeps the Word grand total inside the BOQ items table", () => {
   }
 });
 
-Deno.test("spaces company contact details below the address", () => {
+Deno.test("spaces the divider below company contact details", () => {
   assertIncludes(
     wordExportScript,
-    "after: entry.isAddress && contact ? 70 : 0",
-    "the company address has spacing before contact details",
+    "header,\n      spacer(2.2),\n      divider(),",
+    "the company contact details have spacing before the divider",
   );
 });
