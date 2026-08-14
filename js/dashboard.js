@@ -2,7 +2,7 @@
   const { list } = window.BOQStore;
   const { formatCurrencyMarkup, formatPercent, escapeHtml, debounce } =
     window.BOQUtils;
-  const boqs = list("boqs").map(window.BOQStore.issuedBoqView).map((boq) => ({
+  const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
     ...boq,
     status: boq.status === "Issued" ? "Issued" : "Draft",
     ...window.BOQCalculations.calculateSummary(boq.items || [], {
@@ -72,13 +72,19 @@
     boqEmpty.hidden = true;
     document.querySelector("[data-recent-boqs]").innerHTML = recentBoqs.map((
       boq,
-    ) =>
-      `<tr><td><a class="cell-primary" href="boq-editor.html?id=${
+    ) => {
+      const revision = boq.displayRevisionNumber === null ||
+          boq.displayRevisionNumber === undefined
+        ? ""
+        : window.BOQStore.revisionLabel(boq.displayRevisionNumber);
+      const boqDetail = [revision, boq.customerName || "No customer"]
+        .filter(Boolean).join(" · ");
+      return `<tr><td><a class="cell-primary" href="boq-editor.html?id=${
         encodeURIComponent(boq.id)
       }">${
         escapeHtml(boq.number || "Untitled")
       }</a><span class="cell-secondary">${
-        escapeHtml(boq.customerName || "No customer")
+        escapeHtml(boqDetail)
       }</span></td><td>${
         escapeHtml(boq.projectName || "—")
       }<span class="cell-secondary">${plural(boq.items?.length || 0, "item")}</span></td><td><span class="status status-${
@@ -90,7 +96,7 @@
       }</td><td class="align-right number">${
         formatPercent(boq.marginPercent || 0)
       }</td><td>${formatDateTime(boq.updatedAt)}</td></tr>`
-    ).join("");
+    }).join("");
   } else {
     boqTable.hidden = true;
     boqEmpty.hidden = false;
