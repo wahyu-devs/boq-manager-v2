@@ -698,6 +698,12 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const savedRevisionDraft = store.saveBoqDraft({
     ...revisionDraft,
     projectName: "Project Alpha Updated",
+    date: revisionDraft.date || "2025-02-06",
+    items: revisionDraft.items.map((item) => ({
+      ...item,
+      unit: item.unit || "Each",
+      margin: Number(item.margin || 0),
+    })),
   });
   equal(savedRevisionDraft.status, "Issued", "parent remains issued during draft");
   equal(savedRevisionDraft.hasDraftChanges, true, "draft changes tracked");
@@ -748,7 +754,15 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     number: "BOQ-250205",
     projectName: "First Issue",
     status: "Draft",
-    items: [],
+    date: "2025-02-05",
+    items: [{
+      id: "first-issue-item",
+      item: "First issue item",
+      qty: 1,
+      unit: "Each",
+      unitCogs: 100,
+      margin: 20,
+    }],
   });
   const firstIssue = store.issueBoq(firstDraft);
   equal(firstIssue.revisions[0].label, "R00", "first issue starts at R00");
@@ -766,6 +780,96 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "discarding draft preserves voided audit record",
   );
   equal(discardedAfterVoid.workingRevision, null, "numbered draft removed");
+});
+
+Deno.test("marks valid drafts as issued exactly once", () => {
+  const store = window.BOQStore;
+  store.setUser("mark-issued-user");
+
+  const draft = store.saveBoqDraft({
+    id: "mark-issued-boq",
+    number: "BOQ-260801",
+    projectName: "Mark Issued Project",
+    status: "Draft",
+    date: "2026-08-14",
+    items: [{
+      id: "mark-issued-item",
+      item: "Managed service",
+      qty: 2,
+      unit: "Month",
+      unitCogs: 100,
+      margin: 20,
+    }],
+  });
+  equal(
+    store.validateBoqForIssue(draft).valid,
+    true,
+    "valid draft passes issue validation",
+  );
+
+  const issued = store.issueBoq(draft, { note: "Initial issue" });
+  equal(issued.status, "Issued", "draft status becomes issued");
+  equal(issued.revisions.length, 1, "initial issue creates one snapshot");
+  equal(issued.revisions[0].label, "R00", "initial issue uses R00");
+  equal(issued.workingRevision, null, "issued BOQ is locked");
+
+  let duplicateFailed = false;
+  try {
+    store.issueBoq(issued);
+  } catch (_error) {
+    duplicateFailed = true;
+  }
+  equal(duplicateFailed, true, "duplicate issue action is rejected");
+  equal(
+    store.get("boqs", issued.id).revisions.length,
+    1,
+    "duplicate action creates no extra snapshot",
+  );
+
+  const revisionDraft = store.createRevisionDraft(issued.id);
+  const revised = store.issueBoq({
+    ...revisionDraft,
+    items: revisionDraft.items.map((item) => ({ ...item, qty: 3 })),
+  });
+  equal(revised.revisions.length, 2, "revision draft creates one new snapshot");
+  equal(revised.revisions[1].label, "R01", "revision draft issues as R01");
+
+  const invalidDraft = store.saveBoqDraft({
+    id: "invalid-issued-boq",
+    number: "BOQ-260802",
+    projectName: "Invalid Issue",
+    status: "Draft",
+    date: "2026-08-14",
+    items: [{
+      id: "invalid-issued-item",
+      item: "",
+      qty: 0,
+      unit: "Each",
+      unitCogs: 100,
+      margin: 20,
+    }],
+  });
+  const validation = store.validateBoqForIssue(invalidDraft);
+  equal(validation.valid, false, "invalid item blocks issue validation");
+  equal(validation.errors[0].field, "item", "invalid item is identified");
+
+  let validationFailed = false;
+  try {
+    store.issueBoq(invalidDraft);
+  } catch (_error) {
+    validationFailed = true;
+  }
+  equal(validationFailed, true, "invalid draft cannot be issued");
+  equal(
+    store.get("boqs", invalidDraft.id).status,
+    "Draft",
+    "validation failure preserves draft status",
+  );
+  equal(
+    store.get("boqs", invalidDraft.id).revisions.length,
+    0,
+    "validation failure creates no snapshot",
+  );
 });
 
 Deno.test("creates a revision draft for a legacy sent BOQ", () => {

@@ -305,7 +305,78 @@
     });
   }
 
+  function validateBoqForIssue(record) {
+    const errors = [];
+    const addError = (field, message, itemId = "") => {
+      errors.push({ field, message, itemId });
+    };
+    if (!String(record?.number || "").trim()) {
+      addError("number", "Enter a BOQ number before marking it as issued.");
+    }
+    if (!String(record?.projectName || "").trim()) {
+      addError("projectName", "Enter a project before marking this BOQ as issued.");
+    }
+    if (!String(record?.date || "").trim()) {
+      addError("date", "Enter a BOQ date before marking it as issued.");
+    }
+    const recordItems = Array.isArray(record?.items) ? record.items : [];
+    if (!recordItems.length) {
+      addError("items", "Add at least one BOQ item before marking it as issued.");
+    }
+    recordItems.forEach((item, index) => {
+      const itemNumber = index + 1;
+      const itemId = String(item?.id || "");
+      if (!String(item?.item || "").trim()) {
+        addError("item", `Enter a name for item ${itemNumber}.`, itemId);
+      }
+      if (!(Number(item?.qty) > 0)) {
+        addError(
+          "qty",
+          `Quantity for item ${itemNumber} must be greater than zero.`,
+          itemId,
+        );
+      }
+      if (!String(item?.unit || "").trim()) {
+        addError("unit", `Select a unit for item ${itemNumber}.`, itemId);
+      }
+      const unitCogs = Number(item?.unitCogs);
+      if (!Number.isFinite(unitCogs) || unitCogs < 0) {
+        addError(
+          "unitCogs",
+          `Enter a valid Unit COGS for item ${itemNumber}.`,
+          itemId,
+        );
+      }
+      const margin = Number(item?.margin);
+      if (!Number.isFinite(margin) || margin < 0 || margin > 99.99) {
+        addError(
+          "margin",
+          `Margin for item ${itemNumber} must be between 0% and 99.99%.`,
+          itemId,
+        );
+      }
+      if (item?.sellingOverride !== null &&
+          item?.sellingOverride !== undefined && item?.sellingOverride !== "") {
+        const sellingOverride = Number(item.sellingOverride);
+        if (!Number.isFinite(sellingOverride) || sellingOverride < 0) {
+          addError(
+            "sellingOverride",
+            `Enter a valid Unit Selling Price for item ${itemNumber}.`,
+            itemId,
+          );
+        }
+      }
+    });
+    return {
+      valid: errors.length === 0,
+      errors,
+      message: errors[0]?.message || "",
+    };
+  }
+
   function issueBoq(record, metadata = {}) {
+    const validation = validateBoqForIssue(record);
+    if (!validation.valid) throw new Error(validation.message);
     const existing = record?.id ? get("boqs", record.id) : null;
     const activeRevision = latestIssuedRevision(existing);
     if (activeRevision && existing?.workingRevision === null) {
@@ -1444,6 +1515,7 @@
     save,
     remove,
     saveBoqDraft,
+    validateBoqForIssue,
     issueBoq,
     createRevisionDraft,
     discardBoqDraft,

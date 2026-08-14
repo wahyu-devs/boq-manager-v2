@@ -58,7 +58,7 @@
                 Create Revision
               </button>
               <button
-                class="button button-primary"
+                class="button button-secondary"
                 type="button"
                 form="boq-info"
                 data-save
@@ -68,6 +68,15 @@
                   <path d="M5 4h12l2 2v14H5V4Z" />
                   <path d="M8 4v6h8V4M8 20v-6h8v6" />
                 </svg>Save BOQ
+              </button>
+              <button
+                class="button button-primary"
+                type="button"
+                form="boq-info"
+                data-save
+                data-save-status="Issued"
+              >
+                Mark as Issued
               </button>
               <div class="menu-wrap">
                 <button
@@ -141,6 +150,7 @@
                         class="select"
                         id="boq-status"
                         name="status"
+                        disabled
                       >
                         <option>Draft</option>
                         <option>Issued</option>
@@ -419,23 +429,34 @@
               aria-hidden="true"
             >0.00</span></span></strong><span>Total selling</span>
       </div>
-      <button
-        class="button button-primary"
-        type="button"
-        data-create-revision
-        hidden
-      >
-        Create Revision
-      </button>
-      <button
-        class="button button-primary"
-        type="button"
-        form="boq-info"
-        data-save
-        data-success-message="BOQ saved."
-      >
-        Save BOQ
-      </button>
+      <div class="mobile-save-actions">
+        <button
+          class="button button-primary"
+          type="button"
+          data-create-revision
+          hidden
+        >
+          Create Revision
+        </button>
+        <button
+          class="button button-secondary"
+          type="button"
+          form="boq-info"
+          data-save
+          data-success-message="BOQ saved."
+        >
+          Save BOQ
+        </button>
+        <button
+          class="button button-primary"
+          type="button"
+          form="boq-info"
+          data-save
+          data-save-status="Issued"
+        >
+          Mark as Issued
+        </button>
+      </div>
     </div>
     <div class="modal-backdrop" id="revision-history-modal" hidden>
       <section
@@ -476,10 +497,10 @@
       >
         <header class="modal-header">
           <div>
-            <h2 id="issue-revision-title">Issue Revision</h2>
-            <p class="muted text-sm">The issued snapshot will be locked and retained in history.</p>
+            <h2 id="issue-revision-title">Mark BOQ as Issued?</h2>
+            <p class="muted text-sm">This creates a locked snapshot that will be retained in revision history.</p>
           </div>
-          <button class="icon-button" type="button" data-close-modal aria-label="Close issue confirmation">×</button>
+          <button class="icon-button" type="button" data-close-modal aria-label="Close issued status confirmation">×</button>
         </header>
         <form data-issue-revision-form>
           <div class="modal-body stack-md">
@@ -488,7 +509,7 @@
           </div>
           <footer class="modal-footer">
             <button class="button button-secondary" type="button" data-close-modal>Cancel</button>
-            <button class="button button-primary" type="submit">Issue Revision</button>
+            <button class="button button-primary" type="submit">Mark as Issued</button>
           </footer>
         </form>
       </section>

@@ -183,7 +183,10 @@
   outline: 0;
 }
 
-.input[aria-invalid="true"] {
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"],
+.editor-input[aria-invalid="true"] {
   border-color: var(--color-danger);
 }
 
@@ -1727,6 +1730,12 @@
 
 .mobile-save-bar {
   display: none;
+}
+
+.mobile-save-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .detail-table {

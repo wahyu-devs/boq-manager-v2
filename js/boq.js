@@ -233,6 +233,8 @@
     editor.classList.toggle("editor-readonly", locked);
     document.querySelectorAll("#boq-info input, #boq-info select, #boq-info textarea")
       .forEach((control) => control.disabled = locked);
+    const statusControl = document.querySelector("#boq-status");
+    if (statusControl) statusControl.disabled = true;
     const numberInput = document.querySelector("#boq-number");
     if (numberInput && currentRecord?.revisions?.length) {
       numberInput.disabled = true;
@@ -262,6 +264,37 @@
       reorderMode = false;
       applyReorderState();
     }
+  }
+
+  function clearIssueValidation() {
+    editor.querySelectorAll('[aria-invalid="true"]')
+      .forEach((control) => control.removeAttribute("aria-invalid"));
+  }
+
+  function showIssueValidation(validation) {
+    clearIssueValidation();
+    const error = validation.errors[0];
+    if (!error) return;
+    const informationFields = {
+      number: "#boq-number",
+      projectName: "#boq-project",
+      date: "#boq-date",
+    };
+    let controls = [];
+    if (error.itemId) {
+      controls = [...editor.querySelectorAll(
+        `[data-item-id="${CSS.escape(error.itemId)}"]` +
+          `[data-field="${CSS.escape(error.field)}"]`,
+      )];
+    } else if (informationFields[error.field]) {
+      const control = document.querySelector(informationFields[error.field]);
+      if (control) controls = [control];
+    }
+    controls.forEach((control) => control.setAttribute("aria-invalid", "true"));
+    const focusTarget = controls.find((control) => control.offsetParent !== null) ||
+      controls[0];
+    focusTarget?.focus();
+    window.BOQApp.showToast(validation.message, "error");
   }
 
   function revisionDate(value) {
@@ -1152,6 +1185,10 @@
         ? Math.min(value, 99.99)
         : value;
     } else item[input.dataset.field] = input.value;
+    editor.querySelectorAll(
+      `[data-item-id="${CSS.escape(item.id)}"]` +
+        `[data-field="${CSS.escape(input.dataset.field)}"]`,
+    ).forEach((control) => control.removeAttribute("aria-invalid"));
     syncItem(item);
     markDirty();
   });
@@ -1427,8 +1464,15 @@
 
   document.addEventListener("boq:before-save", (event) => {
     const status = document.querySelector("#boq-status").value;
-    if (status !== "Issued" || isIssuedLocked()) return;
+    const requestedStatus = event.detail.button?.dataset.saveStatus || status;
+    if (requestedStatus !== "Issued" || isIssuedLocked()) return;
     event.preventDefault();
+    const validation = store.validateBoqForIssue(documentPayload());
+    if (!validation.valid) {
+      showIssueValidation(validation);
+      return;
+    }
+    clearIssueValidation();
     pendingSaveContinuation = event.detail.resume;
     const revisionNumber = currentRecord?.workingRevision ??
       store.nextRevisionNumber(currentRecord);
@@ -1452,7 +1496,7 @@
         currentRecord?.updatedAt,
       ) || { ok: true };
       button.disabled = false;
-      button.textContent = "Issue Revision";
+      button.textContent = "Mark as Issued";
       if (!conflict.ok) {
         window.BOQApp.showToast(conflict.message, "error");
         return;
@@ -1460,6 +1504,8 @@
       pendingIssueNote = form.elements.note.value.trim();
       const continuation = pendingSaveContinuation;
       pendingSaveContinuation = null;
+      document.querySelector("#boq-status").value = "Issued";
+      updateEditorHeader();
       window.BOQModal.close(document.getElementById("issue-revision-modal"));
       continuation?.();
     },
@@ -1481,6 +1527,7 @@
   commissionInput?.addEventListener("blur", updateCommissionInput);
   document.querySelectorAll("#boq-info input, #boq-info select, #boq-info textarea")
     .forEach((input) => input.addEventListener("input", () => {
+      input.removeAttribute("aria-invalid");
       updateEditorHeader();
       markDirty();
     }));
@@ -1491,25 +1538,33 @@
   document.addEventListener("boq:saved", (event) => {
     const issuing = document.querySelector("#boq-status").value === "Issued";
     event.detail.promise = (async () => {
-      const record = await saveDocument();
-      if (!record) throw new Error("Unable to save this BOQ.");
-      dirty = false;
-      document.querySelectorAll("[data-save-state]").forEach((element) =>
-        element.textContent = record.cloudSyncPending
-          ? `${store.revisionLabel(record.activeRevisionNumber)} issued locally · cloud sync pending`
-          : issuing
-          ? `${store.revisionLabel(record.activeRevisionNumber)} issued and locked`
-          : record.workingRevision !== null
-          ? `Draft changes saved for ${store.revisionLabel(record.workingRevision)}`
-          : "All changes saved"
-      );
-      event.detail.successMessage = issuing
-        ? `${store.revisionLabel(record.activeRevisionNumber)} issued.`
-        : "BOQ saved.";
-      if (record.cloudSyncPending) {
-        throw new Error(
-          "Revision issued locally, but cloud confirmation is pending.",
+      try {
+        const record = await saveDocument();
+        if (!record) throw new Error("Unable to save this BOQ.");
+        dirty = false;
+        document.querySelectorAll("[data-save-state]").forEach((element) =>
+          element.textContent = record.cloudSyncPending
+            ? `${store.revisionLabel(record.activeRevisionNumber)} issued locally · cloud sync pending`
+            : issuing
+            ? `${store.revisionLabel(record.activeRevisionNumber)} issued and locked`
+            : record.workingRevision !== null
+            ? `Draft changes saved for ${store.revisionLabel(record.workingRevision)}`
+            : "All changes saved"
         );
+        event.detail.successMessage = issuing
+          ? `${store.revisionLabel(record.activeRevisionNumber)} issued.`
+          : "BOQ saved.";
+        if (record.cloudSyncPending) {
+          throw new Error(
+            "Revision issued locally, but cloud confirmation is pending.",
+          );
+        }
+      } catch (error) {
+        if (issuing && !isIssuedLocked()) {
+          document.querySelector("#boq-status").value = "Draft";
+          updateEditorHeader();
+        }
+        throw error;
       }
     })();
   });
