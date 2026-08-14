@@ -59,10 +59,23 @@ Deno.test("wires Word export across BOQ workflows", () => {
 Deno.test("keeps the Word grand total inside the BOQ items table", () => {
   assertIncludes(
     wordExportScript,
+    "rows.push(grandTotalSpacerRow(columns));",
+    "the BOQ table keeps an internal spacer before its grand total",
+  );
+  assertIncludes(
+    wordExportScript,
     "rows.push(grandTotalRow(data, columns, columnWidths));",
     "the BOQ table appends its grand total row",
   );
   if (wordExportScript.includes("grandTotalTable(data)")) {
     throw new Error("the grand total must not be rendered as a separate table");
   }
+});
+
+Deno.test("spaces company contact details below the address", () => {
+  assertIncludes(
+    wordExportScript,
+    "after: entry.isAddress && contact ? 70 : 0",
+    "the company address has spacing before contact details",
+  );
 });

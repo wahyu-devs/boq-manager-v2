@@ -246,20 +246,23 @@
     }
   }
 
-  function detailRuns(settings) {
-    const lines = [
-      settings.registrationNumber
-        ? `Registration no.: ${settings.registrationNumber}`
-        : "",
-      settings.address,
-      [settings.email, settings.phone].filter(Boolean).join(" | "),
-    ].filter(Boolean);
-    return lines.flatMap((line, index) => [
-      run(line, { color: COLORS.muted, size: 15 }),
-      ...(index < lines.length - 1
-        ? [run("", { color: COLORS.muted, size: 15, break: 1 })]
-        : []),
-    ]);
+  function detailParagraphs(settings) {
+    const contact = [settings.email, settings.phone]
+      .filter(Boolean).join(" | ");
+    const entries = [
+      {
+        text: settings.registrationNumber
+          ? `Registration no.: ${settings.registrationNumber}`
+          : "",
+      },
+      { text: settings.address, isAddress: true },
+      { text: contact },
+    ].filter((entry) => entry.text);
+    return entries.map((entry) =>
+      paragraph([run(entry.text, { color: COLORS.muted, size: 15 })], {
+        after: entry.isAddress && contact ? 70 : 0,
+      })
+    );
   }
 
   async function documentHeader(data) {
@@ -276,8 +279,8 @@
         ),
       ], { after: 40 }),
     ];
-    const details = detailRuns(data.settings);
-    if (details.length) leftChildren.push(paragraph(details));
+    const details = detailParagraphs(data.settings);
+    if (details.length) leftChildren.push(...details);
 
     const rightChildren = [
       paragraph([run("BILL OF QUANTITIES", {
@@ -487,6 +490,17 @@
     return new window.docx.TableRow({ cantSplit: true, children });
   }
 
+  function grandTotalSpacerRow(columns) {
+    return new window.docx.TableRow({
+      cantSplit: true,
+      children: [cell([spacer(5.8)], {
+        width: CONTENT_WIDTH,
+        columnSpan: columns.length,
+        margins: margins(0),
+      })],
+    });
+  }
+
   function itemsTable(data) {
     const columns = customerDocument.columns(data.settings);
     const columnWidths = columns.map((column) => mmToTwips(column.widthMm));
@@ -544,6 +558,7 @@
         }),
       );
     }
+    rows.push(grandTotalSpacerRow(columns));
     rows.push(grandTotalRow(data, columns, columnWidths));
     return new window.docx.Table({
       width: fullWidth(),
