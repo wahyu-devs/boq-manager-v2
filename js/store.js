@@ -325,8 +325,15 @@
   }
 
   function createRevisionDraft(id, sourceNumber) {
-    const record = get("boqs", id);
-    const activeRevision = latestSentRevision(record);
+    let record = get("boqs", id);
+    let activeRevision = latestSentRevision(record);
+    if (record?.status === "Sent" && !record.revisions.length) {
+      record = migratedRevisionRecord([{
+        record,
+        parsed: { revision: null },
+      }], record.projectName);
+      activeRevision = latestSentRevision(record);
+    }
     const sourceRevision = sourceNumber === undefined || sourceNumber === null
       ? activeRevision
       : getRevision(record, sourceNumber);

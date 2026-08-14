@@ -1268,8 +1268,15 @@
       );
     }
     if (event.target.closest("[data-create-revision]")) {
+      event.preventDefault();
       const record = store.createRevisionDraft(currentRecordId);
-      if (!record) return;
+      if (!record) {
+        window.BOQApp.showToast(
+          "Unable to create a revision for this BOQ. Reload and try again.",
+          "error",
+        );
+        return;
+      }
       currentRecord = record;
       dirty = false;
       initializeDocument();

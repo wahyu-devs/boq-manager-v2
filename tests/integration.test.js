@@ -738,3 +738,43 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   );
   equal(discardedAfterVoid.workingRevision, null, "numbered draft removed");
 });
+
+Deno.test("creates a revision draft for a legacy sent BOQ", () => {
+  const store = window.BOQStore;
+  const userId = "legacy-revision-draft-user";
+  const prefix = `boq-manager-v2:${userId}`;
+  const createdAt = "2026-08-01T08:00:00.000Z";
+  const updatedAt = "2026-08-02T09:00:00.000Z";
+  store.setUser(userId);
+  localStorage.setItem(`${prefix}:boqs`, JSON.stringify([{
+    id: "legacy-sent-boq",
+    number: "BOQ-260801",
+    projectName: "Legacy Sent Project",
+    customerId: "",
+    customerName: "",
+    status: "Sent",
+    items: [{ id: "legacy-item", item: "Legacy item", qty: 1, unitCogs: 100 }],
+    createdAt,
+    updatedAt,
+    revisions: [],
+  }]));
+  localStorage.setItem(`${prefix}:meta`, JSON.stringify({
+    schemaVersion: 5,
+    boqRevisionMigrationVersion: 3,
+    clientUpdatedAt: Date.parse(updatedAt),
+  }));
+
+  const draft = store.createRevisionDraft("legacy-sent-boq");
+  equal(Boolean(draft), true, "legacy revision draft created");
+  equal(draft.revisions.length, 1, "legacy R00 baseline created once");
+  equal(draft.revisions[0].label, "R00", "legacy baseline labeled R00");
+  equal(draft.activeRevisionNumber, 0, "legacy R00 remains active");
+  equal(draft.workingRevision, 1, "new revision draft starts at R01");
+  equal(draft.items[0].item, "Legacy item", "legacy BOQ content preserved");
+  equal(
+    store.createRevisionDraft("legacy-sent-boq"),
+    null,
+    "existing revision draft is not duplicated",
+  );
+  equal(store.list("boqs").length, 1, "legacy BOQ remains a single record");
+});
