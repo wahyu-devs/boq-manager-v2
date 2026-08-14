@@ -16,8 +16,12 @@
   const HEADER_LOGO_WIDTH = 144;
   const HEADER_LOGO_HEIGHT = 64;
 
+  function revisionLabel(documentValue) {
+    return window.BOQUtils.documentRevisionLabel(documentValue.revisionLabel);
+  }
+
   function documentReference(documentValue) {
-    return [documentValue.number || "BOQ", documentValue.revisionLabel]
+    return [documentValue.number || "BOQ", revisionLabel(documentValue)]
       .filter(Boolean).join(" · ");
   }
 
@@ -989,7 +993,7 @@
 
     const details = [
       ["Status", data.document.status || "Draft"],
-      ["Revision", data.document.revisionLabel || "Not issued"],
+      ["Revision", revisionLabel(data.document) || "—"],
       ["Date", excelDate(data.document.date)],
       ["Valid until", excelDate(data.document.validUntil)],
       ["Currency", data.document.currency],
@@ -1133,7 +1137,7 @@
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = [
       data.document.number,
-      data.document.revisionLabel,
+      revisionLabel(data.document),
       data.document.projectName,
     ]
       .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";

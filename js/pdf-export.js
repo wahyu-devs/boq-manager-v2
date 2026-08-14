@@ -20,8 +20,12 @@
   const TABLE_CELL_PADDING = 2.1;
   const TOTAL_COLUMN_WIDTH = 31;
 
+  function revisionLabel(documentValue) {
+    return window.BOQUtils.documentRevisionLabel(documentValue.revisionLabel);
+  }
+
   function documentReference(documentValue) {
-    return [documentValue.number || "BOQ", documentValue.revisionLabel]
+    return [documentValue.number || "BOQ", revisionLabel(documentValue)]
       .filter(Boolean).join(" · ");
   }
 
@@ -519,7 +523,7 @@
     const doc = create(data);
     const filename = [
       data.document.number,
-      data.document.revisionLabel,
+      revisionLabel(data.document),
       data.document.projectName,
     ]
       .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";

@@ -143,6 +143,11 @@
       .replaceAll("'", "&#039;");
   }
 
+  function documentRevisionLabel(value) {
+    const label = String(value || "").trim();
+    return /^R0+$/i.test(label) ? "" : label;
+  }
+
   function collectUniqueTextValues(...groups) {
     const seen = new Set();
     const values = [];
@@ -210,6 +215,7 @@
     formatPercent,
     debounce,
     escapeHtml,
+    documentRevisionLabel,
     collectUniqueTextValues,
     reorderItemsWithinCategory,
     reorderValues,

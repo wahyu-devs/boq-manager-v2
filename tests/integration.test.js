@@ -77,6 +77,17 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const boqs = store.list("boqs");
   const products = store.list("products");
 
+  equal(
+    window.BOQUtils.documentRevisionLabel("R00"),
+    "",
+    "R00 is hidden from document output",
+  );
+  equal(
+    window.BOQUtils.documentRevisionLabel("R01"),
+    "R01",
+    "later revision labels remain visible in document output",
+  );
+
   equal(store.list("projects").length, 0, "project collection removed");
   equal(boqs.length, 1, "BOQ count");
   equal(products.length, 1, "product count");
