@@ -390,7 +390,7 @@
           revision.state === "Voided" ? " is-voided" : ""
         }"><div class="revision-entry-main"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
           revision.state === "Voided" ? "inactive" : "issued"
-        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-secondary button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-secondary button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button>${
+        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-secondary button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-secondary button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-secondary button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
           canVoid
             ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
             : ""
@@ -1044,16 +1044,9 @@
     }<strong class="pdf-company">${
       escapeHtml(previewSettings.companyName || "Company information not configured")
     }</strong><p>${companyDetails}</p></div><div class="pdf-preview-document"><h2>Bill of Quantities</h2><strong>${
-      escapeHtml([
-        payload.number || "BOQ",
-        visibleRevisionLabel(payload.revisionLabel),
-      ].filter(Boolean).join(" · "))
+      escapeHtml(window.BOQCustomerDocument.documentReference(payload))
     }</strong><span>${escapeHtml(
-      payload.revisionState === "Draft"
-        ? "DRAFT - NOT ISSUED"
-        : payload.revisionState === "Voided"
-        ? "VOIDED REVISION"
-        : "FOR CUSTOMER",
+      window.BOQCustomerDocument.documentBanner(payload),
     )}</span></div></header><div class="pdf-preview-divider" aria-hidden="true"></div><div class="pdf-parties"><div><span>Prepared for</span><strong>${
       escapeHtml(payload.customerName || "-")
     }</strong></div><div><span>Project</span><strong>${
@@ -1312,9 +1305,9 @@
     }
     if (event.target.closest("[data-preview-pdf]")) {
       buildPdfPreview();
-      document.querySelector("#pdf-modal [data-download-pdf]")?.removeAttribute(
-        "data-export-revision",
-      );
+      document.querySelectorAll(
+        "#pdf-modal [data-download-pdf], #pdf-modal [data-download-word]",
+      ).forEach((button) => button.removeAttribute("data-export-revision"));
     }
     if (event.target.closest("[data-create-revision]")) {
       event.preventDefault();
@@ -1367,9 +1360,13 @@
       const data = revisionExportData(previewRevision.dataset.previewRevision);
       if (!data) return;
       buildPdfPreview(data);
-      document.querySelector("#pdf-modal [data-download-pdf]")?.setAttribute(
-        "data-export-revision",
-        String(data.document.revisionNumber),
+      document.querySelectorAll(
+        "#pdf-modal [data-download-pdf], #pdf-modal [data-download-word]",
+      ).forEach((button) =>
+        button.setAttribute(
+          "data-export-revision",
+          String(data.document.revisionNumber),
+        )
       );
       window.BOQModal.close(document.getElementById("revision-history-modal"));
       window.BOQModal.open("pdf-modal");
@@ -1384,6 +1381,15 @@
     if (revisionPdf) {
       document.dispatchEvent(new CustomEvent("boq:export-revision", {
         detail: { type: "pdf", number: revisionPdf.dataset.downloadRevisionPdf },
+      }));
+    }
+    const revisionWord = event.target.closest("[data-download-revision-word]");
+    if (revisionWord) {
+      document.dispatchEvent(new CustomEvent("boq:export-revision", {
+        detail: {
+          type: "word",
+          number: revisionWord.dataset.downloadRevisionWord,
+        },
       }));
     }
     const voidRevision = event.target.closest("[data-void-revision]");

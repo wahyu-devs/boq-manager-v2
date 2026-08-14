@@ -64,6 +64,7 @@ localStorage.setItem(
 await import("../js/store.js");
 await import("../js/calculations.js");
 await import("../js/utils.js");
+await import("../js/document-export.js");
 
 function equal(actual, expected, message) {
   if (actual !== expected) {
@@ -86,6 +87,41 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     window.BOQUtils.visibleRevisionLabel("R01"),
     "R01",
     "later revision labels remain visible in document output",
+  );
+  equal(
+    window.BOQCustomerDocument.documentReference({
+      number: "BOQ-260801",
+      revisionLabel: "R00",
+    }),
+    "BOQ-260801",
+    "customer document reference hides R00",
+  );
+  equal(
+    window.BOQCustomerDocument.documentReference({
+      number: "BOQ-260801",
+      revisionLabel: "R01",
+    }),
+    "BOQ-260801 · R01",
+    "customer document reference includes later revisions",
+  );
+  equal(
+    window.BOQCustomerDocument.columns({
+      showSku: true,
+      showUnitPricing: true,
+    }).reduce((total, column) => total + column.widthMm, 0),
+    192,
+    "customer document columns use the PDF table width",
+  );
+  equal(
+    window.BOQCustomerDocument.filename({
+      document: {
+        number: "BOQ-260801",
+        revisionLabel: "R01",
+        projectName: "Office Upgrade",
+      },
+    }, (value) => value, "docx"),
+    "BOQ-260801 - R01 - Office Upgrade.docx",
+    "Word export uses the customer document filename",
   );
 
   equal(store.list("projects").length, 0, "project collection removed");

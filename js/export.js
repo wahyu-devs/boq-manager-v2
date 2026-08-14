@@ -1,5 +1,8 @@
 (function initializeDocumentExports() {
   if (!document.querySelector("[data-boq-editor]")) return;
+  const WORD_LIBRARY_SOURCE =
+    "https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js";
+  let wordLibraryPromise = null;
 
   function editorData(revisionNumber) {
     if (revisionNumber !== undefined && revisionNumber !== null &&
@@ -21,6 +24,23 @@
     link.download = filename;
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function loadWordLibrary() {
+    if (window.docx?.Document) return Promise.resolve();
+    if (wordLibraryPromise) return wordLibraryPromise;
+    wordLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = WORD_LIBRARY_SOURCE;
+      script.dataset.wordExportLibrary = "true";
+      script.onload = () => resolve();
+      script.onerror = () => {
+        wordLibraryPromise = null;
+        reject(new Error("Word export library failed to load."));
+      };
+      document.head.append(script);
+    });
+    return wordLibraryPromise;
   }
 
   async function exportExcel(mode, revisionNumber) {
@@ -59,6 +79,25 @@
     }
   }
 
+  async function exportWord(revisionNumber) {
+    if (!window.BOQWordExport) {
+      window.BOQApp.showToast("Word export is unavailable.", "error");
+      return;
+    }
+    try {
+      await loadWordLibrary();
+      await window.BOQWordExport.download(
+        editorData(revisionNumber),
+        downloadBlob,
+        safeFilename,
+      );
+      window.BOQApp.showToast("Word document downloaded.");
+    } catch (error) {
+      console.error(error);
+      window.BOQApp.showToast("Unable to create the Word document.", "error");
+    }
+  }
+
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-export-excel]")) {
       window.BOQModal.open("excel-modal");
@@ -70,6 +109,8 @@
     }
     const pdfButton = event.target.closest("[data-download-pdf]");
     if (pdfButton) exportPdf(pdfButton.dataset.exportRevision);
+    const wordButton = event.target.closest("[data-download-word]");
+    if (wordButton) void exportWord(wordButton.dataset.exportRevision);
   });
 
   document.addEventListener("boq:export-revision", (event) => {
@@ -77,6 +118,8 @@
       void exportExcel("selling", event.detail.number);
     } else if (event.detail.type === "pdf") {
       exportPdf(event.detail.number);
+    } else if (event.detail.type === "word") {
+      void exportWord(event.detail.number);
     }
   });
 
@@ -85,5 +128,7 @@
     window.setTimeout(() => window.BOQModal.open("excel-modal"), 0);
   } else if (requestedExport === "pdf") {
     window.setTimeout(exportPdf, 0);
+  } else if (requestedExport === "word") {
+    window.setTimeout(() => void exportWord(), 0);
   }
 })();

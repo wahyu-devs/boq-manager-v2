@@ -1,39 +1,24 @@
 (function definePdfExport() {
+  const customerDocument = window.BOQCustomerDocument;
   const COLORS = {
-    ink: [32, 40, 50],
-    body: [32, 40, 50],
-    company: [45, 96, 137],
-    heading: [45, 96, 137],
-    muted: [105, 117, 130],
-    note: [105, 117, 130],
-    footer: [138, 150, 162],
-    primary: [53, 111, 158],
-    primarySoft: [233, 241, 247],
-    surface: [245, 247, 249],
-    tableHead: [53, 111, 158],
-    tableHeadText: [255, 255, 255],
-    border: [220, 226, 232],
-    white: [255, 255, 255],
+    ink: customerDocument.colorRgb("ink"),
+    body: customerDocument.colorRgb("body"),
+    company: customerDocument.colorRgb("company"),
+    heading: customerDocument.colorRgb("heading"),
+    muted: customerDocument.colorRgb("muted"),
+    note: customerDocument.colorRgb("note"),
+    footer: customerDocument.colorRgb("footer"),
+    primary: customerDocument.colorRgb("primary"),
+    primarySoft: customerDocument.colorRgb("primarySoft"),
+    surface: customerDocument.colorRgb("surface"),
+    tableHead: customerDocument.colorRgb("tableHead"),
+    tableHeadText: customerDocument.colorRgb("tableHeadText"),
+    border: customerDocument.colorRgb("border"),
+    white: customerDocument.colorRgb("white"),
   };
-  const PAGE_MARGIN = 9;
-  const TABLE_WIDTH = 192;
-  const TABLE_CELL_PADDING = 2.1;
-  const TOTAL_COLUMN_WIDTH = 31;
-
-  function revisionLabel(documentValue) {
-    return window.BOQUtils.visibleRevisionLabel(documentValue.revisionLabel);
-  }
-
-  function documentReference(documentValue) {
-    return [documentValue.number || "BOQ", revisionLabel(documentValue)]
-      .filter(Boolean).join(" · ");
-  }
-
-  function documentBanner(documentValue) {
-    if (documentValue.revisionState === "Draft") return "DRAFT - NOT ISSUED";
-    if (documentValue.revisionState === "Voided") return "VOIDED REVISION";
-    return "FOR CUSTOMER";
-  }
+  const PAGE_MARGIN = customerDocument.layout.pageMarginMm;
+  const TABLE_CELL_PADDING = customerDocument.layout.tableCellPaddingMm;
+  const TOTAL_COLUMN_WIDTH = customerDocument.layout.totalColumnWidthMm;
 
   function imageType(source) {
     return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
@@ -111,12 +96,12 @@
     });
     doc.setFontSize(8.25);
     doc.setTextColor(...COLORS.ink);
-    doc.text(documentReference(data.document), rightX, headerTop + 10, {
+    doc.text(customerDocument.documentReference(data.document), rightX, headerTop + 10, {
       align: "right",
     });
     doc.setFontSize(7);
-    doc.setTextColor(154, 100, 28);
-    doc.text(documentBanner(data.document), rightX, headerTop + 16, {
+    doc.setTextColor(...customerDocument.colorRgb("banner"));
+    doc.text(customerDocument.documentBanner(data.document), rightX, headerTop + 16, {
       align: "right",
     });
     const rightBottom = headerTop + 16;
@@ -161,38 +146,10 @@
   }
 
   function pdfColumns(data) {
-    const columns = [
-      { key: "index", label: "No", align: "center", width: 8 },
-    ];
-    if (data.settings.showSku === true) {
-      columns.push({ key: "sku", label: "Part Number", width: 23 });
-    }
-    columns.push(
-      { key: "item", label: "Item" },
-      { key: "qty", label: "Qty", align: "right", width: 13 },
-      { key: "unit", label: "Unit", align: "center", width: 16 },
-    );
-    if (data.settings.showUnitPricing !== false) {
-      columns.push({
-        key: "unitSelling",
-        label: "Unit Price",
-        align: "right",
-        width: 27,
-      });
-    }
-    columns.push({
-      key: "totalSelling",
-      label: "Total",
-      align: "right",
-      width: TOTAL_COLUMN_WIDTH,
-    });
-    const fixedWidth = columns.reduce(
-      (sum, column) => sum + Number(column.width || 0),
-      0,
-    );
-    columns.find((column) => column.key === "item").width = TABLE_WIDTH -
-      fixedWidth;
-    return columns;
+    return customerDocument.columns(data.settings).map((column) => ({
+      ...column,
+      width: column.widthMm,
+    }));
   }
 
   function bodyCell(content, styles = {}) {
@@ -340,7 +297,11 @@
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6.5);
       doc.setTextColor(...COLORS.footer);
-      doc.text(documentReference(data.document), PAGE_MARGIN, pageHeight - 5);
+      doc.text(
+        customerDocument.documentReference(data.document),
+        PAGE_MARGIN,
+        pageHeight - 5,
+      );
       doc.text(
         `Page ${page} of ${pageCount}`,
         pageWidth - PAGE_MARGIN,
@@ -441,7 +402,7 @@
     });
     const projectName = data.document.projectName || "Bill of Quantities";
     doc.setProperties({
-      title: `${documentReference(data.document)} - ${projectName}`,
+      title: `${customerDocument.documentReference(data.document)} - ${projectName}`,
       subject: "Customer Bill of Quantities",
       author: data.settings.companyName || "BOQ Manager",
       creator: "BOQ Manager",
@@ -521,13 +482,7 @@
 
   function download(data, safeFilename) {
     const doc = create(data);
-    const filename = [
-      data.document.number,
-      revisionLabel(data.document),
-      data.document.projectName,
-    ]
-      .filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
-    doc.save(`${filename}.pdf`);
+    doc.save(customerDocument.filename(data, safeFilename, "pdf"));
   }
 
   window.BOQPdfExport = { create, download };
