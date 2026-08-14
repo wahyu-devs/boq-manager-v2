@@ -1854,6 +1854,7 @@
 .pdf-preview-header {
   display: grid;
   min-height: 116px;
+  margin-bottom: 8px;
   grid-template-columns: minmax(0, 1fr) 255px;
   gap: 30px;
 }
