@@ -142,6 +142,18 @@
     };
   }
 
+  function registerBoqView(record) {
+    const normalized = normalizeBoq(record || {});
+    const isDraftRevision = normalized.workingRevision !== null;
+    return {
+      ...normalized,
+      status: isDraftRevision ? "Draft" : normalized.status,
+      displayRevisionNumber: isDraftRevision
+        ? normalized.workingRevision
+        : normalized.activeRevisionNumber,
+    };
+  }
+
   function nextRevisionNumber(record) {
     const revisions = Array.isArray(record?.revisions) ? record.revisions : [];
     return revisions.reduce((highest, revision) =>
@@ -1400,6 +1412,7 @@
     getRevision,
     latestSentRevision,
     issuedBoqView,
+    registerBoqView,
     nextRevisionNumber,
     revisionLabel,
     nextNumber,

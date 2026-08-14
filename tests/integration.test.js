@@ -673,6 +673,13 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(lockedSaveFailed, true, "issued revision cannot be edited directly");
   const revisionDraft = store.createRevisionDraft("alpha-base");
   equal(revisionDraft.workingRevision, 3, "next revision draft created");
+  const draftRegisterView = store.registerBoqView(revisionDraft);
+  equal(draftRegisterView.status, "Draft", "register shows revision draft status");
+  equal(
+    draftRegisterView.displayRevisionNumber,
+    3,
+    "register shows working revision number",
+  );
   const savedRevisionDraft = store.saveBoqDraft({
     ...revisionDraft,
     projectName: "Project Alpha Updated",
@@ -692,6 +699,13 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(issuedRevision.revisions.length, 4, "new sent revision added");
   equal(issuedRevision.revisions[3].label, "R03", "new revision label");
   equal(issuedRevision.workingRevision, null, "issued revision locked");
+  const sentRegisterView = store.registerBoqView(issuedRevision);
+  equal(sentRegisterView.status, "Sent", "register restores sent status");
+  equal(
+    sentRegisterView.displayRevisionNumber,
+    3,
+    "register shows issued revision number",
+  );
   const voidedRevision = store.voidLatestRevision(
     "alpha-base",
     "Issued with incorrect scope",

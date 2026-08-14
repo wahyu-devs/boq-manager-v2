@@ -24,7 +24,7 @@
   const empty = document.querySelector("[data-records-empty]");
 
   function displayBoqs() {
-    return list("boqs").map(window.BOQStore.issuedBoqView);
+    return list("boqs").map(window.BOQStore.registerBoqView);
   }
 
   function statusClass(status) {
@@ -55,7 +55,7 @@
   }
 
   function renderBoq(record) {
-    record = window.BOQStore.issuedBoqView(record);
+    record = window.BOQStore.registerBoqView(record);
     record = {
       ...record,
       status: record.status === "Sent" ? "Sent" : "Draft",
@@ -69,15 +69,10 @@
       record.customerName,
     ].filter(Boolean).join(" ");
     const margin = formatPercent(record.marginPercent || 0);
-    const revision = record.activeRevisionNumber === null ||
-        record.activeRevisionNumber === undefined
+    const revision = record.displayRevisionNumber === null ||
+        record.displayRevisionNumber === undefined
       ? ""
-      : window.BOQStore.revisionLabel(record.activeRevisionNumber);
-    const draftChanges = record.workingRevision !== null
-      ? `<span class="cell-secondary">${escapeHtml(
-        window.BOQStore.revisionLabel(record.workingRevision),
-      )} draft changes</span>`
-      : "";
+      : window.BOQStore.revisionLabel(record.displayRevisionNumber);
     const deleteAction = record.status === "Draft" && !record.revisions?.length
       ? `<button class="menu-item danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete ${
         escapeHtml(record.number || "this BOQ")
@@ -102,7 +97,7 @@
         encodeURIComponent(record.id)
       }">${
         escapeHtml(record.number || "Untitled")
-      }</a>${revision ? `<span class="cell-secondary">${escapeHtml(revision)}</span>` : ""}</td><td>${escapeHtml(record.projectName || "—")}${draftChanges}</td><td>${
+      }</a>${revision ? `<span class="cell-secondary">${escapeHtml(revision)}</span>` : ""}</td><td>${escapeHtml(record.projectName || "—")}</td><td>${
         escapeHtml(record.customerName || "—")
       }</td><td>${
         statusHtml(record.status)
@@ -399,11 +394,11 @@
     const host = document.querySelector("[data-record-detail]");
     if (!host || !record) return;
     if (collection === "boqs") {
-      record = window.BOQStore.issuedBoqView(record);
-      const revision = record.activeRevisionNumber === null ||
-          record.activeRevisionNumber === undefined
+      record = window.BOQStore.registerBoqView(record);
+      const revision = record.displayRevisionNumber === null ||
+          record.displayRevisionNumber === undefined
         ? ""
-        : window.BOQStore.revisionLabel(record.activeRevisionNumber);
+        : window.BOQStore.revisionLabel(record.displayRevisionNumber);
       const summary = window.BOQCalculations.calculateSummary(
         record.items || [],
         { commission: record.commission },
