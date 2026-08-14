@@ -442,6 +442,51 @@
     });
   }
 
+  function grandTotalRow(data, columns, columnWidths) {
+    const amountIndex = columns.length - 1;
+    const labelStart = Math.max(0, amountIndex - 2);
+    const blankWidth = columnWidths.slice(0, labelStart).reduce(
+      (sum, width) => sum + width,
+      0,
+    );
+    const labelWidth = columnWidths.slice(labelStart, amountIndex).reduce(
+      (sum, width) => sum + width,
+      0,
+    );
+    const children = [];
+    if (labelStart > 0) {
+      children.push(cell([paragraph("")], {
+        width: blankWidth,
+        columnSpan: labelStart,
+        margins: margins(0),
+      }));
+    }
+    children.push(
+      textCell("GRAND TOTAL", {
+        width: labelWidth,
+        columnSpan: amountIndex - labelStart,
+        fill: COLORS.primarySoft,
+        color: COLORS.heading,
+        bold: true,
+        size: 18,
+        alignment: window.docx.AlignmentType.RIGHT,
+      }),
+      currencyCell(
+        data.document.totalSelling,
+        data.document.currency,
+        columnWidths[amountIndex],
+        data.settings,
+        {
+          fill: COLORS.primarySoft,
+          color: COLORS.heading,
+          bold: true,
+          size: 21,
+        },
+      ),
+    );
+    return new window.docx.TableRow({ cantSplit: true, children });
+  }
+
   function itemsTable(data) {
     const columns = customerDocument.columns(data.settings);
     const columnWidths = columns.map((column) => mmToTwips(column.widthMm));
@@ -499,58 +544,13 @@
         }),
       );
     }
+    rows.push(grandTotalRow(data, columns, columnWidths));
     return new window.docx.Table({
       width: fullWidth(),
       columnWidths,
       layout: window.docx.TableLayoutType.FIXED,
       borders: noBorders(),
       rows,
-    });
-  }
-
-  function grandTotalTable(data) {
-    const totalWidth = mmToTwips(74);
-    const amountWidth = mmToTwips(
-      customerDocument.layout.totalColumnWidthMm,
-    );
-    const labelWidth = totalWidth - amountWidth;
-    const blankWidth = CONTENT_WIDTH - totalWidth;
-    return new window.docx.Table({
-      width: fullWidth(),
-      columnWidths: [blankWidth, labelWidth, amountWidth],
-      layout: window.docx.TableLayoutType.FIXED,
-      borders: noBorders(),
-      rows: [
-        new window.docx.TableRow({
-          cantSplit: true,
-          children: [
-            cell([paragraph("")], {
-              width: blankWidth,
-              margins: margins(0),
-            }),
-            textCell("GRAND TOTAL", {
-              width: labelWidth,
-              fill: COLORS.primarySoft,
-              color: COLORS.heading,
-              bold: true,
-              size: 18,
-              alignment: window.docx.AlignmentType.RIGHT,
-            }),
-            currencyCell(
-              data.document.totalSelling,
-              data.document.currency,
-              amountWidth,
-              data.settings,
-              {
-                fill: COLORS.primarySoft,
-                color: COLORS.heading,
-                bold: true,
-                size: 21,
-              },
-            ),
-          ],
-        }),
-      ],
     });
   }
 
@@ -660,8 +660,6 @@
       partiesTable(data),
       spacer(7),
       itemsTable(data),
-      spacer(5.8),
-      grandTotalTable(data),
       ...notes(data),
       ...footerText(data),
     ];

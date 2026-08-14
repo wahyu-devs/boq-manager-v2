@@ -10,6 +10,9 @@ const editorScript = await Deno.readTextFile(
 const recordsScript = await Deno.readTextFile(
   new URL("../js/records.js", import.meta.url),
 );
+const wordExportScript = await Deno.readTextFile(
+  new URL("../js/word-export.js", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -51,4 +54,15 @@ Deno.test("wires Word export across BOQ workflows", () => {
     "export=word",
     "BOQ Register exposes Word export",
   );
+});
+
+Deno.test("keeps the Word grand total inside the BOQ items table", () => {
+  assertIncludes(
+    wordExportScript,
+    "rows.push(grandTotalRow(data, columns, columnWidths));",
+    "the BOQ table appends its grand total row",
+  );
+  if (wordExportScript.includes("grandTotalTable(data)")) {
+    throw new Error("the grand total must not be rendered as a separate table");
+  }
 });
