@@ -77,17 +77,19 @@
           boq.displayRevisionNumber === undefined
         ? ""
         : window.BOQStore.revisionLabel(boq.displayRevisionNumber);
-      const boqDetail = [revision, boq.customerName || "No customer"]
-        .filter(Boolean).join(" · ");
       return `<tr><td><a class="cell-primary" href="boq-editor.html?id=${
         encodeURIComponent(boq.id)
       }">${
         escapeHtml(boq.number || "Untitled")
-      }</a><span class="cell-secondary">${
-        escapeHtml(boqDetail)
-      }</span></td><td>${
+      }</a>${
+        revision
+          ? `<span class="cell-secondary">${escapeHtml(revision)}</span>`
+          : ""
+      }</td><td>${
         escapeHtml(boq.projectName || "—")
-      }<span class="cell-secondary">${plural(boq.items?.length || 0, "item")}</span></td><td><span class="status status-${
+      }<span class="cell-secondary">${
+        escapeHtml(boq.customerName || "No customer")
+      }</span></td><td><span class="status status-${
         (boq.status || "Draft").toLowerCase()
       }">${
         escapeHtml(boq.status || "Draft")
