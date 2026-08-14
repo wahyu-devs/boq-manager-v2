@@ -1,7 +1,12 @@
 (function renderDashboard(event) {
   const { list } = window.BOQStore;
-  const { formatCurrencyMarkup, formatPercent, escapeHtml, debounce } =
-    window.BOQUtils;
+  const {
+    formatCurrencyMarkup,
+    formatPercent,
+    escapeHtml,
+    debounce,
+    visibleRevisionLabel,
+  } = window.BOQUtils;
   const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
     ...boq,
     status: boq.status === "Issued" ? "Issued" : "Draft",
@@ -76,7 +81,9 @@
       const revision = boq.displayRevisionNumber === null ||
           boq.displayRevisionNumber === undefined
         ? ""
-        : window.BOQStore.revisionLabel(boq.displayRevisionNumber);
+        : visibleRevisionLabel(
+          window.BOQStore.revisionLabel(boq.displayRevisionNumber),
+        );
       return `<tr><td class="boq-number-cell"><a class="cell-primary" href="boq-editor.html?id=${
         encodeURIComponent(boq.id)
       }">${
