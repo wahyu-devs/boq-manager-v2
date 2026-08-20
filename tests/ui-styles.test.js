@@ -99,3 +99,16 @@ Deno.test("shows a Grand Total for every revision history entry", () => {
     "revision total must use the revision history layout",
   );
 });
+
+Deno.test("shows the snapshot project on every revision history entry", () => {
+  assertIncludes(
+    boqSource,
+    '<div class="revision-entry-project"><span>Project</span>',
+    "revision history must render its snapshot project",
+  );
+  assertIncludes(
+    componentsCss,
+    ".revision-entry-project {",
+    "revision project must use the revision history layout",
+  );
+});

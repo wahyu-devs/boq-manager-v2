@@ -397,6 +397,8 @@
         const revisionData = revisionExportData(revision.number);
         const revisionCurrency = revisionData?.document.currency ||
           currentCurrency();
+        const revisionProject = revisionData?.document.projectName ||
+          "No project";
         const grandTotal = formatCurrencyMarkup(
           revisionData?.document.totalSelling || 0,
           revisionCurrency,
@@ -407,7 +409,7 @@
           revision.state === "Voided" ? " is-voided" : ""
         }"><div class="revision-entry-main"><div class="revision-entry-heading"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
           revision.state === "Voided" ? "inactive" : "issued"
-        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><span>Grand Total</span><strong>${grandTotal}</strong></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
+        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span></div><div class="revision-entry-project"><span>Project</span><strong>${escapeHtml(revisionProject)}</strong></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><span>Grand Total</span><strong>${grandTotal}</strong></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
           canVoid
             ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
             : ""

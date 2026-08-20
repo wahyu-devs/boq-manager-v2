@@ -1252,6 +1252,27 @@
   font-size: 12px;
 }
 
+.revision-entry-project {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.revision-entry-project > span {
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.revision-entry-project > strong {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
 .revision-entry-total {
   grid-area: total;
   display: grid;
