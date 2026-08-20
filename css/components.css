@@ -641,6 +641,7 @@
 
 .editor-table {
   --editor-sticky-index-width: 36px;
+  --editor-sticky-item-width: 300px;
   min-width: 1360px;
 }
 
@@ -676,6 +677,14 @@
 .editor-table .editor-sticky-item {
   z-index: 3;
   left: var(--editor-sticky-index-width);
+  background: var(--color-surface);
+}
+
+.editor-table .editor-sticky-qty {
+  z-index: 3;
+  left: calc(
+    var(--editor-sticky-index-width) + var(--editor-sticky-item-width)
+  );
   background: var(--color-surface);
   box-shadow: 1px 0 0 var(--color-border);
 }
@@ -1643,7 +1652,7 @@
   width: 112px;
 }
 .item-col-name {
-  width: 300px;
+  width: var(--editor-sticky-item-width, 300px);
 }
 .item-col-category {
   width: 130px;

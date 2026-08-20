@@ -156,7 +156,7 @@ Deno.test("keeps the original dark canvas with a darker sidebar", () => {
   }
 });
 
-Deno.test("keeps BOQ item identity visible during horizontal scrolling", () => {
+Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () => {
   assertIncludes(
     editorHtml,
     'class="editor-sticky-column editor-sticky-index"',
@@ -166,6 +166,11 @@ Deno.test("keeps BOQ item identity visible during horizontal scrolling", () => {
     editorHtml,
     'class="editor-sticky-column editor-sticky-item"',
     "BOQ item header must use the sticky item column",
+  );
+  assertIncludes(
+    editorHtml,
+    "align-right editor-sticky-column editor-sticky-qty",
+    "BOQ quantity header must use the sticky quantity column",
   );
   assertIncludes(
     boqSource,
@@ -178,8 +183,18 @@ Deno.test("keeps BOQ item identity visible during horizontal scrolling", () => {
     "BOQ item inputs must remain sticky",
   );
   assertIncludes(
+    boqSource,
+    'td class="editor-sticky-column editor-sticky-qty"',
+    "BOQ quantity inputs must remain sticky",
+  );
+  assertIncludes(
     componentsCss,
     "left: var(--editor-sticky-index-width);",
     "sticky item cells must sit beside the row-number column",
+  );
+  assertIncludes(
+    componentsCss,
+    "var(--editor-sticky-index-width) + var(--editor-sticky-item-width)",
+    "sticky quantity cells must sit beside the item column",
   );
 });

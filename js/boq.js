@@ -559,7 +559,7 @@
       <td><input class="editor-input" data-item-input data-field="sku" data-item-id="${item.id}" value="${escapeHtml(item.sku || "")}" aria-label="Part number, row ${displayIndex}"></td>
       <td class="editor-sticky-column editor-sticky-item"><input class="editor-input" list="product-suggestions" data-item-input data-field="item" data-item-id="${item.id}" value="${escapeHtml(item.item)}" aria-label="Item name, row ${displayIndex}"></td>
       <td><input class="editor-input" data-item-input data-field="category" data-item-id="${item.id}" value="${escapeHtml(item.category)}" aria-label="Category, row ${displayIndex}"></td>
-      <td><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
+      <td class="editor-sticky-column editor-sticky-qty"><input class="editor-input numeric" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}" aria-label="Quantity, row ${displayIndex}"></td>
       <td><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
       <td class="column-cogs column-price"><input class="editor-input numeric" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}" aria-label="Unit COGS, row ${displayIndex}"></td>
       <td class="calculated-cell column-cogs column-price" data-item-output="totalCogs">${formatCurrencyMarkup(calc.totalCogs, currentCurrency())}</td>
