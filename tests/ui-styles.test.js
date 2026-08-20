@@ -4,6 +4,12 @@ const utilitiesCss = await Deno.readTextFile(
 const componentsCss = await Deno.readTextFile(
   new URL("../css/components.css", import.meta.url),
 );
+const variablesCss = await Deno.readTextFile(
+  new URL("../css/variables.css", import.meta.url),
+);
+const layoutCss = await Deno.readTextFile(
+  new URL("../css/layout.css", import.meta.url),
+);
 const editorHtml = await Deno.readTextFile(
   new URL("../boq-editor.html", import.meta.url),
 );
@@ -127,4 +133,22 @@ Deno.test("keeps revision card metadata concise", () => {
       historySource.includes(">Project</span>")) {
     throw new Error("revision values must not repeat visible field labels");
   }
+});
+
+Deno.test("separates the dark sidebar from the workspace", () => {
+  assertIncludes(
+    variablesCss,
+    "--color-bg: #161c22;",
+    "dark workspace must use the separated canvas color",
+  );
+  assertIncludes(
+    variablesCss,
+    "--color-sidebar: #0c1116;",
+    "dark sidebar must use the deeper navigation color",
+  );
+  assertIncludes(
+    layoutCss,
+    "border-right: 1px solid var(--color-sidebar-border);",
+    "sidebar must retain a subtle divider",
+  );
 });
