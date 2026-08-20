@@ -230,6 +230,22 @@
     return values;
   }
 
+  function normalizeSearchText(value) {
+    return String(value ?? "")
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  }
+
+  function matchesSearchQuery(value, query) {
+    const tokens = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+    if (!tokens.length) return true;
+    const searchable = normalizeSearchText(value);
+    return tokens.every((token) => searchable.includes(token));
+  }
+
   function reorderItemsWithinCategory(records, itemId, targetId, position) {
     const items = Array.isArray(records) ? records.slice() : [];
     if (!itemId || !targetId || itemId === targetId) {
@@ -286,6 +302,7 @@
     visibleRevisionLabel,
     greetingForHour,
     collectUniqueTextValues,
+    matchesSearchQuery,
     reorderItemsWithinCategory,
     reorderValues,
   };

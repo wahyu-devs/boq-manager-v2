@@ -477,6 +477,30 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     JSON.stringify(["Each", "Lot", "Box", "Pack", "Crate"]),
     "dynamic option values remain complete and unique",
   );
+  equal(
+    window.BOQUtils.matchesSearchQuery(
+      "BOQ-260836 Additional Floor Socket Ayana Resort Bali",
+      "2608 floor ayana",
+    ),
+    true,
+    "search combines partial tokens from different fields",
+  );
+  equal(
+    window.BOQUtils.matchesSearchQuery(
+      "PT Perkom Indah Murni",
+      "mur perk ind",
+    ),
+    true,
+    "search tokens can match in any order and position",
+  );
+  equal(
+    window.BOQUtils.matchesSearchQuery(
+      "UPS Vertiv Liebert",
+      "vert router",
+    ),
+    false,
+    "every search token must match",
+  );
 
   store.saveSettings({ ...store.getSettings(), numberFormat: "space" });
   equal(window.BOQUtils.formatCurrency(1234.5, "USD", 2), "$1 234,50", "space number format");

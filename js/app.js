@@ -154,7 +154,8 @@
 
         rows.forEach((row) => {
           const matchesQuery = !query ||
-            (row.dataset.search || row.textContent).toLowerCase().includes(
+            window.BOQUtils.matchesSearchQuery(
+              row.dataset.search || row.textContent,
               query,
             );
           const matchesFilters = activeFilters.every(({ key, value }) =>
@@ -167,7 +168,8 @@
 
         cards.forEach((card) => {
           const matchesQuery = !query ||
-            (card.dataset.search || card.textContent).toLowerCase().includes(
+            window.BOQUtils.matchesSearchQuery(
+              card.dataset.search || card.textContent,
               query,
             );
           const matchesFilters = activeFilters.every(({ key, value }) =>
