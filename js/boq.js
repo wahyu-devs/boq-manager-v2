@@ -1368,7 +1368,6 @@
           String(data.document.revisionNumber),
         )
       );
-      window.BOQModal.close(document.getElementById("revision-history-modal"));
       window.BOQModal.open("pdf-modal");
     }
     const revisionExcel = event.target.closest("[data-download-revision-excel]");

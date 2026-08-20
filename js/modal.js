@@ -1,6 +1,9 @@
 (function initializeModalSystem() {
-  let activeModal = null;
-  let previouslyFocused = null;
+  const modalStack = [];
+
+  function activeEntry() {
+    return modalStack.at(-1) || null;
+  }
 
   function getFocusable(modal) {
     return [
@@ -13,20 +16,29 @@
   function openModal(id) {
     const backdrop = document.getElementById(id);
     if (!backdrop) return;
-    previouslyFocused = document.activeElement;
-    activeModal = backdrop;
+    const existingEntry = modalStack.find((entry) =>
+      entry.backdrop === backdrop
+    );
+    if (existingEntry) return;
+    modalStack.push({
+      backdrop,
+      previouslyFocused: document.activeElement,
+    });
     backdrop.hidden = false;
     document.body.style.overflow = "hidden";
     const focusable = getFocusable(backdrop);
     window.setTimeout(() => (focusable[0] || backdrop).focus(), 0);
   }
 
-  function closeModal(backdrop = activeModal) {
+  function closeModal(backdrop = activeEntry()?.backdrop) {
     if (!backdrop) return;
+    const index = modalStack.findIndex((entry) =>
+      entry.backdrop === backdrop
+    );
+    const [entry] = index >= 0 ? modalStack.splice(index, 1) : [];
     backdrop.hidden = true;
-    document.body.style.overflow = "";
-    activeModal = null;
-    if (previouslyFocused) previouslyFocused.focus();
+    document.body.style.overflow = modalStack.length ? "hidden" : "";
+    if (entry?.previouslyFocused) entry.previouslyFocused.focus();
   }
 
   document.addEventListener("click", (event) => {
@@ -49,6 +61,7 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const activeModal = activeEntry()?.backdrop;
     if (!activeModal) return;
     if (event.key === "Escape") {
       closeModal();

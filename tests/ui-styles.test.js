@@ -7,6 +7,12 @@ const editorHtml = await Deno.readTextFile(
 const productsHtml = await Deno.readTextFile(
   new URL("../products.html", import.meta.url),
 );
+const boqSource = await Deno.readTextFile(
+  new URL("../js/boq.js", import.meta.url),
+);
+const modalSource = await Deno.readTextFile(
+  new URL("../js/modal.js", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -52,4 +58,28 @@ Deno.test("uses formatted monetary inputs in the product form", () => {
   if (inputCount !== 2) {
     throw new Error(`expected 2 formatted product inputs, received ${inputCount}`);
   }
+});
+
+Deno.test("keeps Revision History open behind revision previews", () => {
+  const previewStart = boqSource.indexOf(
+    'const previewRevision = event.target.closest("[data-preview-revision]")',
+  );
+  const previewEnd = boqSource.indexOf(
+    'const revisionExcel = event.target.closest("[data-download-revision-excel]")',
+    previewStart,
+  );
+  const previewHandler = boqSource.slice(previewStart, previewEnd);
+  assertIncludes(
+    previewHandler,
+    'window.BOQModal.open("pdf-modal")',
+    "revision preview must open the PDF modal",
+  );
+  if (previewHandler.includes('BOQModal.close')) {
+    throw new Error("revision preview must not close Revision History");
+  }
+  assertIncludes(
+    modalSource,
+    "const modalStack = [];",
+    "nested previews require stacked modal state",
+  );
 });
