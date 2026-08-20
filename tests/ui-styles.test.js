@@ -1,6 +1,9 @@
 const utilitiesCss = await Deno.readTextFile(
   new URL("../css/utilities.css", import.meta.url),
 );
+const componentsCss = await Deno.readTextFile(
+  new URL("../css/components.css", import.meta.url),
+);
 const editorHtml = await Deno.readTextFile(
   new URL("../boq-editor.html", import.meta.url),
 );
@@ -81,5 +84,18 @@ Deno.test("keeps Revision History open behind revision previews", () => {
     modalSource,
     "const modalStack = [];",
     "nested previews require stacked modal state",
+  );
+});
+
+Deno.test("shows a Grand Total for every revision history entry", () => {
+  assertIncludes(
+    boqSource,
+    '<span class="revision-entry-total"><span>Grand Total</span>',
+    "revision history must render its snapshot total",
+  );
+  assertIncludes(
+    componentsCss,
+    ".revision-entry-total {",
+    "revision total must use the revision history layout",
   );
 });

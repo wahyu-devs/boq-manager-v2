@@ -1242,6 +1242,28 @@
   font-size: 12px;
 }
 
+.revision-entry-total {
+  display: grid;
+  min-width: 132px;
+  gap: 2px;
+  margin-left: auto;
+  color: var(--color-text);
+  text-align: right;
+}
+
+.revision-entry-total > span {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.revision-entry-total > strong {
+  font-size: 13px;
+  font-weight: 680;
+}
+
 .revision-entry-actions {
   display: flex;
   justify-content: flex-end;
@@ -1278,6 +1300,12 @@
 
   .revision-entry-actions {
     justify-content: flex-start;
+  }
+
+  .revision-entry-total {
+    flex-basis: 100%;
+    margin-left: 0;
+    text-align: left;
   }
 }
 
