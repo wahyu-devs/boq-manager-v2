@@ -90,7 +90,7 @@ Deno.test("keeps Revision History open behind revision previews", () => {
 Deno.test("shows a Grand Total for every revision history entry", () => {
   assertIncludes(
     boqSource,
-    '<div class="revision-entry-total"><span>Grand Total</span>',
+    '<div class="revision-entry-total"><strong>${grandTotal}</strong>',
     "revision history must render its snapshot total",
   );
   assertIncludes(
@@ -103,7 +103,7 @@ Deno.test("shows a Grand Total for every revision history entry", () => {
 Deno.test("shows the snapshot project on every revision history entry", () => {
   assertIncludes(
     boqSource,
-    '<div class="revision-entry-project"><span>Project</span>',
+    '<div class="revision-entry-project"><strong>${escapeHtml(revisionProject)}</strong>',
     "revision history must render its snapshot project",
   );
   assertIncludes(
@@ -111,4 +111,20 @@ Deno.test("shows the snapshot project on every revision history entry", () => {
     ".revision-entry-project {",
     "revision project must use the revision history layout",
   );
+});
+
+Deno.test("keeps revision card metadata concise", () => {
+  const historyStart = boqSource.indexOf("function renderRevisionHistory()");
+  const historyEnd = boqSource.indexOf(
+    "function comparisonItemKey",
+    historyStart,
+  );
+  const historySource = boqSource.slice(historyStart, historyEnd);
+  if (historySource.includes(">Issued ${escapeHtml(revisionDate")) {
+    throw new Error("revision date must not repeat the Issued badge");
+  }
+  if (historySource.includes(">Grand Total</span>") ||
+      historySource.includes(">Project</span>")) {
+    throw new Error("revision values must not repeat visible field labels");
+  }
 });
