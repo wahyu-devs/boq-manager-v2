@@ -705,7 +705,7 @@
   right: 0;
   bottom: 0;
   width: 1px;
-  background: var(--color-border-strong);
+  background: var(--color-border);
   content: "";
   pointer-events: none;
 }

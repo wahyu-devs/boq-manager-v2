@@ -219,8 +219,8 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    "background: var(--color-border-strong);",
-    "the active sticky boundary must remain visible above scrolling cells",
+    "background: var(--color-border);",
+    "the active sticky boundary must match the table border color",
   );
   assertIncludes(
     boqSource,
