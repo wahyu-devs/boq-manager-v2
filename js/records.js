@@ -15,8 +15,8 @@
     formatCurrencyMarkup,
     formatPercent,
     formatNumberInput,
+    formatNumberInputLive,
     parseNumberInput,
-    numberInputEditingValue,
     collectUniqueTextValues,
     visibleRevisionLabel,
   } = window.BOQUtils;
@@ -387,6 +387,35 @@
     });
   }
 
+  function formatProductNumberInputLive(input) {
+    const text = input.value;
+    const caret = input.selectionStart ?? text.length;
+    const numberFormat = window.BOQStore.getSettings().numberFormat || "comma";
+    const decimalSeparator = numberFormat === "comma" ? "." : ",";
+    const semanticOffset = [...text.slice(0, caret)].filter((character) =>
+      /\d/.test(character) || character === decimalSeparator
+    ).length;
+    const formatted = formatNumberInputLive(text, numberFormat);
+    input.value = formatted;
+    if (semanticOffset === 0) {
+      input.setSelectionRange(0, 0);
+      return;
+    }
+    let semanticCount = 0;
+    let nextCaret = formatted.length;
+    for (let index = 0; index < formatted.length; index += 1) {
+      const character = formatted[index];
+      if (/\d/.test(character) || character === decimalSeparator) {
+        semanticCount += 1;
+      }
+      if (semanticCount === semanticOffset) {
+        nextCaret = index + 1;
+        break;
+      }
+    }
+    input.setSelectionRange(nextCaret, nextCaret);
+  }
+
   function singular(value) {
     return value === "customers"
       ? "customer"
@@ -565,6 +594,10 @@
   document.querySelector("[data-record-form]")?.addEventListener(
     "input",
     (event) => {
+      const numberInput = event.target.closest("[data-product-number-input]");
+      if (numberInput && !numberInput.readOnly) {
+        formatProductNumberInputLive(numberInput);
+      }
       if (collection === "products" &&
           event.target.matches("[data-selling-price]")) {
         const cogs = parseNumberInput(
@@ -580,14 +613,6 @@
         return;
       }
       updateCalculatedProductPrice();
-    },
-  );
-  document.querySelector("[data-record-form]")?.addEventListener(
-    "focusin",
-    (event) => {
-      const input = event.target.closest("[data-product-number-input]");
-      if (!input || input.readOnly || input.value === "") return;
-      input.value = numberInputEditingValue(parseNumberInput(input.value));
     },
   );
   document.querySelector("[data-record-form]")?.addEventListener(

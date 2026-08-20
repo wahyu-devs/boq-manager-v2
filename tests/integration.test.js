@@ -368,6 +368,16 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "comma financial input format",
   );
   equal(
+    window.BOQUtils.formatNumberInputLive("1234567.5"),
+    "1,234,567.5",
+    "comma financial input formats while typing",
+  );
+  equal(
+    window.BOQUtils.formatNumberInputLive("1234."),
+    "1,234.",
+    "live financial input preserves a trailing decimal",
+  );
+  equal(
     window.BOQUtils.parseNumberInput("1,234,567.5"),
     1234567.5,
     "comma financial input parsing",
@@ -428,6 +438,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "dot financial input format",
   );
   equal(
+    window.BOQUtils.formatNumberInputLive("1234567,5"),
+    "1.234.567,5",
+    "dot financial input formats while typing",
+  );
+  equal(
     window.BOQUtils.parseNumberInput("1.234.567,5"),
     1234567.5,
     "dot financial input parsing",
@@ -453,6 +468,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     window.BOQUtils.formatNumberInput(1234567.5),
     "1 234 567,5",
     "space financial input format",
+  );
+  equal(
+    window.BOQUtils.formatNumberInputLive("1234567,5"),
+    "1 234 567,5",
+    "space financial input formats while typing",
   );
   equal(
     window.BOQUtils.parseNumberInput("1 234 567,5"),

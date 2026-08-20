@@ -40,6 +40,32 @@
       : formatted;
   }
 
+  function formatNumberInputLive(value, numberFormat) {
+    const preference = numberFormatPreference(numberFormat);
+    const decimalSeparator = preference === "comma" ? "." : ",";
+    const groupSeparator = preference === "comma"
+      ? ","
+      : preference === "dot"
+      ? "."
+      : " ";
+    const text = String(value ?? "");
+    if (!text) return "";
+    const decimalIndex = text.indexOf(decimalSeparator);
+    const hasDecimal = decimalIndex !== -1;
+    const integerSource = hasDecimal ? text.slice(0, decimalIndex) : text;
+    const fractionSource = hasDecimal ? text.slice(decimalIndex + 1) : "";
+    const integerDigits = integerSource.replace(/\D/g, "")
+      .replace(/^0+(?=\d)/, "");
+    const integer = integerDigits || (hasDecimal ? "0" : "");
+    if (!integer) return "";
+    const groupedInteger = integer.replace(
+      /\B(?=(\d{3})+(?!\d))/g,
+      groupSeparator,
+    );
+    const fraction = fractionSource.replace(/\D/g, "").slice(0, 2);
+    return `${groupedInteger}${hasDecimal ? decimalSeparator + fraction : ""}`;
+  }
+
   function parseNumberInput(value) {
     const preference = numberFormatPreference();
     let text = String(value ?? "").trim().replace(/[\s\u00a0\u202f]/g, "");
@@ -216,6 +242,7 @@
   window.BOQUtils = {
     formatNumber,
     formatNumberInput,
+    formatNumberInputLive,
     parseNumberInput,
     numberInputEditingValue,
     formatCurrency,
