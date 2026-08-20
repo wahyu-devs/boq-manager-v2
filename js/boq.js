@@ -11,7 +11,7 @@
     formatPercent,
     formatNumberInput,
     parseNumberInput,
-    numberInputEditingValue,
+    formatNumberInputElementLive,
     escapeHtml,
     visibleRevisionLabel,
     collectUniqueTextValues,
@@ -1139,20 +1139,6 @@
     return record;
   }
 
-  editor.addEventListener("focusin", (event) => {
-    const input = event.target.closest("[data-number-input]");
-    if (!input) return;
-    const item = items.find((entry) => entry.id === input.dataset.itemId);
-    if (!item) return;
-    const calc = calculateItem(item);
-    const value = input.dataset.field === "sellingOverride"
-      ? calc.isManualSelling
-        ? item.sellingOverride
-        : calc.unitSelling
-      : item.unitCogs;
-    input.value = numberInputEditingValue(value);
-  });
-
   editor.addEventListener("focusout", (event) => {
     const input = event.target.closest("[data-number-input]");
     if (!input) return;
@@ -1174,6 +1160,7 @@
     if (!item) return;
     const numericFields = ["qty", "unitCogs", "margin", "sellingOverride"];
     if (input.matches("[data-number-input]")) {
+      formatNumberInputElementLive(input);
       if (input.dataset.field === "sellingOverride" && input.value === "") {
         item.sellingOverride = null;
       } else {
@@ -1529,10 +1516,8 @@
     currentView = event.target.value;
     applyViewState();
   });
-  commissionInput?.addEventListener("focus", () => {
-    commissionInput.value = numberInputEditingValue(commission);
-  });
   commissionInput?.addEventListener("input", () => {
+    formatNumberInputElementLive(commissionInput);
     commission = Math.max(0, parseNumberInput(commissionInput.value));
     updateSummary();
     markDirty();

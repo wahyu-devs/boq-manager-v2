@@ -66,6 +66,37 @@
     return `${groupedInteger}${hasDecimal ? decimalSeparator + fraction : ""}`;
   }
 
+  function formatNumberInputElementLive(input, numberFormat) {
+    const text = input.value;
+    const caret = input.selectionStart ?? text.length;
+    const preference = numberFormatPreference(numberFormat);
+    const decimalSeparator = preference === "comma" ? "." : ",";
+    const semanticOffset = [...text.slice(0, caret)].filter((character) =>
+      /\d/.test(character) || character === decimalSeparator
+    ).length;
+    const formatted = formatNumberInputLive(text, preference);
+    input.value = formatted;
+    if (typeof input.setSelectionRange !== "function") return formatted;
+    if (semanticOffset === 0) {
+      input.setSelectionRange(0, 0);
+      return formatted;
+    }
+    let semanticCount = 0;
+    let nextCaret = formatted.length;
+    for (let index = 0; index < formatted.length; index += 1) {
+      const character = formatted[index];
+      if (/\d/.test(character) || character === decimalSeparator) {
+        semanticCount += 1;
+      }
+      if (semanticCount === semanticOffset) {
+        nextCaret = index + 1;
+        break;
+      }
+    }
+    input.setSelectionRange(nextCaret, nextCaret);
+    return formatted;
+  }
+
   function parseNumberInput(value) {
     const preference = numberFormatPreference();
     let text = String(value ?? "").trim().replace(/[\s\u00a0\u202f]/g, "");
@@ -243,6 +274,7 @@
     formatNumber,
     formatNumberInput,
     formatNumberInputLive,
+    formatNumberInputElementLive,
     parseNumberInput,
     numberInputEditingValue,
     formatCurrency,

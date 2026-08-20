@@ -15,7 +15,7 @@
     formatCurrencyMarkup,
     formatPercent,
     formatNumberInput,
-    formatNumberInputLive,
+    formatNumberInputElementLive,
     parseNumberInput,
     collectUniqueTextValues,
     visibleRevisionLabel,
@@ -387,35 +387,6 @@
     });
   }
 
-  function formatProductNumberInputLive(input) {
-    const text = input.value;
-    const caret = input.selectionStart ?? text.length;
-    const numberFormat = window.BOQStore.getSettings().numberFormat || "comma";
-    const decimalSeparator = numberFormat === "comma" ? "." : ",";
-    const semanticOffset = [...text.slice(0, caret)].filter((character) =>
-      /\d/.test(character) || character === decimalSeparator
-    ).length;
-    const formatted = formatNumberInputLive(text, numberFormat);
-    input.value = formatted;
-    if (semanticOffset === 0) {
-      input.setSelectionRange(0, 0);
-      return;
-    }
-    let semanticCount = 0;
-    let nextCaret = formatted.length;
-    for (let index = 0; index < formatted.length; index += 1) {
-      const character = formatted[index];
-      if (/\d/.test(character) || character === decimalSeparator) {
-        semanticCount += 1;
-      }
-      if (semanticCount === semanticOffset) {
-        nextCaret = index + 1;
-        break;
-      }
-    }
-    input.setSelectionRange(nextCaret, nextCaret);
-  }
-
   function singular(value) {
     return value === "customers"
       ? "customer"
@@ -596,7 +567,7 @@
     (event) => {
       const numberInput = event.target.closest("[data-product-number-input]");
       if (numberInput && !numberInput.readOnly) {
-        formatProductNumberInputLive(numberInput);
+        formatNumberInputElementLive(numberInput);
       }
       if (collection === "products" &&
           event.target.matches("[data-selling-price]")) {

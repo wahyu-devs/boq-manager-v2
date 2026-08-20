@@ -377,6 +377,17 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "1,234.",
     "live financial input preserves a trailing decimal",
   );
+  const liveInput = {
+    value: "1234",
+    selectionStart: 4,
+    setSelectionRange(start, end) {
+      this.selectionStart = start;
+      this.selectionEnd = end;
+    },
+  };
+  window.BOQUtils.formatNumberInputElementLive(liveInput);
+  equal(liveInput.value, "1,234", "live input element receives separators");
+  equal(liveInput.selectionStart, 5, "live input caret follows separators");
   equal(
     window.BOQUtils.parseNumberInput("1,234,567.5"),
     1234567.5,
