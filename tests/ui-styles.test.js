@@ -135,20 +135,23 @@ Deno.test("keeps revision card metadata concise", () => {
   }
 });
 
-Deno.test("separates the dark sidebar from the workspace", () => {
+Deno.test("keeps the original dark canvas with a darker sidebar", () => {
   assertIncludes(
     variablesCss,
-    "--color-bg: #161c22;",
-    "dark workspace must use the separated canvas color",
+    "--color-bg: #151a1f;",
+    "dark workspace must retain its original canvas color",
+  );
+  assertIncludes(
+    variablesCss,
+    "--color-surface: #1c2229;",
+    "dark cards must retain their original surface color",
   );
   assertIncludes(
     variablesCss,
     "--color-sidebar: #0c1116;",
     "dark sidebar must use the deeper navigation color",
   );
-  assertIncludes(
-    layoutCss,
-    "border-right: 1px solid var(--color-sidebar-border);",
-    "sidebar must retain a subtle divider",
-  );
+  if (layoutCss.includes("border-right: 1px solid var(--color-sidebar-border);")) {
+    throw new Error("sidebar must not render a right-side divider");
+  }
 });
