@@ -640,6 +640,7 @@
 }
 
 .editor-table {
+  --editor-sticky-index-width: 36px;
   min-width: 1360px;
 }
 
@@ -657,6 +658,39 @@
 .editor-table th {
   height: 34px;
   padding: 0 6px;
+}
+
+.editor-table .editor-sticky-column {
+  position: sticky;
+}
+
+.editor-table .editor-sticky-index {
+  z-index: 3;
+  left: 0;
+  width: var(--editor-sticky-index-width);
+  min-width: var(--editor-sticky-index-width);
+  max-width: var(--editor-sticky-index-width);
+  background: var(--color-surface);
+}
+
+.editor-table .editor-sticky-item {
+  z-index: 3;
+  left: var(--editor-sticky-index-width);
+  background: var(--color-surface);
+  box-shadow: 1px 0 0 var(--color-border);
+}
+
+.editor-table thead .editor-sticky-column {
+  z-index: 6;
+  background: var(--color-surface-secondary);
+}
+
+.editor-table tbody tr:hover .editor-sticky-column {
+  background: color-mix(
+    in srgb,
+    var(--color-surface-secondary) 56%,
+    var(--color-surface)
+  );
 }
 
 .editor-table .editor-input {
@@ -1603,7 +1637,7 @@
 }
 
 .item-col-index {
-  width: 36px;
+  width: var(--editor-sticky-index-width, 36px);
 }
 .item-col-part-number {
   width: 112px;

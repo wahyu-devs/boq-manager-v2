@@ -155,3 +155,31 @@ Deno.test("keeps the original dark canvas with a darker sidebar", () => {
     throw new Error("sidebar must not render a right-side divider");
   }
 });
+
+Deno.test("keeps BOQ item identity visible during horizontal scrolling", () => {
+  assertIncludes(
+    editorHtml,
+    'class="editor-sticky-column editor-sticky-index"',
+    "BOQ row number header must use the sticky index column",
+  );
+  assertIncludes(
+    editorHtml,
+    'class="editor-sticky-column editor-sticky-item"',
+    "BOQ item header must use the sticky item column",
+  );
+  assertIncludes(
+    boqSource,
+    "item-order-cell editor-sticky-column editor-sticky-index",
+    "BOQ row numbers must remain sticky",
+  );
+  assertIncludes(
+    boqSource,
+    'td class="editor-sticky-column editor-sticky-item"',
+    "BOQ item inputs must remain sticky",
+  );
+  assertIncludes(
+    componentsCss,
+    "left: var(--editor-sticky-index-width);",
+    "sticky item cells must sit beside the row-number column",
+  );
+});
