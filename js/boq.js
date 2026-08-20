@@ -572,7 +572,7 @@
   }
 
   function categoryDesktopHeader(category) {
-    return `<tr class="editor-category-row" data-category-row data-category="${escapeHtml(category)}"><td colspan="12"><div><span class="category-title">${categoryDragHandle(category)}<strong>${escapeHtml(category)}</strong></span></div></td></tr>`;
+    return `<tr class="editor-category-row" data-category-row data-category="${escapeHtml(category)}"><td colspan="12"><div class="editor-category-sticky"><span class="category-title">${categoryDragHandle(category)}<strong>${escapeHtml(category)}</strong></span></div></td></tr>`;
   }
 
   function categorySubtotalRow(category) {

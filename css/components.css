@@ -643,6 +643,7 @@
   --editor-sticky-index-width: 36px;
   --editor-sticky-item-width: 300px;
   --editor-sticky-qty-width: 68px;
+  --editor-sticky-unit-width: 82px;
   min-width: 1360px;
 }
 
@@ -698,7 +699,8 @@
   background: var(--color-surface);
 }
 
-.editor-table.sticky-columns-active .editor-sticky-unit::after {
+.editor-table.sticky-columns-active .editor-sticky-unit::after,
+.editor-table.sticky-columns-active .editor-category-sticky::after {
   position: absolute;
   z-index: 1;
   top: 0;
@@ -777,15 +779,25 @@
 
 .editor-category-row td {
   height: 32px;
-  padding: 2px 8px;
+  padding: 0;
   background: var(--color-surface-secondary);
 }
 
-.editor-category-row td > div {
+.editor-category-sticky {
+  position: sticky;
+  z-index: 3;
+  left: 0;
   display: flex;
+  width: calc(
+    var(--editor-sticky-index-width) + var(--editor-sticky-item-width) +
+      var(--editor-sticky-qty-width) + var(--editor-sticky-unit-width)
+  );
+  height: 32px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 2px 8px;
+  background: var(--color-surface-secondary);
 }
 
 .editor-category-row strong {
@@ -840,7 +852,7 @@
   text-align: center;
 }
 
-.reorder-mode .editor-category-row td {
+.reorder-mode .editor-category-sticky {
   padding-left: 5px;
 }
 
@@ -1682,7 +1694,7 @@
   width: var(--editor-sticky-qty-width, 68px);
 }
 .item-col-unit {
-  width: 82px;
+  width: var(--editor-sticky-unit-width, 82px);
 }
 .item-col-money {
   width: 116px;

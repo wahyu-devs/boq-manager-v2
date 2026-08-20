@@ -198,6 +198,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     "BOQ unit inputs must remain sticky",
   );
   assertIncludes(
+    boqSource,
+    'class="editor-category-sticky"',
+    "BOQ category rows must keep a sticky category region",
+  );
+  assertIncludes(
     componentsCss,
     "left: var(--editor-sticky-index-width);",
     "sticky item cells must sit beside the row-number column",
@@ -211,6 +216,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     componentsCss,
     "var(--editor-sticky-qty-width)",
     "sticky unit cells must sit beside the quantity column",
+  );
+  assertIncludes(
+    componentsCss,
+    ".editor-category-sticky {",
+    "category regions must have sticky positioning rules",
   );
   assertIncludes(
     componentsCss,
