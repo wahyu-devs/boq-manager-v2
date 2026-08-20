@@ -55,6 +55,7 @@
   }
 
   function catalogItem(product) {
+    const productPricing = calculations.calculateProductPricing(product);
     return {
       sku: product.sku || "",
       item: product.name || "",
@@ -63,7 +64,9 @@
       unit: product.unit || "Each",
       unitCogs: Number(product.defaultCogs || 0),
       margin: Number(product.defaultMargin || 0),
-      sellingOverride: null,
+      sellingOverride: productPricing.isManualSelling
+        ? productPricing.unitSellingRaw
+        : null,
       category: product.category || "Uncategorized",
     };
   }

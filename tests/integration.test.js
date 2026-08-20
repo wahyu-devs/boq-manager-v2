@@ -275,6 +275,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     true,
     "product without COGS uses manual selling",
   );
+  equal(
+    manualProduct.unitSellingRaw,
+    130000,
+    "manual product selling remains available to BOQ items",
+  );
 
   const summary = calculations.calculateSummary([{
     qty: 1,
