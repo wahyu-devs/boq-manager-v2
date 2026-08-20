@@ -198,6 +198,11 @@
   color: var(--color-text-subtle);
 }
 
+.input[data-selling-price]:read-only {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-muted);
+}
+
 .input-sm,
 .select-sm {
   height: var(--control-sm);

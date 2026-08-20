@@ -1084,7 +1084,9 @@
         unit: item.unit,
         defaultCogs: item.unitCogs,
         defaultMargin: item.margin,
-        defaultSellingPrice: item.sellingOverride ?? calc.unitSellingRaw,
+        defaultSellingPrice: Number(item.unitCogs || 0) > 0
+          ? null
+          : item.sellingOverride ?? calc.unitSellingRaw,
         status: existing?.status || "Active",
       });
     });

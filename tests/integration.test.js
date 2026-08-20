@@ -244,6 +244,38 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   });
   equal(manual.unitSelling, 130000, "manual selling override");
 
+  const automaticProduct = calculations.calculateProductPricing({
+    defaultCogs: 100000,
+    defaultMargin: 20,
+    defaultSellingPrice: 130000,
+  });
+  equal(
+    automaticProduct.unitSelling,
+    125000,
+    "product with COGS ignores manual default selling",
+  );
+  equal(
+    automaticProduct.isManualSelling,
+    false,
+    "product with COGS uses automatic selling",
+  );
+
+  const manualProduct = calculations.calculateProductPricing({
+    defaultCogs: 0,
+    defaultMargin: 20,
+    defaultSellingPrice: 130000,
+  });
+  equal(
+    manualProduct.unitSelling,
+    130000,
+    "product without COGS keeps manual default selling",
+  );
+  equal(
+    manualProduct.isManualSelling,
+    true,
+    "product without COGS uses manual selling",
+  );
+
   const summary = calculations.calculateSummary([{
     qty: 1,
     unitCogs: 100000,

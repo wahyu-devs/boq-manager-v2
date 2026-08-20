@@ -53,6 +53,16 @@
     };
   }
 
+  function calculateProductPricing(product, options = {}) {
+    const unitCogs = safeNumber(product?.defaultCogs);
+    return calculateItem({
+      qty: 1,
+      unitCogs,
+      margin: product?.defaultMargin,
+      sellingOverride: unitCogs > 0 ? null : product?.defaultSellingPrice,
+    }, options);
+  }
+
   function calculateSummary(items, options = {}) {
     const totals = (Array.isArray(items) ? items : []).reduce(
       (summary, item) => {
@@ -83,6 +93,7 @@
 
   window.BOQCalculations = {
     calculateItem,
+    calculateProductPricing,
     calculateSummary,
     calculateCategorySummary,
     roundSelling,

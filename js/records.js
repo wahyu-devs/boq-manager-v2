@@ -151,11 +151,9 @@
       0,
       Math.min(Number(record.defaultMargin || 0), 99.99),
     );
-    const selling = window.BOQCalculations.calculateItem({
-      qty: 1,
-      unitCogs: record.defaultCogs,
-      margin,
-      sellingOverride: record.defaultSellingPrice,
+    const selling = window.BOQCalculations.calculateProductPricing({
+      ...record,
+      defaultMargin: margin,
     }).unitSelling;
     const search = [record.sku, record.name].filter(Boolean).join(" ");
     return {
@@ -365,6 +363,7 @@
       control.value = value ?? "";
     });
     if (collection === "products" &&
+        Number(record.defaultCogs || 0) <= 0 &&
         record.defaultSellingPrice !== null &&
         record.defaultSellingPrice !== undefined &&
         record.defaultSellingPrice !== "") {
@@ -386,7 +385,8 @@
     if (collection === "products") {
       values.defaultCogs = Number(values.defaultCogs || 0);
       values.defaultMargin = Number(values.defaultMargin || 0);
-      values.defaultSellingPrice = values.defaultSellingPrice === ""
+      values.defaultSellingPrice = values.defaultCogs > 0 ||
+          values.defaultSellingPrice === ""
         ? null
         : Number(values.defaultSellingPrice || 0);
     }
@@ -462,7 +462,14 @@
     if (!form || !output) return;
     const cogs = Number(form.elements.defaultCogs.value || 0);
     const margin = Number(form.elements.defaultMargin.value || 0);
-    if (output.dataset.manual === "true") return;
+    const hasCogs = Number.isFinite(cogs) && cogs > 0;
+    output.readOnly = hasCogs;
+    output.setAttribute("aria-readonly", String(hasCogs));
+    if (!hasCogs) {
+      if (output.dataset.manual !== "true") output.value = "";
+      return;
+    }
+    output.dataset.manual = "false";
     output.value = window.BOQCalculations.calculateItem({
       qty: 1,
       unitCogs: cogs,
@@ -545,10 +552,14 @@
     (event) => {
       if (collection === "products" &&
           event.target.matches("[data-selling-price]")) {
+        const cogs = Number(event.currentTarget.elements.defaultCogs.value || 0);
+        if (Number.isFinite(cogs) && cogs > 0) {
+          updateCalculatedProductPrice();
+          return;
+        }
         event.target.dataset.manual = event.target.value === ""
           ? "false"
           : "true";
-        if (event.target.value === "") updateCalculatedProductPrice();
         return;
       }
       updateCalculatedProductPrice();
