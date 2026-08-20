@@ -695,8 +695,12 @@
     var(--editor-sticky-index-width) + var(--editor-sticky-item-width) +
       var(--editor-sticky-qty-width)
   );
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid transparent;
   background: var(--color-surface);
+}
+
+.editor-table.sticky-columns-active .editor-sticky-unit {
+  border-right-color: var(--color-border);
 }
 
 .editor-table thead .editor-sticky-column {

@@ -42,6 +42,7 @@
 
   const desktopBody = editor.querySelector("[data-items-body]");
   const mobileList = editor.querySelector("[data-mobile-items]");
+  const desktopTableWrap = editor.querySelector("[data-editor-table]");
   const currencySelect = document.querySelector("#boq-currency");
   const commissionInput = document.querySelector("[data-commission]");
   const commissionCurrency = document.querySelector(
@@ -618,13 +619,29 @@
       );
       return `<section class="mobile-category-section"><header data-category-row data-category="${escapeHtml(category)}"><span class="category-title">${categoryDragHandle(category)}<strong>${escapeHtml(category)}</strong></span></header>${categoryItems.map((item) => mobileCard(item, ++displayIndex)).join("")}</section>`;
     }).join("");
-    editor.querySelector("[data-editor-table]").hidden = items.length === 0;
+    desktopTableWrap.hidden = items.length === 0;
     editor.querySelector("[data-items-empty]").hidden = items.length > 0;
     editor.querySelector("[data-item-count]").textContent =
       `${items.length} item${items.length === 1 ? "" : "s"}`;
     applyViewState();
     updateSummary();
     applyEditorMode();
+    updateStickyColumnsState();
+  }
+
+  function updateStickyColumnsState() {
+    const table = desktopTableWrap?.querySelector(".editor-table");
+    const unitHeader = table?.querySelector("thead .editor-sticky-unit");
+    if (!table || !unitHeader || desktopTableWrap.hidden ||
+        desktopTableWrap.offsetParent === null) {
+      table?.classList.remove("sticky-columns-active");
+      return;
+    }
+    const stickyLeft = Number.parseFloat(getComputedStyle(unitHeader).left) || 0;
+    const pinnedLeft = desktopTableWrap.getBoundingClientRect().left + stickyLeft;
+    const isActive = desktopTableWrap.scrollLeft > 0 &&
+      unitHeader.getBoundingClientRect().left <= pinnedLeft + 1;
+    table.classList.toggle("sticky-columns-active", isActive);
   }
 
   function syncItem(item) {
@@ -1545,6 +1562,10 @@
   );
 
   document.querySelector("[data-catalog-search]")?.addEventListener("input", updateCatalogResults);
+  desktopTableWrap?.addEventListener("scroll", updateStickyColumnsState, {
+    passive: true,
+  });
+  globalThis.addEventListener("resize", updateStickyColumnsState);
   document.querySelector("[data-editor-view]")?.addEventListener("change", (event) => {
     currentView = event.target.value;
     applyViewState();

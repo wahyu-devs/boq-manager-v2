@@ -214,7 +214,17 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    "border-right: 1px solid var(--color-border);",
-    "the final sticky column must have a subtle right border",
+    ".editor-table.sticky-columns-active .editor-sticky-unit",
+    "the final sticky column border must depend on the active sticky state",
+  );
+  assertIncludes(
+    boqSource,
+    'table.classList.toggle("sticky-columns-active", isActive);',
+    "horizontal scrolling must update the active sticky state",
+  );
+  assertIncludes(
+    boqSource,
+    'desktopTableWrap?.addEventListener("scroll", updateStickyColumnsState',
+    "the BOQ table must monitor horizontal scrolling",
   );
 });
