@@ -54,13 +54,13 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #161c22;
-  --color-surface: #1e252d;
-  --color-surface-secondary: #232b34;
-  --color-surface-raised: #252e38;
-  --color-sidebar: #0c1116;
-  --color-sidebar-hover: #1b2630;
-  --color-sidebar-border: #28323c;
+  --color-bg: #181f26;
+  --color-surface: #202830;
+  --color-surface-secondary: #252e37;
+  --color-surface-raised: #29333d;
+  --color-sidebar: #12181e;
+  --color-sidebar-hover: #202a34;
+  --color-sidebar-border: #2b3540;
   --color-sidebar-text: #dbe2e9;
   --color-sidebar-muted: #8493a1;
   --color-text: #e7ebef;
