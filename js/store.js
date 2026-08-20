@@ -397,10 +397,24 @@
     if (!validation.valid) throw new Error(validation.message);
     const existing = record?.id ? get("boqs", record.id) : null;
     const activeRevision = latestIssuedRevision(existing);
-    if (activeRevision && existing?.workingRevision === null) {
-      throw new Error("This issued revision is locked.");
+    let number = existing?.workingRevision ?? null;
+    if (activeRevision && number === null) {
+      const requestedWorkingRevision = record?.workingRevision === null ||
+          record?.workingRevision === undefined || record?.workingRevision === ""
+        ? null
+        : Math.max(0, Number(record.workingRevision) || 0);
+      const sourceRevision = getRevision(
+        existing,
+        record?.draftBaseRevisionNumber,
+      );
+      const isPreparedRevision = requestedWorkingRevision ===
+          nextRevisionNumber(existing) && isIssuedRevision(sourceRevision);
+      if (!isPreparedRevision) {
+        throw new Error("This issued revision is locked.");
+      }
+      number = requestedWorkingRevision;
     }
-    const number = existing?.workingRevision ?? nextRevisionNumber(existing);
+    number ??= nextRevisionNumber(existing);
     const issuedAt = new Date().toISOString();
     const documentValue = revisionDocument({
       ...existing,

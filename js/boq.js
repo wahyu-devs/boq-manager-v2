@@ -264,9 +264,6 @@
     document.querySelectorAll("[data-save]").forEach((button) =>
       button.hidden = locked
     );
-    document.querySelectorAll('[data-save-status="Issued"]').forEach((button) =>
-      button.hidden = locked || hasUnpersistedRevisionDraft()
-    );
     document.querySelectorAll("[data-create-revision]").forEach((button) =>
       button.hidden = !locked
     );

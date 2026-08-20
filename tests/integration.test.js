@@ -1015,13 +1015,23 @@ Deno.test("marks valid drafts as issued exactly once", () => {
     "duplicate action creates no extra snapshot",
   );
 
-  const revisionDraft = store.createRevisionDraft(issued.id);
+  const revisionDraft = store.prepareRevisionDraft(issued.id);
+  equal(
+    store.get("boqs", issued.id).workingRevision,
+    null,
+    "unsaved revision remains local before direct issue",
+  );
   const revised = store.issueBoq({
     ...revisionDraft,
     items: revisionDraft.items.map((item) => ({ ...item, qty: 3 })),
   });
   equal(revised.revisions.length, 2, "revision draft creates one new snapshot");
   equal(revised.revisions[1].label, "R01", "revision draft issues as R01");
+  equal(
+    store.get("boqs", issued.id).workingRevision,
+    null,
+    "direct issue stores no intermediate draft",
+  );
 
   const invalidDraft = store.saveBoqDraft({
     id: "invalid-issued-boq",
