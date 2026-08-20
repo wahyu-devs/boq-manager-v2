@@ -173,6 +173,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     "BOQ quantity header must use the sticky quantity column",
   );
   assertIncludes(
+    editorHtml,
+    'class="editor-sticky-column editor-sticky-unit"',
+    "BOQ unit header must use the sticky unit column",
+  );
+  assertIncludes(
     boqSource,
     "item-order-cell editor-sticky-column editor-sticky-index",
     "BOQ row numbers must remain sticky",
@@ -188,6 +193,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     "BOQ quantity inputs must remain sticky",
   );
   assertIncludes(
+    boqSource,
+    'td class="editor-sticky-column editor-sticky-unit"',
+    "BOQ unit inputs must remain sticky",
+  );
+  assertIncludes(
     componentsCss,
     "left: var(--editor-sticky-index-width);",
     "sticky item cells must sit beside the row-number column",
@@ -196,5 +206,15 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     componentsCss,
     "var(--editor-sticky-index-width) + var(--editor-sticky-item-width)",
     "sticky quantity cells must sit beside the item column",
+  );
+  assertIncludes(
+    componentsCss,
+    "var(--editor-sticky-qty-width)",
+    "sticky unit cells must sit beside the quantity column",
+  );
+  assertIncludes(
+    componentsCss,
+    "border-right: 1px solid var(--color-border);",
+    "the final sticky column must have a subtle right border",
   );
 });
