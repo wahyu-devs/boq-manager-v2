@@ -4,6 +4,9 @@ const utilitiesCss = await Deno.readTextFile(
 const editorHtml = await Deno.readTextFile(
   new URL("../boq-editor.html", import.meta.url),
 );
+const productsHtml = await Deno.readTextFile(
+  new URL("../products.html", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -41,5 +44,12 @@ Deno.test("shows an icon on every Create Revision action", () => {
   const iconCount = editorHtml.split(revisionIcon).length - 1;
   if (iconCount !== 2) {
     throw new Error(`expected 2 Create Revision icons, received ${iconCount}`);
+  }
+});
+
+Deno.test("uses formatted monetary inputs in the product form", () => {
+  const inputCount = productsHtml.split("data-product-number-input").length - 1;
+  if (inputCount !== 2) {
+    throw new Error(`expected 2 formatted product inputs, received ${inputCount}`);
   }
 });

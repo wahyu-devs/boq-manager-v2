@@ -14,6 +14,9 @@
     escapeHtml,
     formatCurrencyMarkup,
     formatPercent,
+    formatNumberInput,
+    parseNumberInput,
+    numberInputEditingValue,
     collectUniqueTextValues,
     visibleRevisionLabel,
   } = window.BOQUtils;
@@ -349,6 +352,7 @@
       : `Add ${headingLabel}`;
     if (!record) {
       updateCalculatedProductPrice();
+      formatProductNumberFields(form);
       return;
     }
     Object.entries(record).forEach(([key, value]) => {
@@ -370,6 +374,17 @@
       form.querySelector("[data-selling-price]").dataset.manual = "true";
     }
     updateCalculatedProductPrice();
+    formatProductNumberFields(form);
+  }
+
+  function formatProductNumberFields(form) {
+    if (collection !== "products") return;
+    form.querySelectorAll("[data-product-number-input]").forEach((input) => {
+      if (input.value === "") return;
+      input.value = formatNumberInput(
+        Math.max(0, parseNumberInput(input.value)),
+      );
+    });
   }
 
   function singular(value) {
@@ -383,12 +398,12 @@
   function formRecord(form) {
     const values = Object.fromEntries(new FormData(form));
     if (collection === "products") {
-      values.defaultCogs = Number(values.defaultCogs || 0);
+      values.defaultCogs = Math.max(0, parseNumberInput(values.defaultCogs));
       values.defaultMargin = Number(values.defaultMargin || 0);
       values.defaultSellingPrice = values.defaultCogs > 0 ||
           values.defaultSellingPrice === ""
         ? null
-        : Number(values.defaultSellingPrice || 0);
+        : Math.max(0, parseNumberInput(values.defaultSellingPrice));
     }
     return values;
   }
@@ -460,7 +475,7 @@
     const form = document.querySelector("[data-record-form]");
     const output = form?.querySelector("[data-selling-price]");
     if (!form || !output) return;
-    const cogs = Number(form.elements.defaultCogs.value || 0);
+    const cogs = parseNumberInput(form.elements.defaultCogs.value);
     const margin = Number(form.elements.defaultMargin.value || 0);
     const hasCogs = Number.isFinite(cogs) && cogs > 0;
     output.readOnly = hasCogs;
@@ -470,11 +485,11 @@
       return;
     }
     output.dataset.manual = "false";
-    output.value = window.BOQCalculations.calculateItem({
+    output.value = formatNumberInput(window.BOQCalculations.calculateItem({
       qty: 1,
       unitCogs: cogs,
       margin,
-    }).unitSelling;
+    }).unitSelling);
   }
 
   document.addEventListener("click", (event) => {
@@ -552,7 +567,9 @@
     (event) => {
       if (collection === "products" &&
           event.target.matches("[data-selling-price]")) {
-        const cogs = Number(event.currentTarget.elements.defaultCogs.value || 0);
+        const cogs = parseNumberInput(
+          event.currentTarget.elements.defaultCogs.value,
+        );
         if (Number.isFinite(cogs) && cogs > 0) {
           updateCalculatedProductPrice();
           return;
@@ -563,6 +580,24 @@
         return;
       }
       updateCalculatedProductPrice();
+    },
+  );
+  document.querySelector("[data-record-form]")?.addEventListener(
+    "focusin",
+    (event) => {
+      const input = event.target.closest("[data-product-number-input]");
+      if (!input || input.readOnly || input.value === "") return;
+      input.value = numberInputEditingValue(parseNumberInput(input.value));
+    },
+  );
+  document.querySelector("[data-record-form]")?.addEventListener(
+    "focusout",
+    (event) => {
+      const input = event.target.closest("[data-product-number-input]");
+      if (!input || input.value === "") return;
+      input.value = formatNumberInput(
+        Math.max(0, parseNumberInput(input.value)),
+      );
     },
   );
   document.addEventListener("boq:workspace-updated", () => {

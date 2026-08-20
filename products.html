@@ -235,9 +235,9 @@
                 >Default COGS</span><input
                   class="input align-right"
                   name="defaultCogs"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  data-product-number-input
+                  type="text"
+                  inputmode="decimal"
                   required
                 ></label><label class="field col-4"><span class="field-label"
                 >Default gross margin %</span><input
@@ -253,9 +253,9 @@
                           class="input align-right"
                           name="defaultSellingPrice"
                           data-selling-price
-                          type="number"
-                          min="0"
-                          step="0.01"
+                          data-product-number-input
+                          type="text"
+                          inputmode="decimal"
                         ><span class="field-hint"
                         >Calculated from COGS and gross margin; editable when
                           COGS is zero</span></label>
