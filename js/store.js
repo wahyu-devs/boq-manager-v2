@@ -228,7 +228,16 @@
   function normalizeProduct(record) {
     const value = { ...(record || {}) };
     delete value.description;
-    return value;
+    return {
+      ...value,
+      defaultMargin: normalizeProductMargin(value.defaultMargin),
+    };
+  }
+
+  function normalizeProductMargin(value) {
+    const margin = Number(value);
+    if (!Number.isFinite(margin)) return 0;
+    return Math.min(99.9, Math.max(0, Math.round(margin * 10) / 10));
   }
 
   function list(collection) {
@@ -688,7 +697,7 @@
     const cost = Number(cogs || 0);
     const price = Number(selling || 0);
     if (!(cost > 0) || !(price > 0) || price < cost) return 0;
-    return Math.max(0, Math.min((price - cost) / price * 100, 99.99));
+    return normalizeProductMargin((price - cost) / price * 100);
   }
 
   function timestampValue(value) {
@@ -1210,6 +1219,37 @@
     return true;
   }
 
+  function migrateProductMargins(options = {}) {
+    const migrationVersion = 1;
+    const meta = read("meta", {});
+    if (Number(meta.productMarginMigrationVersion || 0) >= migrationVersion) {
+      return false;
+    }
+    const products = parseJson(
+      localStorage.getItem(storageKey("products")),
+      [],
+    );
+    if (!Array.isArray(products)) return false;
+    const migrated = products.map((product) => ({
+      ...product,
+      defaultMargin: normalizeProductMargin(product?.defaultMargin),
+    }));
+    localStorage.setItem(storageKey("products"), JSON.stringify(migrated));
+    const clientUpdatedAt = Date.now();
+    localStorage.setItem(storageKey("meta"), JSON.stringify({
+      ...meta,
+      schemaVersion,
+      productMarginMigrationVersion: migrationVersion,
+      clientUpdatedAt,
+    }));
+    if (!options.silent) {
+      document.dispatchEvent(new CustomEvent("boq:data-changed", {
+        detail: { clientUpdatedAt },
+      }));
+    }
+    return true;
+  }
+
   function migrateBoqNumbers(options = {}) {
     const migrationVersion = 1;
     const meta = read("meta", {});
@@ -1578,6 +1618,7 @@
     migrateExistingBoqs,
     migrateIssuedStatuses,
     migrateLegacyPartNumbers,
+    migrateProductMargins,
     migrateBoqNumbers,
     migrateBoqRevisions,
     backfillBoqPartNumbers,

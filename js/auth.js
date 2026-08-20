@@ -263,6 +263,9 @@
       const migratedPartNumbers = store.migrateLegacyPartNumbers({
         silent: true,
       });
+      const migratedProductMargins = store.migrateProductMargins({
+        silent: true,
+      });
       const migratedBoqNumbers = store.migrateBoqNumbers({ silent: true });
       const backfilledPartNumbers = store.backfillBoqPartNumbers({
         silent: true,
@@ -270,7 +273,7 @@
       const migratedBoqRevisions = store.migrateBoqRevisions({ silent: true });
       if (
         migratedBoqs || migratedIssuedStatuses || migratedPartNumbers ||
-        migratedBoqNumbers ||
+        migratedProductMargins || migratedBoqNumbers ||
         backfilledPartNumbers || migratedBoqRevisions
       ) {
         changed = true;

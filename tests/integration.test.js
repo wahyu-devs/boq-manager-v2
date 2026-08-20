@@ -658,6 +658,7 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       id: "imported-product",
       sku: "SKU-001",
       name: "Imported Product",
+      defaultMargin: 30.004093327875562,
       description: "Legacy description",
       source: "imported",
     }, {
@@ -682,7 +683,29 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     true,
     "legacy part number migration applied",
   );
+  equal(
+    store.migrateProductMargins({ silent: true }),
+    true,
+    "product margin precision migration applied",
+  );
   const migratedProducts = store.list("products");
+  equal(migratedProducts[0].defaultMargin, 30, "product margin rounded");
+  equal(
+    JSON.parse(localStorage.getItem("boq-manager-v2:migration-user:products"))[0]
+      .defaultMargin,
+    30,
+    "rounded product margin persisted",
+  );
+  equal(
+    store.getMeta().productMarginMigrationVersion,
+    1,
+    "product margin migration version stored",
+  );
+  equal(
+    store.migrateProductMargins({ silent: true }),
+    false,
+    "product margin migration is idempotent",
+  );
   equal(migratedProducts[0].sku, "", "imported part number cleared");
   equal(
     migratedProducts[0].description,
