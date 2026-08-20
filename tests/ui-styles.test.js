@@ -224,6 +224,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
+    "--editor-sticky-boundary-width",
+    "category regions must follow the measured sticky boundary",
+  );
+  assertIncludes(
+    componentsCss,
     ".editor-table.sticky-columns-active .editor-sticky-unit::after",
     "the final sticky column border must depend on the active sticky state",
   );
@@ -241,6 +246,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     boqSource,
     '!header.classList.contains("editor-sticky-column")',
     "sticky activation must derive from preceding non-sticky columns",
+  );
+  assertIncludes(
+    boqSource,
+    'table.style.setProperty(\n        "--editor-sticky-boundary-width"',
+    "category boundaries must align to the rendered unit column edge",
   );
   assertIncludes(
     boqSource,

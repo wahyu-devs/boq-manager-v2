@@ -788,9 +788,12 @@
   z-index: 3;
   left: 0;
   display: flex;
-  width: calc(
-    var(--editor-sticky-index-width) + var(--editor-sticky-item-width) +
-      var(--editor-sticky-qty-width) + var(--editor-sticky-unit-width)
+  width: var(
+    --editor-sticky-boundary-width,
+    calc(
+      var(--editor-sticky-index-width) + var(--editor-sticky-item-width) +
+        var(--editor-sticky-qty-width) + var(--editor-sticky-unit-width)
+    )
   );
   height: 32px;
   align-items: center;

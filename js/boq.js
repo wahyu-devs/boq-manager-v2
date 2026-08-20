@@ -635,6 +635,7 @@
     if (!table || !unitHeader || desktopTableWrap.hidden ||
         desktopTableWrap.offsetParent === null) {
       table?.classList.remove("sticky-columns-active");
+      table?.style.removeProperty("--editor-sticky-boundary-width");
       return;
     }
     const precedingHeaders = [...unitHeader.parentElement.cells].slice(
@@ -653,6 +654,16 @@
     const isActive = desktopTableWrap.scrollLeft > 0 &&
       desktopTableWrap.scrollLeft >= activationPoint - 1;
     table.classList.toggle("sticky-columns-active", isActive);
+    if (isActive) {
+      const boundaryWidth = unitHeader.getBoundingClientRect().right -
+        desktopTableWrap.getBoundingClientRect().left;
+      table.style.setProperty(
+        "--editor-sticky-boundary-width",
+        `${boundaryWidth}px`,
+      );
+    } else {
+      table.style.removeProperty("--editor-sticky-boundary-width");
+    }
   }
 
   function syncItem(item) {
