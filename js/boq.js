@@ -405,15 +405,15 @@
         );
         return `<article class="revision-entry${
           revision.state === "Voided" ? " is-voided" : ""
-        }"><div class="revision-entry-main"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
+        }"><div class="revision-entry-main"><div class="revision-entry-heading"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
           revision.state === "Voided" ? "inactive" : "issued"
-        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span><span class="revision-entry-total"><span>Grand Total</span><strong>${grandTotal}</strong></span><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-secondary button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-secondary button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-secondary button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
+        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">Issued ${escapeHtml(revisionDate(revision.issuedAt))}</span></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><span>Grand Total</span><strong>${grandTotal}</strong></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
           canVoid
             ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
             : ""
         }${
           canCreateDraft
-            ? `<button class="button button-ghost button-sm" type="button" data-create-revision-from="${revision.number}">Use as Draft</button>`
+            ? `<button class="button button-secondary button-sm" type="button" data-create-revision-from="${revision.number}">Use as Draft</button>`
             : ""
         }</div></article>`;
       }).join("")

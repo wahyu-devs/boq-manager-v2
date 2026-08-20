@@ -90,7 +90,7 @@ Deno.test("keeps Revision History open behind revision previews", () => {
 Deno.test("shows a Grand Total for every revision history entry", () => {
   assertIncludes(
     boqSource,
-    '<span class="revision-entry-total"><span>Grand Total</span>',
+    '<div class="revision-entry-total"><span>Grand Total</span>',
     "revision history must render its snapshot total",
   );
   assertIncludes(
