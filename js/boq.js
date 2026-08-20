@@ -134,9 +134,10 @@
     if (control) control.value = value ?? "";
   }
 
-  function initializeDocument() {
+  function initializeDocument(recordOverride) {
     populateRecordOptions();
-    const record = currentRecordId ? store.get("boqs", currentRecordId) : null;
+    const record = recordOverride ||
+      (currentRecordId ? store.get("boqs", currentRecordId) : null);
     currentRecord = record;
     if (record) {
       if (record.id !== currentRecordId) {
@@ -233,6 +234,14 @@
     );
   }
 
+  function hasUnpersistedRevisionDraft() {
+    if (!currentRecordId || currentRecord?.workingRevision === null ||
+        currentRecord?.workingRevision === undefined) return false;
+    const storedRecord = store.get("boqs", currentRecordId);
+    return storedRecord?.workingRevision === null ||
+      storedRecord?.workingRevision === undefined;
+  }
+
   function applyEditorMode() {
     const locked = isIssuedLocked();
     editor.classList.toggle("editor-readonly", locked);
@@ -254,6 +263,9 @@
       .forEach((control) => control.disabled = locked);
     document.querySelectorAll("[data-save]").forEach((button) =>
       button.hidden = locked
+    );
+    document.querySelectorAll('[data-save-status="Issued"]').forEach((button) =>
+      button.hidden = locked || hasUnpersistedRevisionDraft()
     );
     document.querySelectorAll("[data-create-revision]").forEach((button) =>
       button.hidden = !locked
@@ -1106,6 +1118,9 @@
       ...documentPayload(),
       id: currentRecordId || undefined,
       createdAt: existing?.createdAt,
+      workingRevision: currentRecord?.workingRevision ?? null,
+      draftBaseRevisionNumber:
+        currentRecord?.draftBaseRevisionNumber ?? null,
     };
     const issuing = payload.status === "Issued";
     const selectedCustomer = payload.customerId
@@ -1299,7 +1314,7 @@
     }
     if (event.target.closest("[data-create-revision]")) {
       event.preventDefault();
-      const record = store.createRevisionDraft(currentRecordId);
+      const record = store.prepareRevisionDraft(currentRecordId);
       if (!record) {
         window.BOQApp.showToast(
           "Unable to create a revision for this BOQ. Reload and try again.",
@@ -1308,29 +1323,29 @@
         return;
       }
       currentRecord = record;
-      dirty = false;
-      initializeDocument();
+      initializeDocument(record);
       renderItems();
+      markDirty();
       window.BOQApp.showToast(
-        `${store.revisionLabel(record.workingRevision)} draft created.`,
+        `${store.revisionLabel(record.workingRevision)} draft opened. Save BOQ to keep it.`,
       );
     }
     const revisionSource = event.target.closest("[data-create-revision-from]");
     if (revisionSource) {
-      const record = store.createRevisionDraft(
+      const record = store.prepareRevisionDraft(
         currentRecordId,
         revisionSource.dataset.createRevisionFrom,
       );
       if (!record) return;
       currentRecord = record;
-      dirty = false;
       window.BOQModal.close(document.getElementById("revision-history-modal"));
-      initializeDocument();
+      initializeDocument(record);
       renderItems();
+      markDirty();
       window.BOQApp.showToast(
-        `${store.revisionLabel(record.workingRevision)} draft created from ${
+        `${store.revisionLabel(record.workingRevision)} draft opened from ${
           store.revisionLabel(record.draftBaseRevisionNumber)
-        }.`,
+        }. Save BOQ to keep it.`,
       );
     }
     if (event.target.closest("[data-open-revision-history]")) {
@@ -1425,6 +1440,14 @@
   });
 
   document.addEventListener("boq:discard-revision", () => {
+    if (hasUnpersistedRevisionDraft()) {
+      currentRecord = store.get("boqs", currentRecordId);
+      dirty = false;
+      initializeDocument(currentRecord);
+      renderItems();
+      window.BOQApp.showToast("Unsaved draft revision discarded.");
+      return;
+    }
     const result = store.discardBoqDraft(currentRecordId);
     if (!result) return;
     if (result.removed) {

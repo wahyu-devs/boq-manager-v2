@@ -843,8 +843,19 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     lockedSaveFailed = true;
   }
   equal(lockedSaveFailed, true, "issued revision cannot be edited directly");
-  const revisionDraft = store.createRevisionDraft("alpha-base");
+  const prepareTimestamp = store.getMeta().clientUpdatedAt;
+  const revisionDraft = store.prepareRevisionDraft("alpha-base");
   equal(revisionDraft.workingRevision, 3, "next revision draft created");
+  equal(
+    store.get("boqs", "alpha-base").workingRevision,
+    null,
+    "prepared revision is not stored before Save BOQ",
+  );
+  equal(
+    store.getMeta().clientUpdatedAt,
+    prepareTimestamp,
+    "preparing a revision does not trigger synchronization",
+  );
   const draftRegisterView = store.registerBoqView(revisionDraft);
   equal(draftRegisterView.status, "Draft", "register shows revision draft status");
   equal(
@@ -863,6 +874,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     })),
   });
   equal(savedRevisionDraft.status, "Issued", "parent remains issued during draft");
+  equal(
+    store.get("boqs", "alpha-base").workingRevision,
+    3,
+    "Save BOQ persists the prepared revision",
+  );
   equal(savedRevisionDraft.hasDraftChanges, true, "draft changes tracked");
   equal(savedRevisionDraft.revisions.length, 3, "draft save creates no snapshot");
   equal(

@@ -291,8 +291,24 @@
   function saveBoqDraft(record) {
     const existing = record?.id ? get("boqs", record.id) : null;
     const activeRevision = latestIssuedRevision(existing);
-    if (activeRevision && existing?.workingRevision === null) {
-      throw new Error("Create a revision before editing an issued BOQ.");
+    let workingRevision = existing?.workingRevision ?? null;
+    let draftBaseRevisionNumber = existing?.draftBaseRevisionNumber ?? null;
+    if (activeRevision && workingRevision === null) {
+      const requestedWorkingRevision = record?.workingRevision === null ||
+          record?.workingRevision === undefined || record?.workingRevision === ""
+        ? null
+        : Math.max(0, Number(record.workingRevision) || 0);
+      const sourceRevision = getRevision(
+        existing,
+        record?.draftBaseRevisionNumber,
+      );
+      const isPreparedRevision = requestedWorkingRevision ===
+          nextRevisionNumber(existing) && isIssuedRevision(sourceRevision);
+      if (!isPreparedRevision) {
+        throw new Error("Create a revision before editing an issued BOQ.");
+      }
+      workingRevision = requestedWorkingRevision;
+      draftBaseRevisionNumber = sourceRevision.number;
     }
     return save("boqs", {
       ...existing,
@@ -300,7 +316,8 @@
       status: activeRevision ? "Issued" : "Draft",
       revisions: existing?.revisions || [],
       activeRevisionNumber: activeRevision?.number ?? null,
-      workingRevision: existing?.workingRevision ?? null,
+      workingRevision,
+      draftBaseRevisionNumber,
       hasDraftChanges: Boolean(activeRevision),
       createdAt: existing?.createdAt || record?.createdAt,
     });
@@ -422,7 +439,7 @@
     });
   }
 
-  function createRevisionDraft(id, sourceNumber) {
+  function prepareRevisionDraft(id, sourceNumber) {
     let record = get("boqs", id);
     let activeRevision = latestIssuedRevision(record);
     if (record?.status === "Issued" && !record.revisions.length) {
@@ -439,7 +456,7 @@
       return null;
     }
     if (!sourceRevision || !isIssuedRevision(sourceRevision)) return null;
-    return save("boqs", {
+    return normalizeBoq({
       ...record,
       ...cloneValue(sourceRevision.document),
       id: record.id,
@@ -451,6 +468,11 @@
       hasDraftChanges: true,
       createdAt: record.createdAt,
     });
+  }
+
+  function createRevisionDraft(id, sourceNumber) {
+    const draft = prepareRevisionDraft(id, sourceNumber);
+    return draft ? save("boqs", draft) : null;
   }
 
   function discardBoqDraft(id) {
@@ -1518,6 +1540,7 @@
     saveBoqDraft,
     validateBoqForIssue,
     issueBoq,
+    prepareRevisionDraft,
     createRevisionDraft,
     discardBoqDraft,
     voidLatestRevision,
