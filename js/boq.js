@@ -637,10 +637,21 @@
       table?.classList.remove("sticky-columns-active");
       return;
     }
-    const stickyLeft = Number.parseFloat(getComputedStyle(unitHeader).left) || 0;
-    const pinnedLeft = desktopTableWrap.getBoundingClientRect().left + stickyLeft;
+    const precedingHeaders = [...unitHeader.parentElement.cells].slice(
+      0,
+      unitHeader.cellIndex,
+    );
+    const activationPoint = precedingHeaders
+      .filter((header) =>
+        !header.classList.contains("editor-sticky-column") &&
+        getComputedStyle(header).display !== "none"
+      )
+      .reduce(
+        (width, header) => width + header.getBoundingClientRect().width,
+        0,
+      );
     const isActive = desktopTableWrap.scrollLeft > 0 &&
-      unitHeader.getBoundingClientRect().left <= pinnedLeft + 1;
+      desktopTableWrap.scrollLeft >= activationPoint - 1;
     table.classList.toggle("sticky-columns-active", isActive);
   }
 

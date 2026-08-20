@@ -214,13 +214,23 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    ".editor-table.sticky-columns-active .editor-sticky-unit",
+    ".editor-table.sticky-columns-active .editor-sticky-unit::after",
     "the final sticky column border must depend on the active sticky state",
+  );
+  assertIncludes(
+    componentsCss,
+    "background: var(--color-border-strong);",
+    "the active sticky boundary must remain visible above scrolling cells",
   );
   assertIncludes(
     boqSource,
     'table.classList.toggle("sticky-columns-active", isActive);',
     "horizontal scrolling must update the active sticky state",
+  );
+  assertIncludes(
+    boqSource,
+    '!header.classList.contains("editor-sticky-column")',
+    "sticky activation must derive from preceding non-sticky columns",
   );
   assertIncludes(
     boqSource,

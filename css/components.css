@@ -695,12 +695,19 @@
     var(--editor-sticky-index-width) + var(--editor-sticky-item-width) +
       var(--editor-sticky-qty-width)
   );
-  border-right: 1px solid transparent;
   background: var(--color-surface);
 }
 
-.editor-table.sticky-columns-active .editor-sticky-unit {
-  border-right-color: var(--color-border);
+.editor-table.sticky-columns-active .editor-sticky-unit::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border-strong);
+  content: "";
+  pointer-events: none;
 }
 
 .editor-table thead .editor-sticky-column {
