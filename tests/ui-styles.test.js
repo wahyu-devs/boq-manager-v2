@@ -135,21 +135,16 @@ Deno.test("keeps revision card metadata concise", () => {
   }
 });
 
-Deno.test("uses soft canvas contrast in the dark theme", () => {
+Deno.test("separates the dark sidebar from the workspace", () => {
   assertIncludes(
     variablesCss,
-    "--color-bg: #181f26;",
-    "dark workspace must use the softened canvas color",
+    "--color-bg: #161c22;",
+    "dark workspace must use the separated canvas color",
   );
   assertIncludes(
     variablesCss,
-    "--color-surface: #202830;",
-    "dark surfaces must remain distinct from the canvas",
-  );
-  assertIncludes(
-    variablesCss,
-    "--color-sidebar: #12181e;",
-    "dark sidebar must remain distinct without appearing black",
+    "--color-sidebar: #0c1116;",
+    "dark sidebar must use the deeper navigation color",
   );
   assertIncludes(
     layoutCss,
