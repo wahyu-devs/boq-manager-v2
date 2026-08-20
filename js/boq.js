@@ -63,11 +63,7 @@
       unit: product.unit || "Each",
       unitCogs: Number(product.defaultCogs || 0),
       margin: Number(product.defaultMargin || 0),
-      sellingOverride: product.defaultSellingPrice === null ||
-          product.defaultSellingPrice === undefined ||
-          product.defaultSellingPrice === ""
-        ? null
-        : Number(product.defaultSellingPrice),
+      sellingOverride: null,
       category: product.category || "Uncategorized",
     };
   }
