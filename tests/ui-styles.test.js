@@ -419,6 +419,14 @@ Deno.test("only allows BOQ item changes while Edit is on", () => {
     "disabled item inputs must not mutate BOQ data",
   );
   assertIncludes(
+    boqSource,
+    "[data-item-action], .row-actions [data-menu-trigger],",
+    "Edit off must disable only BOQ row action menus",
+  );
+  if (boqSource.includes("[data-item-action], [data-menu-trigger],")) {
+    throw new Error("Edit off must keep the BOQ header menu enabled");
+  }
+  assertIncludes(
     componentsCss,
     ".items-readonly .editor-table input,",
     "read-only BOQ item controls must retain deliberate styling",

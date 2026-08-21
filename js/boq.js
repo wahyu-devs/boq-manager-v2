@@ -273,7 +273,7 @@
     const itemsEditable = canEditItems();
     editor.classList.toggle("items-readonly", !itemsEditable);
     editor.querySelectorAll(
-      "[data-item-input], [data-item-action], [data-menu-trigger], " +
+      "[data-item-input], [data-item-action], .row-actions [data-menu-trigger], " +
         "[data-drag-handle], [data-category-drag-handle], " +
         "[data-confirm-event=\"boq:delete-item\"], [data-add-custom], " +
         "[data-open-modal=\"catalog-modal\"], [data-toggle-reorder]",
