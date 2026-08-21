@@ -599,6 +599,34 @@
     ) || null;
   }
 
+  function revisionHistory(recordOrId) {
+    const record = typeof recordOrId === "string"
+      ? get("boqs", recordOrId)
+      : normalizeBoq(recordOrId || {});
+    if (!record) return [];
+    const entries = record.revisions.map((revision) => cloneValue(revision));
+    if (record.workingRevision === null) return entries;
+    const currentSettings = getSettings();
+    entries.push({
+      id: `${record.id}:draft:${record.workingRevision}`,
+      number: record.workingRevision,
+      label: revisionLabel(record.workingRevision),
+      state: "Draft",
+      savedAt: record.updatedAt || "",
+      note: "",
+      draftBaseRevisionNumber: record.draftBaseRevisionNumber,
+      document: revisionDocument({ ...record, status: "Draft" }),
+      companySettings: {},
+      calculation: {
+        version: 1,
+        marginMethod: "gross-margin",
+        rounding: currentSettings.rounding || "2",
+        numberFormat: currentSettings.numberFormat || "comma",
+      },
+    });
+    return entries;
+  }
+
   function escapePattern(value) {
     return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -1620,6 +1648,7 @@
     discardBoqDraft,
     voidLatestRevision,
     getRevision,
+    revisionHistory,
     latestIssuedRevision,
     issuedBoqView,
     registerBoqView,

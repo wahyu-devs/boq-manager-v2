@@ -932,6 +932,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     prepareTimestamp,
     "preparing a revision does not trigger synchronization",
   );
+  equal(
+    store.revisionHistory("alpha-base").length,
+    3,
+    "an unsaved revision draft is excluded from revision history",
+  );
   const draftRegisterView = store.registerBoqView(revisionDraft);
   equal(draftRegisterView.status, "Draft", "register shows revision draft status");
   equal(
@@ -957,6 +962,22 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   );
   equal(savedRevisionDraft.hasDraftChanges, true, "draft changes tracked");
   equal(savedRevisionDraft.revisions.length, 3, "draft save creates no snapshot");
+  const savedDraftHistory = store.revisionHistory("alpha-base");
+  equal(
+    savedDraftHistory.length,
+    4,
+    "a saved revision draft is included in revision history",
+  );
+  equal(
+    savedDraftHistory.at(-1).state,
+    "Draft",
+    "saved revision history entry is marked as draft",
+  );
+  equal(
+    savedDraftHistory.at(-1).document.projectName,
+    "Project Alpha Updated",
+    "saved revision history entry uses the saved draft document",
+  );
   equal(
     store.issuedBoqView(savedRevisionDraft).projectName,
     "Project Alpha",

@@ -183,6 +183,24 @@ Deno.test("keeps revision card metadata concise", () => {
   }
 });
 
+Deno.test("shows saved revision drafts in Revision History", () => {
+  assertIncludes(
+    boqSource,
+    "const entries = store.revisionHistory(currentRecordId || currentRecord);",
+    "Revision History must include the saved working draft entry",
+  );
+  assertIncludes(
+    boqSource,
+    "revisionDate(isDraft ? revision.savedAt : revision.issuedAt)",
+    "saved drafts must show their saved timestamp",
+  );
+  assertIncludes(
+    editorHtml,
+    "Saved drafts remain editable; issued revisions are retained as locked snapshots.",
+    "Revision History must explain the difference between drafts and snapshots",
+  );
+});
+
 Deno.test("keeps the original dark canvas with a darker sidebar", () => {
   assertIncludes(
     variablesCss,

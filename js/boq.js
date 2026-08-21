@@ -323,16 +323,18 @@
   }
 
   function revisionExportData(number) {
-    const revision = store.getRevision(currentRecord, number);
+    const revision = store.revisionHistory(currentRecordId || currentRecord)
+      .find((entry) => entry.number === Number(number));
     if (!revision) return null;
+    const isDraft = revision.state === "Draft";
     let documentValue = {
       ...revision.document,
-      status: "Issued",
+      status: isDraft ? "Draft" : "Issued",
       revisionNumber: revision.number,
       revisionLabel: visibleRevisionLabel(revision.label),
       revisionState: revision.state,
       revisionNote: revision.note,
-      issuedAt: revision.issuedAt,
+      issuedAt: revision.issuedAt || "",
     };
     const revisionItems = (documentValue.items || []).map(normalizeItem);
     documentValue = {
@@ -384,15 +386,24 @@
     const host = document.querySelector("[data-revision-list]");
     if (!host) return;
     const revisions = currentRecord?.revisions || [];
+    const entries = store.revisionHistory(currentRecordId || currentRecord);
     const latest = revisions.at(-1);
-    host.innerHTML = revisions.length
-      ? [...revisions].reverse().map((revision) => {
+    host.innerHTML = entries.length
+      ? [...entries].reverse().map((revision) => {
+        const isDraft = revision.state === "Draft";
         const canVoid = latest?.id === revision.id &&
           revision.state === "Issued" &&
           currentRecord?.workingRevision === null;
         const canCreateDraft = isIssuedLocked() &&
           revision.state === "Issued";
-        const reason = revision.state === "Voided"
+        const reason = isDraft
+          ? revision.draftBaseRevisionNumber === null ||
+              revision.draftBaseRevisionNumber === undefined
+            ? "Saved draft changes"
+            : `Saved draft based on ${
+              store.revisionLabel(revision.draftBaseRevisionNumber)
+            }`
+          : revision.state === "Voided"
           ? `Voided ${revisionDate(revision.voidedAt)} · ${revision.voidReason}`
           : revision.note || "No revision note";
         const revisionData = revisionExportData(revision.number);
@@ -407,10 +418,18 @@
           revisionData?.settings.numberFormat || settings.numberFormat,
         );
         return `<article class="revision-entry${
-          revision.state === "Voided" ? " is-voided" : ""
+          revision.state === "Voided"
+            ? " is-voided"
+            : isDraft
+            ? " is-draft"
+            : ""
         }"><div class="revision-entry-main"><div class="revision-entry-heading"><strong>${escapeHtml(revision.label)}</strong><span class="status status-${
-          revision.state === "Voided" ? "inactive" : "issued"
-        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">${escapeHtml(revisionDate(revision.issuedAt))}</span></div><div class="revision-entry-project"><strong>${escapeHtml(revisionProject)}</strong></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><strong>${grandTotal}</strong></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
+          revision.state === "Voided"
+            ? "inactive"
+            : isDraft
+            ? "draft"
+            : "issued"
+        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">${escapeHtml(revisionDate(isDraft ? revision.savedAt : revision.issuedAt))}</span></div><div class="revision-entry-project"><strong>${escapeHtml(revisionProject)}</strong></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><strong>${grandTotal}</strong></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
           canVoid
             ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
             : ""
@@ -420,19 +439,19 @@
             : ""
         }</div></article>`;
       }).join("")
-      : '<div class="empty-state"><div class="empty-state-content"><h3>No Issued Revisions</h3><p>Revision history begins when this BOQ is issued.</p></div></div>';
+      : '<div class="empty-state"><div class="empty-state-content"><h3>No Revision History</h3><p>Saved revision drafts and issued snapshots will appear here.</p></div></div>';
     const compare = document.querySelector("[data-revision-compare]");
     const from = document.querySelector("[data-compare-from]");
     const to = document.querySelector("[data-compare-to]");
-    if (compare) compare.hidden = revisions.length < 2;
-    if (revisions.length >= 2 && from && to) {
-      const options = revisions.map((revision) =>
+    if (compare) compare.hidden = entries.length < 2;
+    if (entries.length >= 2 && from && to) {
+      const options = entries.map((revision) =>
         `<option value="${revision.number}">${escapeHtml(revision.label)} · ${escapeHtml(revision.state)}</option>`
       ).join("");
       from.innerHTML = options;
       to.innerHTML = options;
-      from.value = String(revisions.at(-2).number);
-      to.value = String(revisions.at(-1).number);
+      from.value = String(entries.at(-2).number);
+      to.value = String(entries.at(-1).number);
       renderRevisionComparison(from.value, to.value);
     }
   }
@@ -460,11 +479,11 @@
 
   function renderRevisionComparison(fromNumber, toNumber) {
     const host = document.querySelector("[data-revision-compare-result]");
-    const fromRevision = store.getRevision(currentRecord, fromNumber);
-    const toRevision = store.getRevision(currentRecord, toNumber);
+    const fromRevision = revisionExportData(fromNumber);
+    const toRevision = revisionExportData(toNumber);
     if (!host || !fromRevision || !toRevision) return;
-    const fromItems = fromRevision.document.items || [];
-    const toItems = toRevision.document.items || [];
+    const fromItems = fromRevision.items || [];
+    const toItems = toRevision.items || [];
     const matchedIndexes = new Set();
     let removed = 0;
     let changed = 0;
@@ -485,14 +504,14 @@
     const added = toItems.length - matchedIndexes.size;
     const fromSummary = calculateSummary(fromItems, {
       commission: fromRevision.document.commission,
-      rounding: fromRevision.calculation?.rounding,
+      rounding: fromRevision.settings.rounding,
     });
     const toSummary = calculateSummary(toItems, {
       commission: toRevision.document.commission,
-      rounding: toRevision.calculation?.rounding,
+      rounding: toRevision.settings.rounding,
     });
     const currency = toRevision.document.currency || currentCurrency();
-    const numberFormat = toRevision.calculation?.numberFormat ||
+    const numberFormat = toRevision.settings.numberFormat ||
       settings.numberFormat;
     const marginChange = toSummary.marginPercent - fromSummary.marginPercent;
     host.hidden = false;
