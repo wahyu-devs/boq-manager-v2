@@ -645,6 +645,7 @@
   --editor-sticky-qty-width: 68px;
   --editor-sticky-unit-width: 82px;
   min-width: 1360px;
+  font-size: 11px;
 }
 
 .editor-table thead {
@@ -730,6 +731,7 @@
   height: 26px;
   padding-right: 6px;
   padding-left: 6px;
+  font-size: 11px;
 }
 
 .editor-table .icon-button {

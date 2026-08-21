@@ -328,6 +328,21 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   }
   assertIncludes(
     componentsCss,
+    ".editor-table {\n  --editor-sticky-index-width: 36px;",
+    "BOQ items must use the editor table typography scope",
+  );
+  assertIncludes(
+    componentsCss,
+    "min-width: 1360px;\n  font-size: 11px;",
+    "category, calculated, and subtotal content must use 11px text",
+  );
+  assertIncludes(
+    componentsCss,
+    "padding-left: 6px;\n  font-size: 11px;",
+    "editable BOQ cells must use 11px text",
+  );
+  assertIncludes(
+    componentsCss,
     "--editor-sticky-boundary-width",
     "category regions must follow the measured sticky boundary",
   );
