@@ -31,7 +31,7 @@
       "boolean"
     ? editorPreferences.showCategorySubtotals
     : settings.showCategorySubtotals !== false;
-  let editItems = editorPreferences.editItems !== false;
+  let editItems = true;
   let currentView = "all";
   let reorderMode = false;
   let activeDrag = null;
@@ -1067,8 +1067,11 @@
   function saveEditorPreferences() {
     store.saveLocalPreference("boq-editor", {
       showCategorySubtotals,
-      editItems,
     });
+  }
+
+  function startDraftEditing() {
+    editItems = true;
   }
 
   function buildPdfPreview(exportData = currentExportData()) {
@@ -1425,6 +1428,7 @@
         return;
       }
       currentRecord = record;
+      startDraftEditing();
       initializeDocument(record);
       renderItems();
       markDirty();
@@ -1440,6 +1444,7 @@
       );
       if (!record) return;
       currentRecord = record;
+      startDraftEditing();
       window.BOQModal.close(document.getElementById("revision-history-modal"));
       initializeDocument(record);
       renderItems();

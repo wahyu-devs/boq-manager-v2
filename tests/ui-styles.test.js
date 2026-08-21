@@ -405,8 +405,25 @@ Deno.test("only allows BOQ item changes while Edit is on", () => {
   }
   assertIncludes(
     boqSource,
-    "let editItems = editorPreferences.editItems !== false;",
-    "the per-user Edit preference must default to on",
+    "let editItems = true;",
+    "draft BOQs must default to Edit on",
+  );
+  if (boqSource.includes("editorPreferences.editItems")) {
+    throw new Error(
+      "a previous Edit off preference must not affect a new draft",
+    );
+  }
+  const startDraftEditingCount =
+    boqSource.split("startDraftEditing();").length - 1;
+  if (startDraftEditingCount !== 2) {
+    throw new Error(
+      `expected both revision draft flows to enable editing, received ${startDraftEditingCount}`,
+    );
+  }
+  assertIncludes(
+    boqSource,
+    "function startDraftEditing() {\n    editItems = true;\n  }",
+    "revision drafts must explicitly start with Edit on",
   );
   assertIncludes(
     boqSource,
