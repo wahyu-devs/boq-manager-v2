@@ -823,6 +823,19 @@
   font-weight: 650;
 }
 
+.category-subtotal-row .editor-sticky-column,
+.editor-table tbody .category-subtotal-row:hover .editor-sticky-column {
+  background: color-mix(
+    in srgb,
+    var(--color-surface-secondary) 55%,
+    var(--color-surface)
+  );
+}
+
+.category-subtotal-label {
+  white-space: nowrap;
+}
+
 [data-editor-view-mode="cogs"] .column-selling,
 [data-editor-view-mode="selling"] .column-cogs,
 [data-editor-view-mode="selling"] .column-margin,
