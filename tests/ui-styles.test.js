@@ -270,8 +270,8 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     boqSource,
-    'editor-sticky-item category-subtotal-label',
-    "subtotal labels must remain visible during horizontal scrolling",
+    'class="category-subtotal-sticky"',
+    "subtotal labels must remain visible from the left edge while scrolling",
   );
   assertIncludes(
     boqSource,
@@ -282,6 +282,11 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     componentsCss,
     ".category-subtotal-row .editor-sticky-column,",
     "sticky subtotal cells must keep the subtotal background",
+  );
+  assertIncludes(
+    componentsCss,
+    ".editor-table.sticky-columns-active .category-subtotal-sticky::after",
+    "sticky subtotal boundaries must align with the final sticky column",
   );
   assertIncludes(
     componentsCss,
