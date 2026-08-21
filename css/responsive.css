@@ -17,6 +17,15 @@
     --header-height: 54px;
   }
 
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  .responsive-table {
+    overflow: hidden;
+  }
+
   .sidebar {
     width: min(284px, calc(100vw - 52px));
     overscroll-behavior: contain;
@@ -320,6 +329,10 @@
     grid-column: 1 / -1;
   }
 
+  .editor-view-controls [data-toggle-reorder] {
+    grid-column: 1 / -1;
+  }
+
   .summary-card {
     display: block;
   }
@@ -409,7 +422,11 @@
   }
 
   .modal-header {
+    position: sticky;
+    z-index: 2;
+    top: 0;
     align-items: flex-start;
+    background: var(--color-surface-raised);
   }
 
   .modal-header .icon-button {
@@ -417,8 +434,12 @@
   }
 
   .modal-footer {
+    position: sticky;
+    z-index: 2;
+    bottom: 0;
     flex-wrap: wrap;
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    background: var(--color-surface-raised);
   }
 
   .modal-footer > .cluster {
@@ -581,10 +602,6 @@
     grid-column: 1;
   }
 
-  .mobile-item-body {
-    grid-template-columns: 1fr;
-  }
-
   .record-card-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -632,7 +649,8 @@
   }
 
   .summary-list,
-  .record-card-grid {
+  .record-card-grid,
+  .mobile-item-body {
     grid-template-columns: 1fr;
   }
 

@@ -31,6 +31,9 @@ const boqSource = await Deno.readTextFile(
 const modalSource = await Deno.readTextFile(
   new URL("../js/modal.js", import.meta.url),
 );
+const navigationSource = await Deno.readTextFile(
+  new URL("../js/navigation.js", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -41,6 +44,42 @@ Deno.test("keeps desktop badges vertically centered", () => {
     utilitiesCss,
     ".badge.desktop-only {\n  display: inline-flex;\n}",
     "desktop visibility must preserve the badge flex alignment",
+  );
+});
+
+Deno.test("contains tablet layouts and balances mobile editor controls", () => {
+  assertIncludes(
+    responsiveCss,
+    "html,\n  body {\n    overflow-x: clip;\n  }",
+    "tablet viewports must not pan with internal table overflow",
+  );
+  assertIncludes(
+    responsiveCss,
+    ".responsive-table {\n    overflow: hidden;\n  }",
+    "tablet pages must contain internal table overflow",
+  );
+  assertIncludes(
+    responsiveCss,
+    ".editor-view-controls [data-toggle-reorder] {\n    grid-column: 1 / -1;\n  }",
+    "the mobile reorder control must span the toolbar width",
+  );
+  assertIncludes(
+    responsiveCss,
+    ".record-card-grid,\n  .mobile-item-body {\n    grid-template-columns: 1fr;\n  }",
+    "BOQ item fields must collapse only at the narrowest breakpoint",
+  );
+  assertIncludes(
+    responsiveCss,
+    ".modal-footer {\n    position: sticky;",
+    "mobile modal actions must remain available while forms scroll",
+  );
+});
+
+Deno.test("labels the compact New BOQ action", () => {
+  assertIncludes(
+    navigationSource,
+    'href="boq-editor.html" aria-label="Create new BOQ"',
+    "the icon-only mobile action must retain an accessible name",
   );
 });
 

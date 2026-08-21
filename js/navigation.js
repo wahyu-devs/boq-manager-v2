@@ -81,7 +81,7 @@
         </div>
         <div class="topbar-actions">
           <button class="icon-button" type="button" data-theme-toggle aria-label="Switch theme"></button>
-          <a class="button button-secondary" href="boq-editor.html">${
+          <a class="button button-secondary" href="boq-editor.html" aria-label="Create new BOQ">${
       icon("plus")
     }<span>New BOQ</span></a>
           <div class="menu-wrap user-menu-wrap">
