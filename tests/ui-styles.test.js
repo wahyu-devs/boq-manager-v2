@@ -270,7 +270,7 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     boqSource,
-    'class="category-subtotal-sticky"',
+    'class="category-subtotal-sticky">Subtotal</div>',
     "subtotal labels must remain visible from the left edge while scrolling",
   );
   assertIncludes(
