@@ -290,6 +290,16 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
+    ".editor-table tbody tr.category-subtotal-row td {",
+    "subtotal rows must retain a complete bottom border",
+  );
+  assertIncludes(
+    componentsCss,
+    "bottom: 1px;",
+    "the sticky subtotal surface must leave its bottom border visible",
+  );
+  assertIncludes(
+    componentsCss,
     "left: var(--editor-sticky-index-width);",
     "sticky item cells must sit beside the row-number column",
   );
