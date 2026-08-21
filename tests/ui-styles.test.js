@@ -280,8 +280,13 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    ".category-subtotal-row .editor-sticky-column,",
-    "sticky subtotal cells must keep the subtotal background",
+    ".editor-table tbody tr.category-subtotal-row:hover td,",
+    "every subtotal cell must share one hover background",
+  );
+  assertIncludes(
+    componentsCss,
+    ".editor-table tbody .category-subtotal-row:hover .category-subtotal-sticky",
+    "the sticky subtotal surface must share the row hover background",
   );
   assertIncludes(
     componentsCss,

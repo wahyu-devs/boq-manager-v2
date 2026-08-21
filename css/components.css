@@ -819,19 +819,29 @@
   height: 32px;
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface-secondary) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--color-surface-secondary) 55%,
+    var(--color-surface)
+  );
   color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 650;
 }
 
-.category-subtotal-row .editor-sticky-column,
-.editor-table tbody .category-subtotal-row:hover .editor-sticky-column,
-.category-subtotal-sticky,
-.editor-table tbody .category-subtotal-row:hover .category-subtotal-sticky {
+.category-subtotal-sticky {
   background: color-mix(
     in srgb,
     var(--color-surface-secondary) 55%,
+    var(--color-surface)
+  );
+}
+
+.editor-table tbody tr.category-subtotal-row:hover td,
+.editor-table tbody .category-subtotal-row:hover .category-subtotal-sticky {
+  background: color-mix(
+    in srgb,
+    var(--color-surface-secondary) 72%,
     var(--color-surface)
   );
 }
