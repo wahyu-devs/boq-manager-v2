@@ -323,6 +323,9 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     ".editor-category-sticky {",
     "category regions must have sticky positioning rules",
   );
+  if (/\.editor-category-row strong\s*\{[^}]*font-size:/s.test(componentsCss)) {
+    throw new Error("category labels must inherit the table content font size");
+  }
   assertIncludes(
     componentsCss,
     "--editor-sticky-boundary-width",
