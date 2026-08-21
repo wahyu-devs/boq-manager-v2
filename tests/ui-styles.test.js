@@ -257,4 +257,19 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     'desktopTableWrap?.addEventListener("scroll", updateStickyColumnsState',
     "the BOQ table must monitor horizontal scrolling",
   );
+  assertIncludes(
+    boqSource,
+    'event.target.closest(".editor-table [data-item-input]")',
+    "horizontal gestures must be handled across all BOQ item controls",
+  );
+  assertIncludes(
+    boqSource,
+    "desktopTableWrap.scrollLeft += horizontalDelta * deltaScale;",
+    "horizontal input gestures must scroll the BOQ table",
+  );
+  assertIncludes(
+    boqSource,
+    'editor.addEventListener("wheel", redirectItemInputHorizontalScroll',
+    "the BOQ editor must intercept horizontal input gestures",
+  );
 });

@@ -666,6 +666,24 @@
     }
   }
 
+  function redirectItemInputHorizontalScroll(event) {
+    const input = event.target.closest(".editor-table [data-item-input]");
+    if (!input || desktopTableWrap.hidden) return;
+    const horizontalDelta = event.deltaX ||
+      (event.shiftKey ? event.deltaY : 0);
+    if (!horizontalDelta ||
+        (!event.shiftKey && Math.abs(event.deltaX) <= Math.abs(event.deltaY))) {
+      return;
+    }
+    const deltaScale = event.deltaMode === 1
+      ? 16
+      : event.deltaMode === 2
+      ? desktopTableWrap.clientWidth
+      : 1;
+    event.preventDefault();
+    desktopTableWrap.scrollLeft += horizontalDelta * deltaScale;
+  }
+
   function syncItem(item) {
     const calc = calculateItem(item);
     document.querySelectorAll(`[data-item-row][data-item-id="${CSS.escape(item.id)}"]`)
@@ -1216,6 +1234,10 @@
         : calc.unitSelling
       : item.unitCogs;
     input.value = formatNumberInput(value);
+  });
+
+  editor.addEventListener("wheel", redirectItemInputHorizontalScroll, {
+    passive: false,
   });
 
   editor.addEventListener("input", (event) => {
