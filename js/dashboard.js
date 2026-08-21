@@ -102,11 +102,13 @@
         (boq.status || "Draft").toLowerCase()
       }">${
         escapeHtml(boq.status || "Draft")
-      }</span></td><td class="align-right currency">${
+      }</span></td><td class="align-right currency dashboard-financial-column">${
         formatCurrencyMarkup(boq.totalSelling || 0, boq.currency || currency)
-      }</td><td class="align-right number">${
+      }</td><td class="align-right number dashboard-financial-column">${
         formatPercent(boq.marginPercent || 0)
-      }</td><td>${formatDateTime(boq.updatedAt)}</td></tr>`
+      }</td><td class="dashboard-updated-column">${
+        formatDateTime(boq.updatedAt)
+      }</td></tr>`
     }).join("");
   } else {
     boqTable.hidden = true;

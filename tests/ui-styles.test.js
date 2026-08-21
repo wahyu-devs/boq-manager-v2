@@ -10,6 +10,15 @@ const variablesCss = await Deno.readTextFile(
 const layoutCss = await Deno.readTextFile(
   new URL("../css/layout.css", import.meta.url),
 );
+const responsiveCss = await Deno.readTextFile(
+  new URL("../css/responsive.css", import.meta.url),
+);
+const dashboardHtml = await Deno.readTextFile(
+  new URL("../index.html", import.meta.url),
+);
+const dashboardSource = await Deno.readTextFile(
+  new URL("../js/dashboard.js", import.meta.url),
+);
 const editorHtml = await Deno.readTextFile(
   new URL("../boq-editor.html", import.meta.url),
 );
@@ -271,5 +280,43 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
     boqSource,
     'editor.addEventListener("wheel", redirectItemInputHorizontalScroll',
     "the BOQ editor must intercept horizontal input gestures",
+  );
+});
+
+Deno.test("uses deliberate tablet and mobile layouts", () => {
+  assertIncludes(
+    responsiveCss,
+    '@media (max-width: 991px)',
+    "responsive styles must define the tablet breakpoint",
+  );
+  assertIncludes(
+    responsiveCss,
+    '.editor-page-header .page-actions',
+    "tablet BOQ actions must wrap below the editor heading",
+  );
+  assertIncludes(
+    responsiveCss,
+    'body[data-page="boq-editor"] .main-content',
+    "mobile save-bar spacing must be scoped to the BOQ editor",
+  );
+  assertIncludes(
+    responsiveCss,
+    '.dashboard-recent .dashboard-financial-column',
+    "mobile dashboard tables must hide secondary financial columns",
+  );
+  assertIncludes(
+    responsiveCss,
+    'max-height: calc(100dvh - env(safe-area-inset-top) - 12px);',
+    "mobile modals must respect the dynamic viewport",
+  );
+  assertIncludes(
+    dashboardHtml,
+    'class="align-right dashboard-financial-column"',
+    "dashboard headers must identify columns that collapse on mobile",
+  );
+  assertIncludes(
+    dashboardSource,
+    'dashboard-updated-column',
+    "dashboard rows must match the responsive column classes",
   );
 });
