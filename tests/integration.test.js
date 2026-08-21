@@ -207,11 +207,11 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const preferenceMetaTimestamp = store.getMeta().clientUpdatedAt;
   store.saveLocalPreference("boq-editor", {
     showCategorySubtotals: false,
-    showTablePrices: true,
+    editItems: false,
   });
   equal(
     JSON.stringify(store.getLocalPreference("boq-editor")),
-    JSON.stringify({ showCategorySubtotals: false, showTablePrices: true }),
+    JSON.stringify({ showCategorySubtotals: false, editItems: false }),
     "BOQ editor preferences saved locally",
   );
   equal(

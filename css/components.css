@@ -873,8 +873,7 @@
 
 [data-editor-view-mode="cogs"] .column-selling,
 [data-editor-view-mode="selling"] .column-cogs,
-[data-editor-view-mode="selling"] .column-margin,
-.prices-hidden .column-price {
+[data-editor-view-mode="selling"] .column-margin {
   display: none;
 }
 
@@ -1432,9 +1431,15 @@
 .editor-readonly .editor-table input,
 .editor-readonly .editor-table select,
 .editor-readonly .mobile-item-list input,
-.editor-readonly .mobile-item-list select {
+.editor-readonly .mobile-item-list select,
+.items-readonly .editor-table input,
+.items-readonly .editor-table select,
+.items-readonly .mobile-item-list input,
+.items-readonly .mobile-item-list select {
   color: var(--color-text);
   cursor: default;
+  opacity: 1;
+  -webkit-text-fill-color: var(--color-text);
 }
 
 @media (max-width: 767px) {

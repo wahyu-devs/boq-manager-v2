@@ -31,9 +31,7 @@
       "boolean"
     ? editorPreferences.showCategorySubtotals
     : settings.showCategorySubtotals !== false;
-  let showTablePrices = typeof editorPreferences.showTablePrices === "boolean"
-    ? editorPreferences.showTablePrices
-    : settings.showTablePrices !== false;
+  let editItems = editorPreferences.editItems !== false;
   let currentView = "all";
   let reorderMode = false;
   let activeDrag = null;
@@ -235,6 +233,10 @@
     );
   }
 
+  function canEditItems() {
+    return editItems && !isIssuedLocked();
+  }
+
   function hasUnpersistedRevisionDraft() {
     if (!currentRecordId || currentRecord?.workingRevision === null ||
         currentRecord?.workingRevision === undefined) return false;
@@ -254,14 +256,7 @@
     if (numberInput && currentRecord?.revisions?.length) {
       numberInput.disabled = true;
     }
-    editor.querySelectorAll(
-      "[data-item-input], [data-item-action], [data-drag-handle], " +
-        "[data-category-drag-handle], [data-commission]",
-    ).forEach((control) => control.disabled = locked);
-    editor.querySelectorAll('[data-confirm-event="boq:delete-item"]')
-      .forEach((control) => control.disabled = locked);
-    editor.querySelectorAll("[data-add-custom], [data-open-modal=\"catalog-modal\"]")
-      .forEach((control) => control.disabled = locked);
+    if (commissionInput) commissionInput.disabled = locked;
     document.querySelectorAll("[data-save]").forEach((button) =>
       button.hidden = locked
     );
@@ -275,10 +270,26 @@
       button.hidden = !(currentRecord?.workingRevision !== null &&
         currentRecord?.revisions?.length)
     );
-    if (locked && reorderMode) {
-      reorderMode = false;
-      applyReorderState();
+    const itemsEditable = canEditItems();
+    editor.classList.toggle("items-readonly", !itemsEditable);
+    editor.querySelectorAll(
+      "[data-item-input], [data-item-action], [data-menu-trigger], " +
+        "[data-drag-handle], [data-category-drag-handle], " +
+        "[data-confirm-event=\"boq:delete-item\"], [data-add-custom], " +
+        "[data-open-modal=\"catalog-modal\"], [data-toggle-reorder]",
+    ).forEach((control) => control.disabled = !itemsEditable);
+    document.querySelectorAll("[data-add-product]")
+      .forEach((control) => control.disabled = !itemsEditable);
+    const editButton = document.querySelector("[data-toggle-edit]");
+    if (editButton) {
+      editButton.disabled = locked;
+      editButton.textContent = itemsEditable ? "Edit on" : "Edit off";
+      editButton.setAttribute("aria-pressed", String(itemsEditable));
     }
+    if (!itemsEditable && reorderMode) {
+      reorderMode = false;
+    }
+    applyReorderState();
   }
 
   function clearIssueValidation() {
@@ -810,6 +821,7 @@
   }
 
   function addItem(source = {}) {
+    if (!canEditItems()) return;
     const item = normalizeItem({
       qty: 1,
       unit: "Each",
@@ -827,6 +839,7 @@
   }
 
   function duplicateItem(id) {
+    if (!canEditItems()) return;
     const index = items.findIndex((item) => item.id === id);
     if (index < 0) return;
     const duplicate = {
@@ -841,6 +854,7 @@
   }
 
   function moveItem(id, direction) {
+    if (!canEditItems()) return;
     const item = items.find((entry) => entry.id === id);
     if (!item) return;
     const peers = items.filter((entry) => entry.category === item.category);
@@ -862,6 +876,7 @@
   }
 
   function reorderItem(itemId, targetId, position) {
+    if (!canEditItems()) return false;
     const reordered = reorderItemsWithinCategory(
       items,
       itemId,
@@ -876,6 +891,7 @@
   }
 
   function moveCategory(category, direction) {
+    if (!canEditItems()) return;
     const index = categories().indexOf(category);
     const destination = index + direction;
     if (index < 0 || destination < 0 || destination >= categoryOrder.length) {
@@ -894,6 +910,7 @@
   }
 
   function reorderCategory(category, targetCategory, position) {
+    if (!canEditItems()) return false;
     categories();
     const reordered = reorderValues(
       categoryOrder,
@@ -1012,40 +1029,37 @@
         return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
       : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No Products Found</h3><p>Try searching by product name, part number, or category.</p></div></div>';
+    host.querySelectorAll("[data-add-product]")
+      .forEach((button) => button.disabled = !canEditItems());
     document.querySelector("#product-suggestions").innerHTML = catalog.map(
       (product) => `<option value="${escapeHtml(product.name)}"></option>`,
     ).join("");
   }
 
   function applyReorderState() {
-    editor.classList.toggle("reorder-mode", reorderMode);
+    const enabled = reorderMode && canEditItems();
+    editor.classList.toggle("reorder-mode", enabled);
     const reorderButton = document.querySelector("[data-toggle-reorder]");
     if (reorderButton) {
-      reorderButton.textContent = reorderMode ? "Reorder on" : "Reorder off";
-      reorderButton.setAttribute("aria-pressed", String(reorderMode));
+      reorderButton.textContent = enabled ? "Reorder on" : "Reorder off";
+      reorderButton.setAttribute("aria-pressed", String(enabled));
     }
     editor.querySelectorAll(
       "[data-drag-handle], [data-category-drag-handle]",
     ).forEach((handle) => {
-      handle.tabIndex = reorderMode ? 0 : -1;
+      handle.tabIndex = enabled ? 0 : -1;
     });
-    if (!reorderMode) clearDragState();
+    if (!enabled) clearDragState();
   }
 
   function applyViewState() {
     editor.dataset.editorViewMode = currentView;
-    editor.classList.toggle("prices-hidden", !showTablePrices);
     const subtotalButton = document.querySelector("[data-toggle-subtotals]");
-    const priceButton = document.querySelector("[data-toggle-prices]");
     if (subtotalButton) {
       subtotalButton.textContent = showCategorySubtotals
         ? "Subtotals on"
         : "Subtotals off";
       subtotalButton.setAttribute("aria-pressed", String(showCategorySubtotals));
-    }
-    if (priceButton) {
-      priceButton.textContent = showTablePrices ? "Prices shown" : "Prices hidden";
-      priceButton.setAttribute("aria-pressed", String(showTablePrices));
     }
     applyReorderState();
   }
@@ -1053,7 +1067,7 @@
   function saveEditorPreferences() {
     store.saveLocalPreference("boq-editor", {
       showCategorySubtotals,
-      showTablePrices,
+      editItems,
     });
   }
 
@@ -1261,7 +1275,7 @@
 
   editor.addEventListener("input", (event) => {
     const input = event.target.closest("[data-item-input]");
-    if (!input) return;
+    if (!input || !canEditItems()) return;
     const item = items.find((entry) => entry.id === input.dataset.itemId);
     if (!item) return;
     const numericFields = ["qty", "unitCogs", "margin", "sellingOverride"];
@@ -1288,7 +1302,7 @@
 
   editor.addEventListener("change", (event) => {
     const input = event.target.closest("[data-item-input]");
-    if (!input) return;
+    if (!input || !canEditItems()) return;
     const item = items.find((entry) => entry.id === input.dataset.itemId);
     if (!item) return;
     if (input.dataset.field === "item" && applyCatalogMatch(item)) {
@@ -1305,7 +1319,7 @@
 
   editor.addEventListener("click", (event) => {
     const action = event.target.closest("[data-item-action]");
-    if (action) {
+    if (action && canEditItems()) {
       const id = action.dataset.itemId;
       if (action.dataset.itemAction === "duplicate") duplicateItem(id);
     }
@@ -1315,7 +1329,7 @@
     const itemHandle = event.target.closest("[data-drag-handle]");
     const categoryHandle = event.target.closest("[data-category-drag-handle]");
     const handle = itemHandle || categoryHandle;
-    if (!reorderMode || !handle || event.button > 0) return;
+    if (!reorderMode || !canEditItems() || !handle || event.button > 0) return;
     const type = categoryHandle ? "category" : "item";
     const row = handle.closest(
       type === "category" ? "[data-category-row]" : "[data-item-row]",
@@ -1387,9 +1401,9 @@
   });
 
   document.addEventListener("click", (event) => {
-    if (event.target.closest("[data-add-custom]")) addItem();
+    if (event.target.closest("[data-add-custom]") && canEditItems()) addItem();
     const productButton = event.target.closest("[data-add-product]");
-    if (productButton) {
+    if (productButton && canEditItems()) {
       const product = store.get("products", productButton.dataset.addProduct);
       if (product) addItem(catalogItem(product));
       window.BOQModal.close(document.getElementById("catalog-modal"));
@@ -1498,18 +1512,19 @@
       saveEditorPreferences();
       renderItems();
     }
-    if (event.target.closest("[data-toggle-prices]")) {
-      showTablePrices = !showTablePrices;
+    if (event.target.closest("[data-toggle-edit]") && !isIssuedLocked()) {
+      editItems = !editItems;
       saveEditorPreferences();
-      applyViewState();
+      applyEditorMode();
     }
-    if (event.target.closest("[data-toggle-reorder]")) {
+    if (event.target.closest("[data-toggle-reorder]") && canEditItems()) {
       reorderMode = !reorderMode;
       applyReorderState();
     }
   });
 
   document.addEventListener("boq:delete-item", (event) => {
+    if (!canEditItems()) return;
     const id = event.detail.targetId;
     const index = items.findIndex((item) => item.id === id);
     if (index < 0) return;

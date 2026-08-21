@@ -393,6 +393,42 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
 });
 
+Deno.test("only allows BOQ item changes while Edit is on", () => {
+  assertIncludes(
+    editorHtml,
+    "data-toggle-edit",
+    "BOQ Items must provide an Edit toggle",
+  );
+  if (editorHtml.includes("data-toggle-prices") ||
+      editorHtml.includes("Prices shown")) {
+    throw new Error("the price visibility toggle must be removed");
+  }
+  assertIncludes(
+    boqSource,
+    "let editItems = editorPreferences.editItems !== false;",
+    "the per-user Edit preference must default to on",
+  );
+  assertIncludes(
+    boqSource,
+    'editor.classList.toggle("items-readonly", !itemsEditable);',
+    "Edit off must apply the read-only item state",
+  );
+  assertIncludes(
+    boqSource,
+    'if (!input || !canEditItems()) return;',
+    "disabled item inputs must not mutate BOQ data",
+  );
+  assertIncludes(
+    componentsCss,
+    ".items-readonly .editor-table input,",
+    "read-only BOQ item controls must retain deliberate styling",
+  );
+  if (boqSource.includes("prices-hidden") ||
+      componentsCss.includes(".prices-hidden")) {
+    throw new Error("price hiding behavior must be removed from BOQ Items");
+  }
+});
+
 Deno.test("uses deliberate tablet and mobile layouts", () => {
   assertIncludes(
     responsiveCss,
