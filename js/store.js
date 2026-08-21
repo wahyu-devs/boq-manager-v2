@@ -462,7 +462,27 @@
     });
   }
 
-  function prepareRevisionDraft(id, sourceNumber) {
+  function documentDatesFrom(currentDate = new Date()) {
+    const date = new Date(currentDate);
+    const today = Number.isNaN(date.getTime()) ? new Date() : date;
+    const configuredValidity = Number(getSettings().defaultValidity);
+    const validityDays = Number.isFinite(configuredValidity) &&
+        configuredValidity > 0
+      ? configuredValidity
+      : 30;
+    const validUntil = new Date(today);
+    validUntil.setDate(validUntil.getDate() + validityDays);
+    const toLocalDate = (value) => {
+      const offset = value.getTimezoneOffset() * 60000;
+      return new Date(value.getTime() - offset).toISOString().slice(0, 10);
+    };
+    return {
+      date: toLocalDate(today),
+      validUntil: toLocalDate(validUntil),
+    };
+  }
+
+  function prepareRevisionDraft(id, sourceNumber, currentDate = new Date()) {
     let record = get("boqs", id);
     let activeRevision = latestIssuedRevision(record);
     if (record?.status === "Issued" && !record.revisions.length) {
@@ -489,6 +509,7 @@
       workingRevision: nextRevisionNumber(record),
       draftBaseRevisionNumber: sourceRevision.number,
       hasDraftChanges: true,
+      ...documentDatesFrom(currentDate),
       createdAt: record.createdAt,
     });
   }

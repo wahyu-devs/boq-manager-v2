@@ -891,8 +891,37 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   }
   equal(lockedSaveFailed, true, "issued revision cannot be edited directly");
   const prepareTimestamp = store.getMeta().clientUpdatedAt;
-  const revisionDraft = store.prepareRevisionDraft("alpha-base");
+  const revisionDraft = store.prepareRevisionDraft(
+    "alpha-base",
+    undefined,
+    new Date(2026, 7, 21, 10, 30),
+  );
   equal(revisionDraft.workingRevision, 3, "next revision draft created");
+  equal(
+    revisionDraft.date,
+    "2026-08-21",
+    "creating a revision refreshes the document date",
+  );
+  equal(
+    revisionDraft.validUntil,
+    "2026-09-20",
+    "creating a revision refreshes validity from commercial defaults",
+  );
+  const sourcedRevisionDraft = store.prepareRevisionDraft(
+    "alpha-base",
+    1,
+    new Date(2026, 7, 21, 10, 30),
+  );
+  equal(
+    sourcedRevisionDraft.date,
+    "2026-08-21",
+    "using an issued revision as draft refreshes the document date",
+  );
+  equal(
+    sourcedRevisionDraft.validUntil,
+    "2026-09-20",
+    "using an issued revision as draft refreshes validity",
+  );
   equal(
     store.get("boqs", "alpha-base").workingRevision,
     null,
