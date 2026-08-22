@@ -154,6 +154,24 @@ Deno.test("shows a Grand Total for every revision history entry", () => {
   );
 });
 
+Deno.test("shows snapshot gross margin for every revision history entry", () => {
+  assertIncludes(
+    boqSource,
+    "revisionData?.document.marginPercent || 0,",
+    "revision margin must come from the selected snapshot calculation",
+  );
+  assertIncludes(
+    boqSource,
+    '<span class="revision-entry-margin">Gross margin ${grossMargin}</span>',
+    "revision history must render the snapshot gross margin",
+  );
+  assertIncludes(
+    componentsCss,
+    ".revision-entry-margin {",
+    "revision gross margin must use the revision history layout",
+  );
+});
+
 Deno.test("shows the snapshot project on every revision history entry", () => {
   assertIncludes(
     boqSource,

@@ -428,6 +428,10 @@
           undefined,
           revisionData?.settings.numberFormat || settings.numberFormat,
         );
+        const grossMargin = formatPercent(
+          revisionData?.document.marginPercent || 0,
+          revisionData?.settings.numberFormat || settings.numberFormat,
+        );
         return `<article class="revision-entry${
           revision.state === "Voided"
             ? " is-voided"
@@ -440,7 +444,7 @@
             : isDraft
             ? "draft"
             : "issued"
-        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">${escapeHtml(revisionDate(isDraft ? revision.savedAt : revision.issuedAt))}</span></div><div class="revision-entry-project"><strong>${escapeHtml(revisionProject)}</strong></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><strong>${grandTotal}</strong></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
+        }">${escapeHtml(revision.state)}</span><span class="muted text-sm">${escapeHtml(revisionDate(isDraft ? revision.savedAt : revision.issuedAt))}</span></div><div class="revision-entry-project"><strong>${escapeHtml(revisionProject)}</strong></div><p class="revision-entry-note">${escapeHtml(reason)}</p></div><div class="revision-entry-total"><strong>${grandTotal}</strong><span class="revision-entry-margin">Gross margin ${grossMargin}</span></div><div class="revision-entry-actions"><button class="button button-secondary button-sm" type="button" data-preview-revision="${revision.number}">Preview</button><button class="button button-ghost button-sm" type="button" data-download-revision-excel="${revision.number}">Excel</button><button class="button button-ghost button-sm" type="button" data-download-revision-pdf="${revision.number}">PDF</button><button class="button button-ghost button-sm" type="button" data-download-revision-word="${revision.number}">Word</button>${
           canVoid
             ? `<button class="button button-ghost button-sm danger-text" type="button" data-void-revision="${revision.number}">Void</button>`
             : ""

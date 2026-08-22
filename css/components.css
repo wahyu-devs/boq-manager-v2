@@ -1393,6 +1393,8 @@
 .revision-entry-total {
   grid-area: total;
   display: grid;
+  gap: 3px;
+  align-content: start;
   min-width: 148px;
   padding-left: var(--space-4);
   border-left: 1px solid var(--color-border);
@@ -1403,6 +1405,13 @@
 .revision-entry-total > strong {
   font-size: 13px;
   font-weight: 680;
+}
+
+.revision-entry-margin {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
 }
 
 .revision-entry-actions {
