@@ -65,6 +65,7 @@ await import("../js/store.js");
 await import("../js/calculations.js");
 await import("../js/utils.js");
 await import("../js/document-export.js");
+await import("../js/excel-export.js");
 
 function equal(actual, expected, message) {
   if (actual !== expected) {
@@ -159,6 +160,44 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     192,
     "non-pricing customer columns expand to the full document width",
   );
+  const excelLayouts = [
+    [true, true, true, "index,sku,item,qty,unit,unitSelling,totalSelling", "7,18,42,10,12,18,20"],
+    [true, true, false, "index,item,qty,unit,unitSelling,totalSelling", "7,50,15,17,18,20"],
+    [true, false, true, "index,sku,item,qty,unit,totalSelling", "7,18,60,10,12,20"],
+    [true, false, false, "index,item,qty,unit,totalSelling", "7,50,30,15,25"],
+    [false, true, true, "index,sku,item,qty,unit", "7,20,50,20,30"],
+    [false, true, false, "index,item,qty,unit", "7,55,30,35"],
+    [false, false, true, "index,sku,item,qty,unit", "7,20,50,20,30"],
+    [false, false, false, "index,item,qty,unit", "7,55,30,35"],
+  ];
+  excelLayouts.forEach(([
+    showPricing,
+    showUnitPricing,
+    showSku,
+    expectedColumns,
+    expectedWidths,
+  ]) => {
+    const columns = window.BOQExcelExport.quotationColumns({
+      showPricing,
+      showUnitPricing,
+      showSku,
+    });
+    equal(
+      columns.map((column) => column.key).join(","),
+      expectedColumns,
+      `Excel customer columns for ${showPricing}/${showUnitPricing}/${showSku}`,
+    );
+    equal(
+      columns.map((column) => column.width).join(","),
+      expectedWidths,
+      `Excel customer widths for ${showPricing}/${showUnitPricing}/${showSku}`,
+    );
+    equal(
+      columns.reduce((total, column) => total + column.width, 0),
+      127,
+      `Excel customer width for ${showPricing}/${showUnitPricing}/${showSku}`,
+    );
+  });
   equal(
     window.BOQCustomerDocument.filename({
       document: {

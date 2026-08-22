@@ -99,3 +99,16 @@ Deno.test("keeps internal Excel sheets independent from customer pricing", () =>
     "the internal Overview sheet must still be generated",
   );
 });
+
+Deno.test("balances the Excel BOQ header when pricing columns are hidden", () => {
+  assertIncludes(
+    excelScript,
+    "const splitColumn = Math.max(2, columnCount - 2);",
+    "four-column BOQ sheets must reserve two columns for the document header",
+  );
+  assertIncludes(
+    excelScript,
+    "window.BOQExcelExport = { download, quotationColumns };",
+    "Excel layout profiles must remain independently testable",
+  );
+});

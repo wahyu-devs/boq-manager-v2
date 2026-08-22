@@ -242,22 +242,59 @@
     ].filter(Boolean).join("\n");
   }
 
+  function quotationWidthProfile(display) {
+    if (!display.showPricing) {
+      return display.showSku
+        ? { index: 7, sku: 20, item: 50, qty: 20, unit: 30 }
+        : { index: 7, item: 55, qty: 30, unit: 35 };
+    }
+    if (!display.showUnitPricing) {
+      return display.showSku
+        ? { index: 7, sku: 18, item: 60, qty: 10, unit: 12, totalSelling: 20 }
+        : { index: 7, item: 50, qty: 30, unit: 15, totalSelling: 25 };
+    }
+    return display.showSku
+      ? {
+        index: 7,
+        sku: 18,
+        item: 42,
+        qty: 10,
+        unit: 12,
+        unitSelling: 18,
+        totalSelling: 20,
+      }
+      : {
+        index: 7,
+        item: 50,
+        qty: 15,
+        unit: 17,
+        unitSelling: 18,
+        totalSelling: 20,
+      };
+  }
+
   function quotationColumns(settings) {
     const display = window.BOQCustomerDocument.visibility(settings);
-    const columns = [{ key: "index", header: "No", width: 7, align: "center" }];
+    const widths = quotationWidthProfile(display);
+    const columns = [{
+      key: "index",
+      header: "No",
+      width: widths.index,
+      align: "center",
+    }];
     if (display.showSku) {
-      columns.push({ key: "sku", header: "Part Number", width: 18 });
+      columns.push({ key: "sku", header: "Part Number", width: widths.sku });
     }
     columns.push(
-      { key: "item", header: "Item", width: 42 },
-      { key: "qty", header: "Qty", width: 10, align: "right" },
-      { key: "unit", header: "Unit", width: 12, align: "center" },
+      { key: "item", header: "Item", width: widths.item },
+      { key: "qty", header: "Qty", width: widths.qty, align: "right" },
+      { key: "unit", header: "Unit", width: widths.unit, align: "center" },
     );
     if (display.showUnitPricing) {
       columns.push({
         key: "unitSelling",
         header: "Unit Price",
-        width: 18,
+        width: widths.unitSelling,
         align: "right",
         money: true,
       });
@@ -266,17 +303,11 @@
       columns.push({
         key: "totalSelling",
         header: "Total",
-        width: 20,
+        width: widths.totalSelling,
         align: "right",
         money: true,
       });
     }
-    const itemColumn = columns.find((column) => column.key === "item");
-    const currentWidth = columns.reduce(
-      (total, column) => total + column.width,
-      0,
-    );
-    itemColumn.width += Math.max(0, 127 - currentWidth);
     return columns;
   }
 
@@ -318,7 +349,7 @@
       width: HEADER_LOGO_WIDTH,
       height: HEADER_LOGO_HEIGHT,
     });
-    const splitColumn = Math.max(3, columnCount - 2);
+    const splitColumn = Math.max(2, columnCount - 2);
     const splitLetter = columnLetter(splitColumn);
     const rightStart = columnLetter(splitColumn + 1);
     const companyNameRange = hasLogo
@@ -1161,5 +1192,5 @@
     );
   }
 
-  window.BOQExcelExport = { download };
+  window.BOQExcelExport = { download, quotationColumns };
 })();
