@@ -558,8 +558,10 @@
         }),
       );
     }
-    rows.push(grandTotalSpacerRow(columns));
-    rows.push(grandTotalRow(data, columns, columnWidths));
+    if (customerDocument.visibility(data.settings).showPricing) {
+      rows.push(grandTotalSpacerRow(columns));
+      rows.push(grandTotalRow(data, columns, columnWidths));
+    }
     return new window.docx.Table({
       width: fullWidth(),
       columnWidths,

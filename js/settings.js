@@ -9,6 +9,7 @@
     numberingFormat: "BOQ-{YY}{MM}{NN}",
     rounding: "2",
     showSku: false,
+    showPricing: true,
     showUnitPricing: true,
     taxEnabled: false,
     taxRate: 0,
@@ -37,6 +38,16 @@
     const enabled = form.elements.taxEnabled.checked;
     form.elements.taxRate.disabled = !enabled;
     form.elements.taxRegistrationNumber.disabled = !enabled;
+  }
+
+  function updateDocumentControls() {
+    const showPricing = form.elements.showPricing.checked;
+    const unitPricing = form.elements.showUnitPricing;
+    unitPricing.disabled = !showPricing;
+    document.querySelector("[data-unit-pricing-setting]")?.classList.toggle(
+      "is-disabled",
+      !showPricing,
+    );
   }
 
   function updateLogoPreview() {
@@ -107,6 +118,7 @@
   }
 
   form.elements.taxEnabled.addEventListener("change", updateTaxControls);
+  form.elements.showPricing.addEventListener("change", updateDocumentControls);
   form.elements.numberingFormat.addEventListener("input", updateNumberingPreview);
   document.querySelector("[data-company-logo-input]").addEventListener(
     "change",
@@ -210,12 +222,14 @@
     if (formDirty) return;
     applyStoredSettings();
     updateTaxControls();
+    updateDocumentControls();
     updateLogoPreview();
     updateSyncStatus();
     updateNumberingPreview();
   });
   document.addEventListener("boq:sync-complete", updateSyncStatus);
   updateTaxControls();
+  updateDocumentControls();
   updateLogoPreview();
   updateSyncStatus();
   updateNumberingPreview();

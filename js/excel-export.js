@@ -243,8 +243,9 @@
   }
 
   function quotationColumns(settings) {
+    const display = window.BOQCustomerDocument.visibility(settings);
     const columns = [{ key: "index", header: "No", width: 7, align: "center" }];
-    if (settings.showSku === true) {
+    if (display.showSku) {
       columns.push({ key: "sku", header: "Part Number", width: 18 });
     }
     columns.push(
@@ -252,7 +253,7 @@
       { key: "qty", header: "Qty", width: 10, align: "right" },
       { key: "unit", header: "Unit", width: 12, align: "center" },
     );
-    if (settings.showUnitPricing !== false) {
+    if (display.showUnitPricing) {
       columns.push({
         key: "unitSelling",
         header: "Unit Price",
@@ -261,13 +262,21 @@
         money: true,
       });
     }
-    columns.push({
-      key: "totalSelling",
-      header: "Total",
-      width: 20,
-      align: "right",
-      money: true,
-    });
+    if (display.showPricing) {
+      columns.push({
+        key: "totalSelling",
+        header: "Total",
+        width: 20,
+        align: "right",
+        money: true,
+      });
+    }
+    const itemColumn = columns.find((column) => column.key === "item");
+    const currentWidth = columns.reduce(
+      (total, column) => total + column.width,
+      0,
+    );
+    itemColumn.width += Math.max(0, 127 - currentWidth);
     return columns;
   }
 
@@ -428,6 +437,7 @@
 
   function addQuotationSheet(workbook, data, targetSheet, logo, costing) {
     const { calculateItem } = window.BOQCalculations;
+    const display = window.BOQCustomerDocument.visibility(data.settings);
     const columns = quotationColumns(data.settings);
     const sheet = targetSheet || workbook.addWorksheet("BOQ");
     configureSheet(sheet, { freezeRows: 10, orientation: "portrait" });
@@ -472,7 +482,7 @@
               const unitSellingColumn = columnLetter(
                 columns.findIndex((entry) => entry.key === "unitSelling") + 1,
               );
-              if (data.settings.showUnitPricing !== false) {
+              if (display.showUnitPricing) {
                 cell.value = {
                   formula:
                     `${quantityColumn}${rowNumber}*${unitSellingColumn}${rowNumber}`,
@@ -513,41 +523,43 @@
       sheet.getRow(rowNumber).height = 28;
     }
 
-    rowNumber += 2;
-    const totalColumn = columnLetter(columns.length);
-    const totalLabelStart = columnLetter(Math.max(1, columns.length - 2));
-    mergeValue(
-      sheet,
-      `${totalLabelStart}${rowNumber}:${
-        columnLetter(columns.length - 1)
-      }${rowNumber}`,
-      "GRAND TOTAL",
-      {
+    if (display.showPricing) {
+      rowNumber += 2;
+      const totalColumn = columnLetter(columns.length);
+      const totalLabelStart = columnLetter(Math.max(1, columns.length - 2));
+      mergeValue(
+        sheet,
+        `${totalLabelStart}${rowNumber}:${
+          columnLetter(columns.length - 1)
+        }${rowNumber}`,
+        "GRAND TOTAL",
+        {
+          bold: true,
+          fill: COLORS.highlight,
+          color: COLORS.primaryDark,
+          align: "right",
+          size: 10,
+        },
+      );
+      const totalCell = sheet.getCell(`${totalColumn}${rowNumber}`);
+      totalCell.value = itemRows.length
+        ? {
+          formula: `SUM(${totalColumn}${itemRows[0]}:${totalColumn}${
+            itemRows.at(-1)
+          })`,
+          result: data.document.totalSelling,
+        }
+        : 0;
+      setCell(totalCell, totalCell.value, {
         bold: true,
         fill: COLORS.highlight,
         color: COLORS.primaryDark,
         align: "right",
-        size: 10,
-      },
-    );
-    const totalCell = sheet.getCell(`${totalColumn}${rowNumber}`);
-    totalCell.value = itemRows.length
-      ? {
-        formula: `SUM(${totalColumn}${itemRows[0]}:${totalColumn}${
-          itemRows.at(-1)
-        })`,
-        result: data.document.totalSelling,
-      }
-      : 0;
-    setCell(totalCell, totalCell.value, {
-      bold: true,
-      fill: COLORS.highlight,
-      color: COLORS.primaryDark,
-      align: "right",
-      size: 12,
-      numFmt: moneyFormat,
-    });
-    sheet.getRow(rowNumber).height = 27;
+        size: 12,
+        numFmt: moneyFormat,
+      });
+      sheet.getRow(rowNumber).height = 27;
+    }
 
     if (data.document.notes) {
       rowNumber += 2;

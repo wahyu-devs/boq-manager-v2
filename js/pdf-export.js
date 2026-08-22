@@ -313,6 +313,7 @@
 
   function drawSummary(doc, data, startY, reserve) {
     const { formatCurrencyParts } = window.BOQUtils;
+    const showPricing = customerDocument.visibility(data.settings).showPricing;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const contentBottom = pageHeight - reserve;
@@ -322,28 +323,31 @@
     const amountRightX = pageWidth - PAGE_MARGIN - TABLE_CELL_PADDING;
     const amountX = totalX + labelWidth + TABLE_CELL_PADDING;
     const totalHeight = 9;
-    let y = ensureSpace(doc, startY, totalHeight, contentBottom);
-    const total = formatCurrencyParts(
-      data.document.totalSelling,
-      data.document.currency,
-      undefined,
-      data.settings.numberFormat,
-    );
+    let y = startY;
+    if (showPricing) {
+      y = ensureSpace(doc, y, totalHeight, contentBottom);
+      const total = formatCurrencyParts(
+        data.document.totalSelling,
+        data.document.currency,
+        undefined,
+        data.settings.numberFormat,
+      );
 
-    doc.setFillColor(...COLORS.primarySoft);
-    doc.rect(totalX, y, totalWidth, totalHeight, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.25);
-    doc.setTextColor(...COLORS.heading);
-    doc.text("GRAND TOTAL", totalX + labelWidth - 2, y + 5.8, {
-      align: "right",
-    });
-    doc.setFontSize(10.5);
-    doc.text(total.symbol, amountX, y + 5.8);
-    doc.text(total.value, amountRightX, y + 5.8, {
-      align: "right",
-    });
-    y += totalHeight;
+      doc.setFillColor(...COLORS.primarySoft);
+      doc.rect(totalX, y, totalWidth, totalHeight, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.25);
+      doc.setTextColor(...COLORS.heading);
+      doc.text("GRAND TOTAL", totalX + labelWidth - 2, y + 5.8, {
+        align: "right",
+      });
+      doc.setFontSize(10.5);
+      doc.text(total.symbol, amountX, y + 5.8);
+      doc.text(total.value, amountRightX, y + 5.8, {
+        align: "right",
+      });
+      y += totalHeight;
+    }
 
     const notes = String(data.document.notes || "").trim();
     if (!notes) return y;
@@ -353,7 +357,7 @@
     );
     const noteLineHeight = 3.8;
     let lineIndex = 0;
-    y += 8;
+    if (showPricing) y += 8;
     while (lineIndex < noteLines.length) {
       y = ensureSpace(doc, y, 13, contentBottom);
       const availableLines = Math.max(

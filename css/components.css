@@ -1643,6 +1643,15 @@
   font-size: 11px;
 }
 
+.switch-row.is-disabled > div,
+.switch-row.is-disabled .switch-track {
+  opacity: 0.55;
+}
+
+.switch-row.is-disabled .switch {
+  cursor: not-allowed;
+}
+
 .switch {
   position: relative;
   width: 38px;
@@ -2132,6 +2141,21 @@
   --pdf-qty-width: 10.9%;
   --pdf-unit-width: 13.1%;
   --pdf-total-width: 22.7%;
+}
+
+.pdf-preview-table.without-pricing {
+  --pdf-no-width: 7%;
+  --pdf-part-number-width: 20%;
+  --pdf-item-width: 50%;
+  --pdf-qty-width: 10%;
+  --pdf-unit-width: 13%;
+}
+
+.pdf-preview-table.without-pricing:not(.has-part-number) {
+  --pdf-no-width: 8%;
+  --pdf-item-width: 65%;
+  --pdf-qty-width: 12%;
+  --pdf-unit-width: 15%;
 }
 
 .pdf-preview-table th,

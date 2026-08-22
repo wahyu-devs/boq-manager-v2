@@ -44,11 +44,21 @@
     return "FOR CUSTOMER";
   }
 
+  function visibility(settings = {}) {
+    const showPricing = settings.showPricing !== false;
+    return {
+      showPricing,
+      showSku: settings.showSku === true,
+      showUnitPricing: showPricing && settings.showUnitPricing !== false,
+    };
+  }
+
   function columns(settings = {}) {
+    const display = visibility(settings);
     const values = [
       { key: "index", label: "No", align: "center", widthMm: 8 },
     ];
-    if (settings.showSku === true) {
+    if (display.showSku) {
       values.push({ key: "sku", label: "Part Number", widthMm: 23 });
     }
     values.push(
@@ -56,7 +66,7 @@
       { key: "qty", label: "Qty", align: "right", widthMm: 13 },
       { key: "unit", label: "Unit", align: "center", widthMm: 16 },
     );
-    if (settings.showUnitPricing !== false) {
+    if (display.showUnitPricing) {
       values.push({
         key: "unitSelling",
         label: "Unit Price",
@@ -64,12 +74,14 @@
         widthMm: 27,
       });
     }
-    values.push({
-      key: "totalSelling",
-      label: "Total",
-      align: "right",
-      widthMm: layout.totalColumnWidthMm,
-    });
+    if (display.showPricing) {
+      values.push({
+        key: "totalSelling",
+        label: "Total",
+        align: "right",
+        widthMm: layout.totalColumnWidthMm,
+      });
+    }
     const fixedWidth = values.reduce(
       (sum, column) => sum + Number(column.widthMm || 0),
       0,
@@ -96,6 +108,7 @@
     revisionLabel,
     documentReference,
     documentBanner,
+    visibility,
     columns,
     filename,
   };

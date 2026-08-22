@@ -127,10 +127,37 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(
     window.BOQCustomerDocument.columns({
       showSku: true,
+      showPricing: true,
       showUnitPricing: true,
     }).reduce((total, column) => total + column.widthMm, 0),
     192,
     "customer document columns use the PDF table width",
+  );
+  equal(
+    window.BOQCustomerDocument.columns({
+      showSku: true,
+      showPricing: false,
+      showUnitPricing: true,
+    }).map((column) => column.key).join(","),
+    "index,sku,item,qty,unit",
+    "customer documents can hide every pricing column",
+  );
+  equal(
+    window.BOQCustomerDocument.columns({
+      showSku: false,
+      showPricing: true,
+      showUnitPricing: false,
+    }).map((column) => column.key).join(","),
+    "index,item,qty,unit,totalSelling",
+    "line totals remain visible when only unit pricing is hidden",
+  );
+  equal(
+    window.BOQCustomerDocument.columns({
+      showSku: true,
+      showPricing: false,
+    }).reduce((total, column) => total + column.widthMm, 0),
+    192,
+    "non-pricing customer columns expand to the full document width",
   );
   equal(
     window.BOQCustomerDocument.filename({

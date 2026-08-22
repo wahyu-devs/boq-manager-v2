@@ -59,6 +59,11 @@ Deno.test("wires Word export across BOQ workflows", () => {
 Deno.test("keeps the Word grand total inside the BOQ items table", () => {
   assertIncludes(
     wordExportScript,
+    "if (customerDocument.visibility(data.settings).showPricing) {",
+    "the Word grand total must respect Show pricing",
+  );
+  assertIncludes(
+    wordExportScript,
     "rows.push(grandTotalSpacerRow(columns));",
     "the BOQ table keeps an internal spacer before its grand total",
   );

@@ -74,6 +74,14 @@
     return currencySelect?.value || settings.defaultCurrency || "IDR";
   }
 
+  function currentDocumentVisibilitySettings() {
+    return {
+      showPricing: settings.showPricing !== false,
+      showSku: settings.showSku === true,
+      showUnitPricing: settings.showUnitPricing !== false,
+    };
+  }
+
   function localDate(date) {
     const offset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() - offset).toISOString().slice(0, 10);
@@ -376,6 +384,7 @@
           revision.companySettings?.rounding || settings.rounding,
         numberFormat: revision.calculation?.numberFormat ||
           revision.companySettings?.numberFormat || settings.numberFormat,
+        ...currentDocumentVisibilitySettings(),
       },
     };
   }
@@ -1086,9 +1095,14 @@
     const previewSettings = exportData.settings;
     const previewCurrency = payload.currency || previewSettings.defaultCurrency ||
       "IDR";
-    const showPartNumber = previewSettings.showSku === true;
-    const showUnitPricing = previewSettings.showUnitPricing !== false;
-    const columnCount = 5 + Number(showPartNumber) + Number(showUnitPricing);
+    const documentVisibility = window.BOQCustomerDocument.visibility(
+      previewSettings,
+    );
+    const showPartNumber = documentVisibility.showSku;
+    const showPricing = documentVisibility.showPricing;
+    const showUnitPricing = documentVisibility.showUnitPricing;
+    const columnCount = 4 + Number(showPartNumber) + Number(showPricing) +
+      Number(showUnitPricing);
     const contactDetails = [previewSettings.email, previewSettings.phone]
       .filter(Boolean).map(escapeHtml).join(" | ");
     const companyDetails = [
@@ -1110,10 +1124,14 @@
     const unitPriceHeader = showUnitPricing
       ? '<th class="align-right pdf-column-unit-price">Unit Price</th>'
       : "";
+    const totalHeader = showPricing
+      ? '<th class="align-right pdf-total-column">Total</th>'
+      : "";
     const tableClasses = [
       "pdf-preview-table",
       showPartNumber ? "has-part-number" : "",
       showUnitPricing ? "has-unit-price" : "",
+      showPricing ? "" : "without-pricing",
     ].filter(Boolean).join(" ");
     let rowIndex = 0;
     const itemRows = previewCategories.map((category) => {
@@ -1140,14 +1158,18 @@
               )
             }</td>`
             : ""
-        }<td class="align-right pdf-total-column">${
-          formatCurrencyMarkup(
-            calculation.totalSelling,
-            previewCurrency,
-            undefined,
-            previewSettings.numberFormat,
-          )
-        }</td></tr>`;
+        }${
+          showPricing
+            ? `<td class="align-right pdf-total-column">${
+              formatCurrencyMarkup(
+                calculation.totalSelling,
+                previewCurrency,
+                undefined,
+                previewSettings.numberFormat,
+              )
+            }</td>`
+            : ""
+        }</tr>`;
       }).join("");
       return `<tr class="pdf-category"><td colspan="${columnCount}"><strong>${
         escapeHtml(category)
@@ -1171,14 +1193,18 @@
       escapeHtml(payload.date || "-")
     }</strong><strong>${
       escapeHtml(payload.validUntil || "-")
-    }</strong></div></div><table class="${tableClasses}"><thead><tr><th class="pdf-column-no">No</th>${partNumberHeader}<th class="pdf-column-item">Item</th><th class="align-right pdf-column-qty">Qty</th><th class="pdf-column-unit">Unit</th>${unitPriceHeader}<th class="align-right pdf-total-column">Total</th></tr></thead><tbody>${tableRows}</tbody></table><div class="pdf-preview-total"><span>Grand Total</span><strong>${
-      formatCurrencyMarkup(
-        payload.totalSelling,
-        previewCurrency,
-        undefined,
-        previewSettings.numberFormat,
-      )
-    }</strong></div>${
+    }</strong></div></div><table class="${tableClasses}"><thead><tr><th class="pdf-column-no">No</th>${partNumberHeader}<th class="pdf-column-item">Item</th><th class="align-right pdf-column-qty">Qty</th><th class="pdf-column-unit">Unit</th>${unitPriceHeader}${totalHeader}</tr></thead><tbody>${tableRows}</tbody></table>${
+      showPricing
+        ? `<div class="pdf-preview-total"><span>Grand Total</span><strong>${
+          formatCurrencyMarkup(
+            payload.totalSelling,
+            previewCurrency,
+            undefined,
+            previewSettings.numberFormat,
+          )
+        }</strong></div>`
+        : ""
+    }${
       payload.notes
         ? `<div class="pdf-notes"><strong>Terms / Notes</strong><p>${escapeHtml(payload.notes)}</p></div>`
         : ""
