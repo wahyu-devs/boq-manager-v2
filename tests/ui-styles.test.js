@@ -351,7 +351,7 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    "min-width: 1360px;\n  font-size: 11px;",
+    "min-width: var(--editor-table-min-width);\n  font-size: 11px;",
     "category, calculated, and subtotal content must use 11px text",
   );
   assertIncludes(
@@ -469,6 +469,39 @@ Deno.test("only allows BOQ item changes while Edit is on", () => {
   if (boqSource.includes("prices-hidden") ||
       componentsCss.includes(".prices-hidden")) {
     throw new Error("price hiding behavior must be removed from BOQ Items");
+  }
+});
+
+Deno.test("collapses hidden BOQ pricing columns without an empty scroll area", () => {
+  assertIncludes(
+    editorHtml,
+    'class="item-col-money column-cogs"',
+    "COGS column tracks must follow the selected editor view",
+  );
+  assertIncludes(
+    editorHtml,
+    'class="item-col-money column-selling"',
+    "selling column tracks must follow the selected editor view",
+  );
+  assertIncludes(
+    editorHtml,
+    'class="item-col-margin column-margin"',
+    "margin column tracks must follow the selected editor view",
+  );
+  assertIncludes(
+    componentsCss,
+    '[data-editor-view-mode="cogs"] .editor-table {\n  --editor-table-min-width: 1128px;',
+    "COGS view must remove hidden selling width from the table",
+  );
+  assertIncludes(
+    componentsCss,
+    '[data-editor-view-mode="selling"] .editor-table {\n  --editor-table-min-width: 1050px;',
+    "selling view must remove hidden COGS and margin width from the table",
+  );
+  if (editorHtml.includes('<option value="summary">')) {
+    throw new Error(
+      "Calculation summary must not duplicate the Financial Summary panel",
+    );
   }
 });
 

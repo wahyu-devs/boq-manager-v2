@@ -644,7 +644,8 @@
   --editor-sticky-item-width: 300px;
   --editor-sticky-qty-width: 68px;
   --editor-sticky-unit-width: 82px;
-  min-width: 1360px;
+  --editor-table-min-width: 1360px;
+  min-width: var(--editor-table-min-width);
   font-size: 11px;
 }
 
@@ -877,9 +878,12 @@
   display: none;
 }
 
-[data-editor-view-mode="summary"] [data-editor-table],
-[data-editor-view-mode="summary"] [data-mobile-items] {
-  display: none;
+[data-editor-view-mode="cogs"] .editor-table {
+  --editor-table-min-width: 1128px;
+}
+
+[data-editor-view-mode="selling"] .editor-table {
+  --editor-table-min-width: 1050px;
 }
 
 .drag-handle {
