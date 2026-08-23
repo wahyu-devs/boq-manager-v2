@@ -91,7 +91,7 @@
         escapeHtml(
           (record.status || "Draft").toLowerCase().replaceAll(" ", "-"),
         )
-      }" data-project="${escapeHtml((record.projectName || "").toLowerCase())}" data-number="${
+      }" data-customer="${escapeHtml((record.customerName || "").toLowerCase())}" data-number="${
         escapeHtml(record.number || "")
       }" data-project-name="${
         escapeHtml(record.projectName || "")
@@ -125,8 +125,8 @@
           escapeHtml(
             (record.status || "Draft").toLowerCase().replaceAll(" ", "-"),
           )
-        }" data-project="${
-          escapeHtml((record.projectName || "").toLowerCase())
+        }" data-customer="${
+          escapeHtml((record.customerName || "").toLowerCase())
         }"><div class="record-card-header"><div><a class="cell-primary" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
         }">${
@@ -282,17 +282,17 @@
   }
 
   function updateDynamicOptions() {
-    const projectFilter = document.querySelector("[data-project-filter]");
-    if (projectFilter) {
-      const current = projectFilter.value;
-      const projectNames = [...new Set(displayBoqs().map((record) =>
-        record.projectName
+    const customerFilter = document.querySelector("[data-customer-filter]");
+    if (customerFilter) {
+      const current = customerFilter.value;
+      const customerNames = [...new Set(displayBoqs().map((record) =>
+        record.customerName
       ).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-      projectFilter.innerHTML = '<option value="">All projects</option>' +
-        projectNames.map((name) =>
+      customerFilter.innerHTML = '<option value="">All customers</option>' +
+        customerNames.map((name) =>
           `<option value="${escapeHtml(name.toLowerCase())}">${escapeHtml(name)}</option>`
         ).join("");
-      projectFilter.value = current;
+      customerFilter.value = current;
     }
     const categoryFilter = document.querySelector("[data-category-filter]");
     if (categoryFilter) {
