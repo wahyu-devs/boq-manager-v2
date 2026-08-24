@@ -593,7 +593,7 @@
         numFmt: moneyFormat,
         border: thinHorizontalBorder(),
       });
-      sheet.getRow(rowNumber).height = 27;
+      sheet.getRow(rowNumber).height = 21;
     }
 
     if (data.document.notes) {

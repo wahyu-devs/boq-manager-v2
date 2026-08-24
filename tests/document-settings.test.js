@@ -125,6 +125,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   [
     "border-top: 1px solid #dce2e8;",
     "border-bottom: 1px solid #dce2e8;",
+    "min-height: 30px;",
     "font-size: 13px;",
     "text-align: center;",
     "font-size: inherit;",
@@ -137,8 +138,18 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   );
   assertIncludes(
     pdfScript,
-    'doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {',
+    'doc.text("Grand Total", totalX + labelWidth / 2, totalTextY, {',
     "PDF must center the title-case Grand Total label",
+  );
+  assertIncludes(
+    pdfScript,
+    "minCellHeight: CATEGORY_ROW_HEIGHT,",
+    "PDF category rows must use the shared document row height",
+  );
+  assertIncludes(
+    pdfScript,
+    "const totalHeight = CATEGORY_ROW_HEIGHT;",
+    "PDF Grand Total must match the category row height",
   );
   assertIncludes(
     pdfScript,
@@ -176,9 +187,17 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   const wordBorderCount = (
     wordTotalSource.match(/borders: horizontalBorders\(\),/g) || []
   ).length;
-  if (wordSizeCount !== 2 || wordBorderCount !== 2) {
+  if (
+    wordSizeCount !== 2 || wordBorderCount !== 2 ||
+    !wordTotalSource.includes("height: categoryRowHeight(),")
+  ) {
     throw new Error("Word Grand Total cells must share font size and borders");
   }
+  assertIncludes(
+    wordScript,
+    "height: categoryRowHeight(),\n          children: [textCell(category, {",
+    "Word category and Grand Total rows must share one height",
+  );
   assertIncludes(
     excelScript,
     '"Grand Total",\n        {',
@@ -202,4 +221,9 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   if (excelSizeCount !== 2 || excelBorderCount !== 2) {
     throw new Error("Excel Grand Total cells must share font size and borders");
   }
+  assertIncludes(
+    excelTotalSource,
+    "sheet.getRow(rowNumber).height = 21;",
+    "Excel Grand Total must match the category row height",
+  );
 });

@@ -2235,7 +2235,7 @@
 .pdf-preview-total {
   display: grid;
   width: 39.3%;
-  min-height: 40px;
+  min-height: 30px;
   grid-template-columns: 58.1% 41.9%;
   align-items: center;
   margin: 23px 0 0 auto;
