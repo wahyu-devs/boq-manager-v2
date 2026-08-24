@@ -571,7 +571,7 @@
           fill: COLORS.highlight,
           color: COLORS.primaryDark,
           align: "center",
-          size: 12,
+          size: 11,
           border: thinHorizontalBorder(),
         },
       );
@@ -589,7 +589,7 @@
         fill: COLORS.highlight,
         color: COLORS.primaryDark,
         align: "right",
-        size: 12,
+        size: 11,
         numFmt: moneyFormat,
         border: thinHorizontalBorder(),
       });

@@ -125,7 +125,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   [
     "border-top: 1px solid #dce2e8;",
     "border-bottom: 1px solid #dce2e8;",
-    "font-size: 14px;",
+    "font-size: 13px;",
     "text-align: center;",
     "font-size: inherit;",
   ].forEach((rule) =>
@@ -153,7 +153,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   const pdfTotalStart = pdfScript.indexOf("function drawSummary(");
   const pdfTotalEnd = pdfScript.indexOf("const notes =", pdfTotalStart);
   const pdfTotalSource = pdfScript.slice(pdfTotalStart, pdfTotalEnd);
-  if ((pdfTotalSource.match(/setFontSize\(10\.5\)/g) || []).length !== 1) {
+  if ((pdfTotalSource.match(/setFontSize\(10\.25\)/g) || []).length !== 1) {
     throw new Error("PDF Grand Total label and amount must share one font size");
   }
   assertIncludes(
@@ -172,7 +172,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
     wordTotalStart,
   );
   const wordTotalSource = wordScript.slice(wordTotalStart, wordTotalEnd);
-  const wordSizeCount = (wordTotalSource.match(/size: 21,/g) || []).length;
+  const wordSizeCount = (wordTotalSource.match(/size: 20,/g) || []).length;
   const wordBorderCount = (
     wordTotalSource.match(/borders: horizontalBorders\(\),/g) || []
   ).length;
@@ -186,7 +186,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   );
   assertIncludes(
     excelScript,
-    'align: "center",\n          size: 12,\n          border: thinHorizontalBorder(),',
+    'align: "center",\n          size: 11,\n          border: thinHorizontalBorder(),',
     "Excel must center and border the Grand Total label",
   );
   const excelTotalStart = excelScript.indexOf("if (display.showPricing) {");
@@ -195,7 +195,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
     excelTotalStart,
   );
   const excelTotalSource = excelScript.slice(excelTotalStart, excelTotalEnd);
-  const excelSizeCount = (excelTotalSource.match(/size: 12,/g) || []).length;
+  const excelSizeCount = (excelTotalSource.match(/size: 11,/g) || []).length;
   const excelBorderCount = (
     excelTotalSource.match(/border: thinHorizontalBorder\(\),/g) || []
   ).length;

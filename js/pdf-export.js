@@ -345,7 +345,7 @@
         y + totalHeight,
       );
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
+      doc.setFontSize(10.25);
       doc.setTextColor(...COLORS.heading);
       doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {
         align: "center",
