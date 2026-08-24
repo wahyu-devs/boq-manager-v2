@@ -97,6 +97,11 @@
     };
   }
 
+  function thinHorizontalBorder() {
+    const edge = { style: "thin", color: { argb: COLORS.border } };
+    return { top: edge, bottom: edge };
+  }
+
   function inputCellBorder() {
     const edge = { style: "thin", color: { argb: COLORS.borderStrong } };
     return { top: edge, right: edge, bottom: edge, left: edge };
@@ -335,10 +340,7 @@
       color: COLORS.primaryDark,
       size: 9,
     });
-    row.getCell(1).border = {
-      top: { style: "thin", color: { argb: COLORS.border } },
-      bottom: { style: "thin", color: { argb: COLORS.border } },
-    };
+    row.getCell(1).border = thinHorizontalBorder();
   }
 
   function addQuotationHeader(workbook, sheet, data, columnCount, logo) {
@@ -563,13 +565,14 @@
         `${totalLabelStart}${rowNumber}:${
           columnLetter(columns.length - 1)
         }${rowNumber}`,
-        "GRAND TOTAL",
+        "Grand Total",
         {
           bold: true,
           fill: COLORS.highlight,
           color: COLORS.primaryDark,
-          align: "right",
-          size: 10,
+          align: "center",
+          size: 12,
+          border: thinHorizontalBorder(),
         },
       );
       const totalCell = sheet.getCell(`${totalColumn}${rowNumber}`);
@@ -588,6 +591,7 @@
         align: "right",
         size: 12,
         numFmt: moneyFormat,
+        border: thinHorizontalBorder(),
       });
       sheet.getRow(rowNumber).height = 27;
     }

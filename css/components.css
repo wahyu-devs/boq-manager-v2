@@ -2239,21 +2239,23 @@
   grid-template-columns: 58.1% 41.9%;
   align-items: center;
   margin: 23px 0 0 auto;
+  border-top: 1px solid #dce2e8;
+  border-bottom: 1px solid #dce2e8;
   background: #e9f1f7;
   color: #2d6089;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .pdf-preview-total > span {
   padding: 0 10px;
-  text-align: right;
-  text-transform: uppercase;
+  text-align: center;
 }
 
 .pdf-preview-total > strong {
   padding: 0 8px;
   color: #2d6089;
-  font-size: 14px;
+  font-size: inherit;
 }
 
 @media print {

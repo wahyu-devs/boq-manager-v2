@@ -335,13 +335,21 @@
 
       doc.setFillColor(...COLORS.primarySoft);
       doc.rect(totalX, y, totalWidth, totalHeight, "F");
+      doc.setDrawColor(...COLORS.border);
+      doc.setLineWidth(0.2);
+      doc.line(totalX, y, totalX + totalWidth, y);
+      doc.line(
+        totalX,
+        y + totalHeight,
+        totalX + totalWidth,
+        y + totalHeight,
+      );
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.25);
-      doc.setTextColor(...COLORS.heading);
-      doc.text("GRAND TOTAL", totalX + labelWidth - 2, y + 5.8, {
-        align: "right",
-      });
       doc.setFontSize(10.5);
+      doc.setTextColor(...COLORS.heading);
+      doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {
+        align: "center",
+      });
       doc.text(total.symbol, amountX, y + 5.8);
       doc.text(total.value, amountRightX, y + 5.8, {
         align: "right",

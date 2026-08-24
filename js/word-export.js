@@ -53,6 +53,20 @@
     };
   }
 
+  function horizontalBorders() {
+    const edge = {
+      style: window.docx.BorderStyle.SINGLE,
+      size: 2,
+      color: COLORS.border,
+    };
+    return {
+      top: edge,
+      bottom: edge,
+      left: noBorder(),
+      right: noBorder(),
+    };
+  }
+
   function margins(value = CELL_PADDING) {
     return { top: value, bottom: value, left: value, right: value };
   }
@@ -465,14 +479,15 @@
       }));
     }
     children.push(
-      textCell("GRAND TOTAL", {
+      textCell("Grand Total", {
         width: labelWidth,
         columnSpan: amountIndex - labelStart,
         fill: COLORS.primarySoft,
         color: COLORS.heading,
         bold: true,
-        size: 18,
-        alignment: window.docx.AlignmentType.RIGHT,
+        size: 21,
+        alignment: window.docx.AlignmentType.CENTER,
+        borders: horizontalBorders(),
       }),
       currencyCell(
         data.document.totalSelling,
@@ -484,6 +499,7 @@
           color: COLORS.heading,
           bold: true,
           size: 21,
+          borders: horizontalBorders(),
         },
       ),
     );
