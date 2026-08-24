@@ -10,7 +10,6 @@
   const CELL_PADDING = Math.round(
     customerDocument.layout.tableCellPaddingMm * TWIPS_PER_MM,
   );
-  const CATEGORY_ROW_HEIGHT = mmToTwips(8);
   const COLORS = customerDocument.palette;
 
   function mmToTwips(value) {
@@ -70,13 +69,6 @@
 
   function margins(value = CELL_PADDING) {
     return { top: value, bottom: value, left: value, right: value };
-  }
-
-  function categoryRowHeight() {
-    return {
-      value: CATEGORY_ROW_HEIGHT,
-      rule: window.docx.HeightRule.EXACT,
-    };
   }
 
   function run(text, options = {}) {
@@ -178,14 +170,10 @@
   }
 
   function currencyCell(value, currency, width, settings, options = {}) {
-    const { compact = false, ...cellOptions } = options;
-    const trailingParagraph = compact
-      ? paragraph([run("", { size: 2 })], { line: 20 })
-      : paragraph([run("", { size: 2 })]);
     return cell([
-      accountingTable(value, currency, width, settings, cellOptions),
-      trailingParagraph,
-    ], { ...cellOptions, width });
+      accountingTable(value, currency, width, settings, options),
+      paragraph([run("", { size: 2 })]),
+    ], { ...options, width });
   }
 
   function imageType(source) {
@@ -498,7 +486,6 @@
         color: COLORS.heading,
         bold: true,
         size: 20,
-        margins: margins(mmToTwips(1)),
         alignment: window.docx.AlignmentType.CENTER,
         borders: horizontalBorders(),
       }),
@@ -512,17 +499,11 @@
           color: COLORS.heading,
           bold: true,
           size: 20,
-          compact: true,
-          margins: margins(mmToTwips(1)),
           borders: horizontalBorders(),
         },
       ),
     );
-    return new window.docx.TableRow({
-      cantSplit: true,
-      height: categoryRowHeight(),
-      children,
-    });
+    return new window.docx.TableRow({ cantSplit: true, children });
   }
 
   function grandTotalSpacerRow(columns) {
@@ -555,7 +536,6 @@
       rows.push(
         new window.docx.TableRow({
           cantSplit: true,
-          height: categoryRowHeight(),
           children: [textCell(category, {
             columnSpan: columns.length,
             fill: COLORS.primarySoft,
@@ -563,7 +543,6 @@
             bold: true,
             size: 16,
             alignment: window.docx.AlignmentType.LEFT,
-            margins: margins(mmToTwips(1.5)),
             borders: bottomBorder(),
           })],
         }),

@@ -19,7 +19,6 @@
   const PAGE_MARGIN = customerDocument.layout.pageMarginMm;
   const TABLE_CELL_PADDING = customerDocument.layout.tableCellPaddingMm;
   const TOTAL_COLUMN_WIDTH = customerDocument.layout.totalColumnWidthMm;
-  const CATEGORY_ROW_HEIGHT = 8;
 
   function imageType(source) {
     return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
@@ -214,7 +213,6 @@
           textColor: COLORS.heading,
           fontStyle: "bold",
           halign: "left",
-          minCellHeight: CATEGORY_ROW_HEIGHT,
         },
       }]);
       data.items.filter((item) =>
@@ -324,7 +322,7 @@
     const totalX = pageWidth - PAGE_MARGIN - totalWidth;
     const amountRightX = pageWidth - PAGE_MARGIN - TABLE_CELL_PADDING;
     const amountX = totalX + labelWidth + TABLE_CELL_PADDING;
-    const totalHeight = CATEGORY_ROW_HEIGHT;
+    const totalHeight = 9;
     let y = startY;
     if (showPricing) {
       y = ensureSpace(doc, y, totalHeight, contentBottom);
@@ -349,12 +347,11 @@
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.25);
       doc.setTextColor(...COLORS.heading);
-      const totalTextY = y + totalHeight / 2 + 1.25;
-      doc.text("Grand Total", totalX + labelWidth / 2, totalTextY, {
+      doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {
         align: "center",
       });
-      doc.text(total.symbol, amountX, totalTextY);
-      doc.text(total.value, amountRightX, totalTextY, {
+      doc.text(total.symbol, amountX, y + 5.8);
+      doc.text(total.value, amountRightX, y + 5.8, {
         align: "right",
       });
       y += totalHeight;
