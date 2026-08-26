@@ -168,7 +168,7 @@
     if (typeof value === "object") return 1;
     const charactersPerLine = Math.max(
       4,
-      Math.floor(Number(width || 8.43) * 0.9),
+      Math.floor(Number(width || 8.43) * 1.2),
     );
     return String(value).split(/\r?\n/).reduce((total, line) =>
       total + Math.max(1, Math.ceil(line.length / charactersPerLine)), 0);
@@ -182,6 +182,7 @@
       1,
       ...cells.map(({ value, width }) => wrappedLineCount(value, width)),
     );
+    if (lines <= 1) return minimum;
     return Math.max(minimum, lines * lineHeight + padding);
   }
 

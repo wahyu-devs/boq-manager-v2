@@ -22,6 +22,16 @@ Deno.test("estimates Excel row height from wrapped content", () => {
   );
   assertIncludes(
     helperSource,
+    "Math.floor(Number(width || 8.43) * 1.2)",
+    "wrap estimation must account for the smaller 9pt worksheet font",
+  );
+  assertIncludes(
+    helperSource,
+    "if (lines <= 1) return minimum;",
+    "single-line rows must retain their original compact height",
+  );
+  assertIncludes(
+    helperSource,
     "return Math.max(minimum, lines * lineHeight + padding);",
     "row height must retain a compact minimum and expand for wrapping",
   );
