@@ -1253,18 +1253,31 @@ Deno.test("marks an issued BOQ as won without changing its revision", () => {
     }],
   });
   equal(
-    store.markBoqWon(draft.id),
+    store.markBoqWon(draft.id, { customerPoNumber: "PO-DRAFT" }),
     null,
     "draft BOQ cannot be marked won",
   );
   const issued = store.issueBoq(draft, { note: "Initial issue" });
   const issuedRevision = JSON.stringify(issued.revisions[0]);
+  equal(
+    store.markBoqWon(issued.id, { customerPoNumber: "" }),
+    null,
+    "customer PO number is required",
+  );
   const won = store.markBoqWon(
     issued.id,
-    new Date("2026-08-26T08:30:00.000Z"),
+    {
+      customerPoNumber: "  PO-CUSTOMER-001  ",
+      currentDate: new Date("2026-08-26T08:30:00.000Z"),
+    },
   );
   equal(won.status, "Won", "issued BOQ becomes won");
   equal(won.wonAt, "2026-08-26T08:30:00.000Z", "won timestamp is stored");
+  equal(
+    won.customerPoNumber,
+    "PO-CUSTOMER-001",
+    "customer PO number is trimmed and stored",
+  );
   equal(won.revisions.length, 1, "won transition creates no revision");
   equal(
     JSON.stringify(won.revisions[0]),
@@ -1286,16 +1299,45 @@ Deno.test("marks an issued BOQ as won without changing its revision", () => {
     null,
     "won BOQ cannot create a revision",
   );
-  equal(store.markBoqWon(won.id), null, "won transition is idempotent");
+  equal(
+    store.markBoqWon(won.id, { customerPoNumber: "PO-CUSTOMER-001" }),
+    null,
+    "won transition is idempotent",
+  );
   equal(
     store.voidLatestRevision(won.id, "Not allowed while won"),
     null,
     "won BOQ revision cannot be voided",
   );
 
-  const reverted = store.revertBoqToIssued(won.id);
+  equal(
+    store.updateBoqCustomerPoNumber(won.id, ""),
+    null,
+    "empty customer PO update is rejected",
+  );
+  const updatedWon = store.updateBoqCustomerPoNumber(
+    won.id,
+    "PO-CUSTOMER-002",
+  );
+  equal(
+    updatedWon.customerPoNumber,
+    "PO-CUSTOMER-002",
+    "customer PO can be corrected while won",
+  );
+  equal(
+    JSON.stringify(updatedWon.revisions[0]),
+    issuedRevision,
+    "editing customer PO does not change the issued revision",
+  );
+
+  const reverted = store.revertBoqToIssued(updatedWon.id);
   equal(reverted.status, "Issued", "won BOQ can return to issued");
   equal(reverted.wonAt, undefined, "reverting clears the won timestamp");
+  equal(
+    reverted.customerPoNumber,
+    undefined,
+    "reverting clears the customer PO number",
+  );
   equal(
     JSON.stringify(reverted.revisions[0]),
     issuedRevision,
@@ -1324,7 +1366,10 @@ Deno.test("marks an issued BOQ as won without changing its revision", () => {
   });
   const legacyWon = store.markBoqWon(
     legacyIssued.id,
-    new Date("2026-08-26T09:00:00.000Z"),
+    {
+      customerPoNumber: "PO-LEGACY-001",
+      currentDate: new Date("2026-08-26T09:00:00.000Z"),
+    },
   );
   equal(legacyWon.status, "Won", "legacy issued BOQ can become won");
   equal(

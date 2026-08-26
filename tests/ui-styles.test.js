@@ -115,7 +115,7 @@ Deno.test("shows an icon on every Create Revision action", () => {
 
 Deno.test("exposes the Issued to Won editor workflow", () => {
   const markWonCount = editorHtml.split(
-    'data-confirm-event="boq:mark-won"',
+    "data-mark-won",
   ).length - 1;
   if (markWonCount !== 2) {
     throw new Error(`expected 2 Mark as Won actions, received ${markWonCount}`);
@@ -130,6 +130,16 @@ Deno.test("exposes the Issued to Won editor workflow", () => {
   }
   assertIncludes(
     editorHtml,
+    'name="customerPoNumber"',
+    "Mark as Won must collect a customer PO number",
+  );
+  assertIncludes(
+    editorHtml,
+    "data-edit-customer-po",
+    "Won BOQs must allow the customer PO number to be corrected",
+  );
+  assertIncludes(
+    editorHtml,
     'data-confirm-event="boq:revert-issued"',
     "Won BOQs must offer Revert to Issued",
   );
@@ -140,8 +150,13 @@ Deno.test("exposes the Issued to Won editor workflow", () => {
   );
   assertIncludes(
     boqSource,
-    "store.markBoqWon(currentRecordId)",
+    "store.markBoqWon(currentRecordId, {",
     "Mark as Won must use the store transition",
+  );
+  assertIncludes(
+    boqSource,
+    "store.updateBoqCustomerPoNumber(currentRecordId, customerPoNumber)",
+    "Edit Customer PO must update parent-level commercial metadata",
   );
   assertIncludes(
     boqSource,

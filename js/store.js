@@ -231,6 +231,9 @@
       workingRevision,
       hasDraftChanges: Boolean(value.hasDraftChanges && workingRevision !== null),
       wonAt: isWonStatus(value.status) ? isoTimestamp(value.wonAt) : undefined,
+      customerPoNumber: isWonStatus(value.status)
+        ? String(value.customerPoNumber || "").trim()
+        : undefined,
     };
   }
 
@@ -472,12 +475,15 @@
       hasDraftChanges: false,
       issuedAt,
       wonAt: undefined,
+      customerPoNumber: undefined,
       createdAt: existing?.createdAt || record?.createdAt,
     });
   }
 
-  function markBoqWon(id, currentDate = new Date()) {
+  function markBoqWon(id, metadata = {}) {
     let record = get("boqs", id);
+    const customerPoNumber = String(metadata.customerPoNumber || "").trim();
+    if (!customerPoNumber || customerPoNumber.length > 100) return null;
     if (record?.status === "Issued" && !record.revisions.length) {
       record = migratedRevisionRecord([{
         record,
@@ -488,7 +494,7 @@
         record.workingRevision !== null || !latestIssuedRevision(record)) {
       return null;
     }
-    const date = new Date(currentDate);
+    const date = new Date(metadata.currentDate || new Date());
     const wonAt = Number.isNaN(date.getTime())
       ? new Date().toISOString()
       : date.toISOString();
@@ -496,6 +502,21 @@
       ...record,
       status: "Won",
       wonAt,
+      customerPoNumber,
+    });
+  }
+
+  function updateBoqCustomerPoNumber(id, value) {
+    const record = get("boqs", id);
+    const customerPoNumber = String(value || "").trim();
+    if (!record || record.status !== "Won" ||
+        record.workingRevision !== null || !customerPoNumber ||
+        customerPoNumber.length > 100) {
+      return null;
+    }
+    return save("boqs", {
+      ...record,
+      customerPoNumber,
     });
   }
 
@@ -509,6 +530,7 @@
       ...record,
       status: "Issued",
       wonAt: undefined,
+      customerPoNumber: undefined,
     });
   }
 
@@ -605,6 +627,7 @@
       draftBaseRevisionNumber: null,
       hasDraftChanges: false,
       wonAt: undefined,
+      customerPoNumber: undefined,
       createdAt: record.createdAt,
     });
   }
@@ -640,6 +663,7 @@
       draftBaseRevisionNumber: previous ? null : latest.number,
       hasDraftChanges: !previous,
       wonAt: undefined,
+      customerPoNumber: undefined,
       createdAt: record.createdAt,
     });
   }
@@ -1698,6 +1722,7 @@
     validateBoqForIssue,
     issueBoq,
     markBoqWon,
+    updateBoqCustomerPoNumber,
     revertBoqToIssued,
     prepareRevisionDraft,
     createRevisionDraft,

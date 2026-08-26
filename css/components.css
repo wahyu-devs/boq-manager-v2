@@ -427,6 +427,15 @@
   white-space: nowrap;
 }
 
+.boq-register-table {
+  min-width: 1040px;
+}
+
+.data-table .boq-po-cell {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
 .data-table .cell-secondary {
   display: block;
   margin-top: 2px;

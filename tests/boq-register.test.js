@@ -31,6 +31,26 @@ Deno.test("filters the BOQ Register by customer", () => {
     "BOQ Register must render the Won semantic status",
   );
   assertIncludes(
+    registerHtml,
+    'data-sort-key="customerPo"',
+    "BOQ Register must provide Customer PO sorting",
+  );
+  assertIncludes(
+    recordsScript,
+    "record.customerPoNumber,",
+    "Customer PO must be included in BOQ search data",
+  );
+  assertIncludes(
+    recordsScript,
+    'data-customer-po="${escapeHtml(record.customerPoNumber || "")}"',
+    "desktop BOQ rows must include the Customer PO sort value",
+  );
+  assertIncludes(
+    recordsScript,
+    "<dt>Customer PO</dt><dd>",
+    "mobile BOQ cards must display the Customer PO number",
+  );
+  assertIncludes(
     recordsScript,
     'data-customer="${escapeHtml((record.customerName || "").toLowerCase())}"',
     "desktop BOQ rows must include the customer filter value",

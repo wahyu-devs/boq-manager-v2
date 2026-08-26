@@ -70,7 +70,7 @@
                 </svg><input
                   class="input"
                   type="search"
-                  placeholder="Search BOQ, project, or customer"
+                  placeholder="Search BOQ, project, customer, or PO"
                   data-table-search
                 ></label>
               <div class="toolbar-group">
@@ -93,7 +93,7 @@
               </div>
             </div>
             <div class="table-wrap" data-records-table hidden>
-              <table class="data-table">
+              <table class="data-table boq-register-table">
                 <thead>
                   <tr>
                     <th>
@@ -116,6 +116,15 @@
                     </th>
                     <th>Customer</th>
                     <th>Status</th>
+                    <th class="boq-po-cell">
+                      <button
+                        class="sort-button"
+                        type="button"
+                        data-sort-key="customerPo"
+                      >
+                        Customer PO
+                      </button>
+                    </th>
                     <th class="align-right">
                       <button
                         class="sort-button"

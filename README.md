@@ -14,7 +14,7 @@ It is designed as a practical internal workspace for sales, estimation, procurem
 - Per-item quantity, unit COGS, margin, and selling price controls.
 - Configurable category subtotals and customer-facing price visibility.
 - Persistent financial summary for total COGS, total selling, commission, margin value, and margin percentage.
-- Draft, Issued, and Won workflow with locked revision snapshots and revision history.
+- Draft, Issued, and Won workflow with customer PO metadata, locked revision snapshots, and revision history.
 - Product and customer directories with related BOQ information.
 - Customer PDF preview and document export to Excel, PDF, and Word.
 - Company, commercial, numbering, document, tax, and user preference settings.

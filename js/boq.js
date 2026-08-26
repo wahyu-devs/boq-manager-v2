@@ -298,6 +298,9 @@
     document.querySelectorAll("[data-revert-issued]").forEach((button) =>
       button.hidden = !won
     );
+    document.querySelectorAll("[data-edit-customer-po]").forEach((button) =>
+      button.hidden = !won
+    );
     document.querySelectorAll("[data-open-revision-history]").forEach((button) =>
       button.hidden = !currentRecord?.revisions?.length
     );
@@ -1520,6 +1523,19 @@
       renderRevisionHistory();
       window.BOQModal.open("revision-history-modal");
     }
+    const markWon = event.target.closest("[data-mark-won]");
+    if (markWon && isRevisableIssued()) {
+      openCustomerPoModal("mark");
+    }
+    const editCustomerPo = event.target.closest("[data-edit-customer-po]");
+    if (editCustomerPo && isWonLocked()) {
+      const menu = editCustomerPo.closest(".dropdown-menu");
+      if (menu) {
+        menu.hidden = true;
+        menu.previousElementSibling?.setAttribute("aria-expanded", "false");
+      }
+      openCustomerPoModal("edit");
+    }
     if (event.target.closest("[data-compare-revisions]")) {
       renderRevisionComparison(
         document.querySelector("[data-compare-from]").value,
@@ -1659,12 +1675,63 @@
     });
   }
 
-  document.addEventListener("boq:mark-won", () => {
-    applyStatusTransition(
-      store.markBoqWon(currentRecordId),
-      "BOQ marked as Won.",
-    );
-  });
+  function openCustomerPoModal(mode) {
+    const form = document.querySelector("[data-won-status-form]");
+    if (!form) return;
+    const editing = mode === "edit";
+    form.reset();
+    form.dataset.mode = editing ? "edit" : "mark";
+    form.elements.customerPoNumber.setCustomValidity("");
+    form.elements.customerPoNumber.value = editing
+      ? currentRecord?.customerPoNumber || ""
+      : "";
+    document.querySelector("[data-won-status-title]").textContent = editing
+      ? "Edit Customer PO"
+      : "Mark BOQ as Won?";
+    document.querySelector("[data-won-status-description]").textContent = editing
+      ? "Update the customer PO reference without changing the issued revision."
+      : "Record the customer PO before confirming this BOQ as Won.";
+    document.querySelector("[data-won-status-submit]").textContent = editing
+      ? "Save Customer PO"
+      : "Mark as Won";
+    window.BOQModal.open("won-status-modal");
+  }
+
+  document.querySelector("[data-won-status-form]")?.addEventListener(
+    "submit",
+    (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const input = form.elements.customerPoNumber;
+      input.setCustomValidity("");
+      if (!form.checkValidity()) return form.reportValidity();
+      const customerPoNumber = input.value.trim();
+      if (!customerPoNumber) {
+        input.setCustomValidity("Enter the customer PO number.");
+        input.reportValidity();
+        return;
+      }
+      const editing = form.dataset.mode === "edit";
+      const record = editing
+        ? store.updateBoqCustomerPoNumber(currentRecordId, customerPoNumber)
+        : store.markBoqWon(currentRecordId, {
+          customerPoNumber,
+          currentDate: new Date(),
+        });
+      if (!record) {
+        window.BOQApp.showToast(
+          "The customer PO could not be saved. Reload and try again.",
+          "error",
+        );
+        return;
+      }
+      window.BOQModal.close(document.getElementById("won-status-modal"));
+      applyStatusTransition(
+        record,
+        editing ? "Customer PO updated." : "BOQ marked as Won.",
+      );
+    },
+  );
 
   document.addEventListener("boq:revert-issued", () => {
     applyStatusTransition(

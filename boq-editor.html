@@ -66,12 +66,6 @@
                 class="button button-primary"
                 type="button"
                 data-mark-won
-                data-confirm
-                data-confirm-event="boq:mark-won"
-                data-confirm-title="Mark BOQ as Won?"
-                data-confirm-message="This confirms that a customer PO has been received. The issued BOQ will remain locked."
-                data-confirm-label="Mark as Won"
-                data-confirm-tone="primary"
                 hidden
               >
                 <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
@@ -132,11 +126,17 @@
                   <button
                     class="menu-item"
                     type="button"
+                    data-edit-customer-po
+                    hidden
+                  >Edit Customer PO</button>
+                  <button
+                    class="menu-item"
+                    type="button"
                     data-revert-issued
                     data-confirm
                     data-confirm-event="boq:revert-issued"
                     data-confirm-title="Revert BOQ to Issued?"
-                    data-confirm-message="This removes the Won status without changing the issued revision."
+                    data-confirm-message="This removes the Won status and customer PO number without changing the issued revision."
                     data-confirm-label="Revert to Issued"
                     data-confirm-tone="primary"
                     hidden
@@ -501,12 +501,6 @@
           class="button button-primary"
           type="button"
           data-mark-won
-          data-confirm
-          data-confirm-event="boq:mark-won"
-          data-confirm-title="Mark BOQ as Won?"
-          data-confirm-message="This confirms that a customer PO has been received. The issued BOQ will remain locked."
-          data-confirm-label="Mark as Won"
-          data-confirm-tone="primary"
           hidden
         >
           <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
@@ -565,6 +559,38 @@
         <footer class="modal-footer">
           <button class="button button-secondary" type="button" data-close-modal>Close</button>
         </footer>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="won-status-modal" hidden>
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="won-status-title"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="won-status-title" data-won-status-title>Mark BOQ as Won?</h2>
+            <p class="muted text-sm" data-won-status-description>Record the customer PO before confirming this BOQ as Won.</p>
+          </div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Close customer PO form">×</button>
+        </header>
+        <form data-won-status-form>
+          <div class="modal-body stack-md">
+            <label class="field"><span class="field-label">Customer PO Number</span><input
+                class="input"
+                name="customerPoNumber"
+                maxlength="100"
+                autocomplete="off"
+                placeholder="Enter the customer PO number"
+                required
+              ><span class="field-hint">Use the exact reference shown on the customer's purchase order.</span></label>
+          </div>
+          <footer class="modal-footer">
+            <button class="button button-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="button button-primary" type="submit" data-won-status-submit>Mark as Won</button>
+          </footer>
+        </form>
       </section>
     </div>
     <div class="modal-backdrop" id="issue-revision-modal" hidden>
