@@ -1113,10 +1113,10 @@
         ];
         values.forEach((value, index) => {
           setCell(sheet.getCell(rowNumber, index + 1), value, {
-            align: index === 0 || index === 4
-              ? "right"
-              : index === 5
+            align: index === 0 || index === 5
               ? "center"
+              : index === 4
+              ? "right"
               : "left",
             border: thinBottomBorder(),
             size: 9,

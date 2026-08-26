@@ -103,6 +103,11 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
     "sheet.mergeCells(rowNumber, 3, rowNumber, 4);",
     "each Item value must span the matching physical columns",
   );
+  assertIncludes(
+    sheetSource,
+    'align: index === 0 || index === 5\n              ? "center"',
+    "Purchasing row numbers and units must be centered",
+  );
 });
 
 Deno.test("excludes Services while preserving purchasing item order", () => {
