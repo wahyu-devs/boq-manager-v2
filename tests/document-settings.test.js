@@ -143,7 +143,7 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   );
   assertIncludes(
     previewTotalSource,
-    "padding: 5px 0;",
+    "padding: 6px 0;",
     "Customer Preview Grand Total height must follow its content and padding",
   );
   if (previewTotalSource.includes("height:")) {
