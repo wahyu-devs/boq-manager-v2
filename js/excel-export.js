@@ -163,6 +163,28 @@
     if (options.numFmt) cell.numFmt = options.numFmt;
   }
 
+  function wrappedLineCount(value, width) {
+    if (value === null || value === undefined || value === "") return 1;
+    if (typeof value === "object") return 1;
+    const charactersPerLine = Math.max(
+      4,
+      Math.floor(Number(width || 8.43) * 0.9),
+    );
+    return String(value).split(/\r?\n/).reduce((total, line) =>
+      total + Math.max(1, Math.ceil(line.length / charactersPerLine)), 0);
+  }
+
+  function wrappedRowHeight(cells, options = {}) {
+    const minimum = Number(options.minimum || 20);
+    const lineHeight = Number(options.lineHeight || 12);
+    const padding = Number(options.padding || 6);
+    const lines = Math.max(
+      1,
+      ...cells.map(({ value, width }) => wrappedLineCount(value, width)),
+    );
+    return Math.max(minimum, lines * lineHeight + padding);
+  }
+
   function mergeValue(sheet, range, value, options = {}) {
     sheet.mergeCells(range);
     setCell(sheet.getCell(range.split(":")[0]), value, options);
@@ -362,7 +384,14 @@
   function styleCategoryRow(sheet, rowNumber, columnCount) {
     sheet.mergeCells(rowNumber, 1, rowNumber, columnCount);
     const row = sheet.getRow(rowNumber);
-    row.height = 21;
+    const combinedWidth = Array.from(
+      { length: columnCount },
+      (_, index) => Number(sheet.getColumn(index + 1).width || 8.43),
+    ).reduce((total, width) => total + width, 0);
+    row.height = wrappedRowHeight([{
+      value: row.getCell(1).value,
+      width: combinedWidth,
+    }], { minimum: 21 });
     setCell(row.getCell(1), row.getCell(1).value, {
       bold: true,
       fill: COLORS.primarySoft,
@@ -569,7 +598,14 @@
               size: 9,
             });
           });
-          sheet.getRow(rowNumber).height = 20;
+          sheet.getRow(rowNumber).height = wrappedRowHeight(
+            columns.filter((column) =>
+              ["sku", "item", "unit"].includes(column.key)
+            ).map((column) => ({
+              value: values[column.key],
+              width: column.width,
+            })),
+          );
         },
       );
     });
@@ -818,7 +854,12 @@
           size: 9,
         });
       });
-      sheet.getRow(rowNumber).height = 20;
+      sheet.getRow(rowNumber).height = wrappedRowHeight([
+        { value: item.sku, width: 18 },
+        { value: item.item, width: 34 },
+        { value: item.category || "Uncategorized", width: 20 },
+        { value: item.unit, width: 11 },
+      ]);
     });
 
     if (!data.items.length) {
@@ -1081,7 +1122,11 @@
           });
         });
         sheet.mergeCells(rowNumber, 3, rowNumber, 4);
-        sheet.getRow(rowNumber).height = 20;
+        sheet.getRow(rowNumber).height = wrappedRowHeight([
+          { value: item.sku, width: 20 },
+          { value: item.item, width: 52 },
+          { value: item.unit, width: 12 },
+        ]);
       });
     });
 
@@ -1337,7 +1382,10 @@
         numFmt: "0.0%",
         size: 9,
       });
-      sheet.getRow(categoryRow).height = 20;
+      sheet.getRow(categoryRow).height = wrappedRowHeight([{
+        value: category,
+        width: 20,
+      }]);
     });
     if (!data.categories.length) {
       categoryRow += 1;
