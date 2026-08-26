@@ -935,17 +935,16 @@
     const sheet = targetSheet || workbook.addWorksheet("Purchasing");
     const purchasing = purchasingExportData(data);
     configureSheet(sheet, {
-      freezeRows: 10,
+      freezeRows: 11,
       orientation: "landscape",
     });
     sheet.columns = [
       { width: 7 },
       { width: 20 },
-      { width: 48 },
+      { width: 52 },
       { width: 10 },
       { width: 12 },
-      { width: 18 },
-      { width: 30 },
+      { width: 34 },
     ];
 
     const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
@@ -967,18 +966,18 @@
       size: 8,
       vertical: "top",
     });
-    mergeValue(sheet, "E1:G1", "PURCHASING MATERIAL LIST", {
+    mergeValue(sheet, "E1:F1", "PURCHASING MATERIAL LIST", {
       bold: true,
       color: COLORS.primaryDark,
       size: 14,
       align: "right",
     });
-    mergeValue(sheet, "E2:G2", documentReference(data.document), {
+    mergeValue(sheet, "E2:F2", documentReference(data.document), {
       bold: true,
       size: 10,
       align: "right",
     });
-    mergeValue(sheet, "E3:G3", "INTERNAL - FOR PURCHASING", {
+    mergeValue(sheet, "E3:F3", "INTERNAL - FOR PURCHASING", {
       bold: true,
       color: "FF9A641C",
       size: 8,
@@ -989,7 +988,7 @@
     sheet.getRow(3).height = hasLogo ? 22 : 24;
     if (hasLogo) sheet.getRow(4).height = 34;
     sheet.getRow(5).height = 4;
-    for (let column = 1; column <= 7; column += 1) {
+    for (let column = 1; column <= 6; column += 1) {
       sheet.getRow(5).getCell(column).fill = {
         type: "pattern",
         pattern: "solid",
@@ -1000,7 +999,6 @@
     const metadata = [
       ["A6:B6", "A7:B8", "CUSTOMER PO", data.document.customerPoNumber || "-"],
       ["C6:D6", "C7:D8", "PROJECT", data.document.projectName || "-"],
-      ["E6:F6", "E7:F8", "CUSTOMER", data.document.customerName || "-"],
     ];
     metadata.forEach(([labelRange, valueRange, label, value]) => {
       mergeValue(sheet, labelRange, label, {
@@ -1016,33 +1014,45 @@
         vertical: "top",
       });
     });
-    setCell(sheet.getCell("G6"), "WON DATE", {
+    mergeValue(sheet, "E6:F6", "PO DATE", {
       bold: true,
       color: COLORS.muted,
       fill: COLORS.surface,
       size: 8,
     });
-    sheet.mergeCells("G7:G8");
-    const wonDateCell = sheet.getCell("G7");
-    const wonDate = excelTimestampDate(data.document.wonAt);
-    setCell(wonDateCell, wonDate, {
+    sheet.mergeCells("E7:F8");
+    const poDateCell = sheet.getCell("E7");
+    const poDate = excelTimestampDate(data.document.wonAt);
+    setCell(poDateCell, poDate, {
       bold: true,
       fill: COLORS.surface,
       size: 10,
       vertical: "top",
-      numFmt: wonDate instanceof Date ? "dd mmm yyyy" : undefined,
+      numFmt: poDate instanceof Date ? "dd mmm yyyy" : undefined,
     });
     sheet.getRow(7).height = 18;
     sheet.getRow(8).height = 20;
+    mergeValue(sheet, "A9:B9", "CUSTOMER", {
+      bold: true,
+      color: COLORS.muted,
+      fill: COLORS.surface,
+      size: 8,
+    });
+    mergeValue(sheet, "C9:F9", data.document.customerName || "-", {
+      bold: true,
+      fill: COLORS.surface,
+      size: 10,
+    });
+    sheet.getRow(9).height = 21;
+    sheet.getRow(10).height = 4;
 
-    const headerRow = 10;
+    const headerRow = 11;
     const headers = [
       "No",
       "Part Number",
       "Item",
       "Qty",
       "Unit",
-      "Category",
       "Remarks",
     ];
     sheet.getRow(headerRow).values = headers;
@@ -1065,7 +1075,6 @@
           item.item || "",
           Number(item.qty || 0),
           item.unit || "",
-          category,
           "",
         ];
         values.forEach((value, index) => {
@@ -1085,14 +1094,14 @@
 
     if (!itemIndex) {
       rowNumber += 1;
-      mergeValue(sheet, `A${rowNumber}:G${rowNumber}`, "No purchasing items", {
+      mergeValue(sheet, `A${rowNumber}:F${rowNumber}`, "No purchasing items", {
         color: COLORS.muted,
         fill: COLORS.surface,
         size: 9,
       });
       sheet.getRow(rowNumber).height = 28;
     }
-    sheet.pageSetup.printArea = `A1:G${rowNumber}`;
+    sheet.pageSetup.printArea = `A1:F${rowNumber}`;
     sheet.pageSetup.printTitlesRow = `${headerRow}:${headerRow}`;
     sheet.headerFooter.oddFooter = `&L${
       documentReference(data.document)

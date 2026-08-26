@@ -53,10 +53,9 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
     '"Item"',
     '"Qty"',
     '"Unit"',
-    '"Category"',
     '"Remarks"',
     '"CUSTOMER PO"',
-    '"WON DATE"',
+    '"PO DATE"',
   ].forEach((value) =>
     assertIncludes(
       sheetSource,
@@ -77,6 +76,12 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
       throw new Error(`Purchasing sheet must not expose ${value}`);
     }
   });
+  if (sheetSource.includes('"Category"') ||
+      sheetSource.includes('"WON DATE"')) {
+    throw new Error(
+      "Purchasing must use category rows and label the customer PO date clearly",
+    );
+  }
 });
 
 Deno.test("excludes Services while preserving purchasing item order", () => {
