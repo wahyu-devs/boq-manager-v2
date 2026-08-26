@@ -82,6 +82,26 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
       "Purchasing must use category rows and label the customer PO date clearly",
     );
   }
+  assertIncludes(
+    sheetSource,
+    '["E6:F6", "E7:F8", "CUSTOMER", data.document.customerName || "-"],',
+    "Customer must remain in the original metadata row",
+  );
+  assertIncludes(
+    sheetSource,
+    'setCell(sheet.getCell("G6"), "PO DATE", {',
+    "PO Date must remain in the original right-side metadata block",
+  );
+  assertIncludes(
+    sheetSource,
+    "sheet.mergeCells(headerRow, 3, headerRow, 4);",
+    "the Item header must span two physical columns",
+  );
+  assertIncludes(
+    sheetSource,
+    "sheet.mergeCells(rowNumber, 3, rowNumber, 4);",
+    "each Item value must span the matching physical columns",
+  );
 });
 
 Deno.test("excludes Services while preserving purchasing item order", () => {
