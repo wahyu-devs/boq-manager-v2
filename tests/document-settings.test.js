@@ -101,6 +101,11 @@ Deno.test("keeps internal Excel sheets independent from customer pricing", () =>
     "addOverviewSheet(workbook, data, costing, overviewSheet, logo)",
     "the internal Overview sheet must still be generated",
   );
+  assertIncludes(
+    downloadSource,
+    "addPurchasingSheet(workbook, data, purchasingSheet, logo)",
+    "the internal Purchasing sheet must be generated independently of customer pricing",
+  );
 });
 
 Deno.test("balances the Excel BOQ header when pricing columns are hidden", () => {

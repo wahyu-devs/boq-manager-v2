@@ -16,7 +16,7 @@ It is designed as a practical internal workspace for sales, estimation, procurem
 - Persistent financial summary for total COGS, total selling, commission, margin value, and margin percentage.
 - Draft, Issued, and Won workflow with customer PO metadata, locked revision snapshots, and revision history.
 - Product and customer directories with related BOQ information.
-- Customer PDF preview and document export to Excel, PDF, and Word.
+- Customer PDF preview and document export to Excel, PDF, and Word, including a price-free Purchasing sheet in the internal estimation workbook.
 - Company, commercial, numbering, document, tax, and user preference settings.
 - Responsive application shell with intentionally designed light and dark themes.
 - Authenticated, user-scoped storage with background cloud synchronization.

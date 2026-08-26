@@ -70,6 +70,23 @@
     };
   }
 
+  function normalizeCategory(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function purchasingExportData(data) {
+    const items = (data.items || []).filter((item) =>
+      normalizeCategory(itemCategory(item)) !== "services"
+    );
+    const categories = (data.categories || []).filter((category) =>
+      normalizeCategory(category) !== "services" &&
+      items.some((item) =>
+        normalizeCategory(itemCategory(item)) === normalizeCategory(category)
+      )
+    );
+    return { items, categories };
+  }
+
   function currencyFormat(currency) {
     const symbols = { USD: "$", EUR: "€", GBP: "£", IDR: "Rp" };
     const symbol = String(symbols[currency] || currency).replaceAll('"', '""');
@@ -89,6 +106,18 @@
       12,
     ));
     return Number.isNaN(date.getTime()) ? value : date;
+  }
+
+  function excelTimestampDate(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return new Date(Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      12,
+    ));
   }
 
   function thinBottomBorder() {
@@ -902,6 +931,175 @@
     };
   }
 
+  function addPurchasingSheet(workbook, data, targetSheet, logo) {
+    const sheet = targetSheet || workbook.addWorksheet("Purchasing");
+    const purchasing = purchasingExportData(data);
+    configureSheet(sheet, {
+      freezeRows: 10,
+      orientation: "landscape",
+    });
+    sheet.columns = [
+      { width: 7 },
+      { width: 20 },
+      { width: 48 },
+      { width: 10 },
+      { width: 12 },
+      { width: 18 },
+      { width: 30 },
+    ];
+
+    const hasLogo = addWorkbookLogo(workbook, sheet, logo, {
+      col: 0.05,
+      row: 0.05,
+      width: HEADER_LOGO_WIDTH,
+      height: HEADER_LOGO_HEIGHT,
+    });
+    const companyNameRange = hasLogo ? "A3:D3" : "A1:D1";
+    const companyDetailsRange = hasLogo ? "A4:D4" : "A2:D3";
+    mergeValue(
+      sheet,
+      companyNameRange,
+      data.settings.companyName || "BOQ Manager",
+      { bold: true, color: COLORS.primaryDark, size: 15 },
+    );
+    mergeValue(sheet, companyDetailsRange, companyDetails(data.settings), {
+      color: COLORS.muted,
+      size: 8,
+      vertical: "top",
+    });
+    mergeValue(sheet, "E1:G1", "PURCHASING MATERIAL LIST", {
+      bold: true,
+      color: COLORS.primaryDark,
+      size: 14,
+      align: "right",
+    });
+    mergeValue(sheet, "E2:G2", documentReference(data.document), {
+      bold: true,
+      size: 10,
+      align: "right",
+    });
+    mergeValue(sheet, "E3:G3", "INTERNAL - FOR PURCHASING", {
+      bold: true,
+      color: "FF9A641C",
+      size: 8,
+      align: "right",
+    });
+    sheet.getRow(1).height = hasLogo ? 30 : 25;
+    sheet.getRow(2).height = hasLogo ? 24 : 18;
+    sheet.getRow(3).height = hasLogo ? 22 : 24;
+    if (hasLogo) sheet.getRow(4).height = 34;
+    sheet.getRow(5).height = 4;
+    for (let column = 1; column <= 7; column += 1) {
+      sheet.getRow(5).getCell(column).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: COLORS.primary },
+      };
+    }
+
+    const metadata = [
+      ["A6:B6", "A7:B8", "CUSTOMER PO", data.document.customerPoNumber || "-"],
+      ["C6:D6", "C7:D8", "PROJECT", data.document.projectName || "-"],
+      ["E6:F6", "E7:F8", "CUSTOMER", data.document.customerName || "-"],
+    ];
+    metadata.forEach(([labelRange, valueRange, label, value]) => {
+      mergeValue(sheet, labelRange, label, {
+        bold: true,
+        color: COLORS.muted,
+        fill: COLORS.surface,
+        size: 8,
+      });
+      mergeValue(sheet, valueRange, value, {
+        bold: true,
+        fill: COLORS.surface,
+        size: 10,
+        vertical: "top",
+      });
+    });
+    setCell(sheet.getCell("G6"), "WON DATE", {
+      bold: true,
+      color: COLORS.muted,
+      fill: COLORS.surface,
+      size: 8,
+    });
+    sheet.mergeCells("G7:G8");
+    const wonDateCell = sheet.getCell("G7");
+    const wonDate = excelTimestampDate(data.document.wonAt);
+    setCell(wonDateCell, wonDate, {
+      bold: true,
+      fill: COLORS.surface,
+      size: 10,
+      vertical: "top",
+      numFmt: wonDate instanceof Date ? "dd mmm yyyy" : undefined,
+    });
+    sheet.getRow(7).height = 18;
+    sheet.getRow(8).height = 20;
+
+    const headerRow = 10;
+    const headers = [
+      "No",
+      "Part Number",
+      "Item",
+      "Qty",
+      "Unit",
+      "Category",
+      "Remarks",
+    ];
+    sheet.getRow(headerRow).values = headers;
+    styleTableHeader(sheet, headerRow, headers.length);
+
+    let rowNumber = headerRow;
+    let itemIndex = 0;
+    purchasing.categories.forEach((category) => {
+      rowNumber += 1;
+      sheet.getCell(rowNumber, 1).value = category;
+      styleCategoryRow(sheet, rowNumber, headers.length);
+      purchasing.items.filter((item) =>
+        normalizeCategory(itemCategory(item)) === normalizeCategory(category)
+      ).forEach((item) => {
+        rowNumber += 1;
+        itemIndex += 1;
+        const values = [
+          itemIndex,
+          item.sku || "",
+          item.item || "",
+          Number(item.qty || 0),
+          item.unit || "",
+          category,
+          "",
+        ];
+        values.forEach((value, index) => {
+          setCell(sheet.getCell(rowNumber, index + 1), value, {
+            align: index === 0 || index === 3
+              ? "right"
+              : index === 4
+              ? "center"
+              : "left",
+            border: thinBottomBorder(),
+            size: 9,
+          });
+        });
+        sheet.getRow(rowNumber).height = 20;
+      });
+    });
+
+    if (!itemIndex) {
+      rowNumber += 1;
+      mergeValue(sheet, `A${rowNumber}:G${rowNumber}`, "No purchasing items", {
+        color: COLORS.muted,
+        fill: COLORS.surface,
+        size: 9,
+      });
+      sheet.getRow(rowNumber).height = 28;
+    }
+    sheet.pageSetup.printArea = `A1:G${rowNumber}`;
+    sheet.pageSetup.printTitlesRow = `${headerRow}:${headerRow}`;
+    sheet.headerFooter.oddFooter = `&L${
+      documentReference(data.document)
+    } - Purchasing&RPage &P of &N`;
+    return sheet;
+  }
+
   function addOverviewSheet(workbook, data, costing, targetSheet, logo) {
     const { calculateCategorySummary, calculateSummary } =
       window.BOQCalculations;
@@ -1172,9 +1370,11 @@
       const overviewSheet = workbook.addWorksheet("Overview");
       const quotationSheet = workbook.addWorksheet("BOQ");
       const costingSheet = workbook.addWorksheet("Costing");
+      const purchasingSheet = workbook.addWorksheet("Purchasing");
       const costing = addCostingSheet(workbook, data, costingSheet);
       addOverviewSheet(workbook, data, costing, overviewSheet, logo);
       addQuotationSheet(workbook, data, quotationSheet, logo, costing);
+      addPurchasingSheet(workbook, data, purchasingSheet, logo);
     } else {
       addQuotationSheet(workbook, data, undefined, logo);
     }

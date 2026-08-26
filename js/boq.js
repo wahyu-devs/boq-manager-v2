@@ -381,6 +381,8 @@
     let documentValue = {
       ...revision.document,
       status: isDraft ? "Draft" : "Issued",
+      customerPoNumber: currentRecord?.customerPoNumber || "",
+      wonAt: currentRecord?.wonAt || "",
       revisionNumber: revision.number,
       revisionLabel: visibleRevisionLabel(revision.label),
       revisionState: revision.state,
@@ -844,6 +846,8 @@
       date: document.querySelector("#boq-date").value,
       validUntil: document.querySelector("#boq-valid-until").value,
       notes: document.querySelector("#boq-notes").value.trim(),
+      customerPoNumber: currentRecord?.customerPoNumber || "",
+      wonAt: currentRecord?.wonAt || "",
       items: items.map(({ id, ...item }) => ({ ...item })),
       commission,
       categoryOrder: categoryOrder.slice(),
