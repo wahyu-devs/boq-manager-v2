@@ -120,6 +120,14 @@ Deno.test("exposes the Issued to Won editor workflow", () => {
   if (markWonCount !== 2) {
     throw new Error(`expected 2 Mark as Won actions, received ${markWonCount}`);
   }
+  const issuedStatusIconCount = editorHtml.split(
+    '<path d="m8.5 12 2.25 2.25L15.75 9" />',
+  ).length - 1;
+  if (issuedStatusIconCount !== 4) {
+    throw new Error(
+      "Mark as Issued and Mark as Won must share the same icon",
+    );
+  }
   assertIncludes(
     editorHtml,
     'data-confirm-event="boq:revert-issued"',
