@@ -55,7 +55,7 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
     '"Unit"',
     '"Remarks"',
     '"CUSTOMER PO"',
-    '"PO DATE"',
+    '"DATE"',
   ].forEach((value) =>
     assertIncludes(
       sheetSource,
@@ -77,9 +77,10 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
     }
   });
   if (sheetSource.includes('"Category"') ||
-      sheetSource.includes('"WON DATE"')) {
+      sheetSource.includes('"WON DATE"') ||
+      sheetSource.includes('"PO DATE"')) {
     throw new Error(
-      "Purchasing must use category rows and label the customer PO date clearly",
+      "Purchasing must use category rows and the concise Date label",
     );
   }
   assertIncludes(
@@ -89,8 +90,8 @@ Deno.test("keeps the Purchasing sheet price-free", () => {
   );
   assertIncludes(
     sheetSource,
-    'setCell(sheet.getCell("G6"), "PO DATE", {',
-    "PO Date must remain in the original right-side metadata block",
+    'setCell(sheet.getCell("G6"), "DATE", {',
+    "Date must remain in the original right-side metadata block",
   );
   assertIncludes(
     sheetSource,

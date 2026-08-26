@@ -1016,7 +1016,7 @@
         vertical: "top",
       });
     });
-    setCell(sheet.getCell("G6"), "PO DATE", {
+    setCell(sheet.getCell("G6"), "DATE", {
       bold: true,
       color: COLORS.muted,
       fill: COLORS.surface,
