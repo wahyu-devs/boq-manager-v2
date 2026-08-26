@@ -243,8 +243,13 @@
       "This action cannot be undone.";
     modal.querySelector("#confirm-title").textContent = title;
     modal.querySelector("#confirm-message").textContent = message;
-    modal.querySelector("[data-confirm-action]").textContent =
-      trigger.dataset.confirmLabel || "Delete";
+    const actionButton = modal.querySelector("[data-confirm-action]");
+    actionButton.textContent = trigger.dataset.confirmLabel || "Delete";
+    actionButton.className = `button ${
+      trigger.dataset.confirmTone === "primary"
+        ? "button-primary"
+        : "button-danger"
+    }`;
     modal.dataset.targetId = trigger.dataset.targetId || "";
     modal.dataset.confirmEvent = trigger.dataset.confirmEvent || "";
     window.BOQModal.open("confirm-modal");

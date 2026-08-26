@@ -1234,6 +1234,106 @@ Deno.test("marks valid drafts as issued exactly once", () => {
   );
 });
 
+Deno.test("marks an issued BOQ as won without changing its revision", () => {
+  const store = window.BOQStore;
+  store.setUser("mark-won-user");
+  const draft = store.saveBoqDraft({
+    id: "mark-won-boq",
+    number: "BOQ-260803",
+    projectName: "Customer PO Project",
+    status: "Draft",
+    date: "2026-08-26",
+    items: [{
+      id: "mark-won-item",
+      item: "Managed service",
+      qty: 1,
+      unit: "Lot",
+      unitCogs: 100,
+      margin: 20,
+    }],
+  });
+  equal(
+    store.markBoqWon(draft.id),
+    null,
+    "draft BOQ cannot be marked won",
+  );
+  const issued = store.issueBoq(draft, { note: "Initial issue" });
+  const issuedRevision = JSON.stringify(issued.revisions[0]);
+  const won = store.markBoqWon(
+    issued.id,
+    new Date("2026-08-26T08:30:00.000Z"),
+  );
+  equal(won.status, "Won", "issued BOQ becomes won");
+  equal(won.wonAt, "2026-08-26T08:30:00.000Z", "won timestamp is stored");
+  equal(won.revisions.length, 1, "won transition creates no revision");
+  equal(
+    JSON.stringify(won.revisions[0]),
+    issuedRevision,
+    "issued revision snapshot remains unchanged",
+  );
+  equal(
+    won.revisions[0].document.status,
+    "Issued",
+    "customer revision remains an issued document",
+  );
+  equal(
+    store.registerBoqView(won).status,
+    "Won",
+    "register exposes the won status",
+  );
+  equal(
+    store.prepareRevisionDraft(won.id),
+    null,
+    "won BOQ cannot create a revision",
+  );
+  equal(store.markBoqWon(won.id), null, "won transition is idempotent");
+  equal(
+    store.voidLatestRevision(won.id, "Not allowed while won"),
+    null,
+    "won BOQ revision cannot be voided",
+  );
+
+  const reverted = store.revertBoqToIssued(won.id);
+  equal(reverted.status, "Issued", "won BOQ can return to issued");
+  equal(reverted.wonAt, undefined, "reverting clears the won timestamp");
+  equal(
+    JSON.stringify(reverted.revisions[0]),
+    issuedRevision,
+    "reverting does not change the issued revision",
+  );
+  equal(
+    store.revertBoqToIssued(reverted.id),
+    null,
+    "issued BOQ cannot be reverted twice",
+  );
+  equal(
+    Boolean(store.prepareRevisionDraft(reverted.id)),
+    true,
+    "reverted BOQ can create a revision again",
+  );
+
+  const legacyIssued = store.save("boqs", {
+    id: "legacy-mark-won-boq",
+    number: "BOQ-260804",
+    projectName: "Legacy Customer PO",
+    status: "Issued",
+    date: "2026-08-26",
+    items: [],
+    revisions: [],
+    workingRevision: null,
+  });
+  const legacyWon = store.markBoqWon(
+    legacyIssued.id,
+    new Date("2026-08-26T09:00:00.000Z"),
+  );
+  equal(legacyWon.status, "Won", "legacy issued BOQ can become won");
+  equal(
+    legacyWon.revisions.length,
+    1,
+    "legacy issued BOQ receives an R00 baseline before becoming won",
+  );
+});
+
 Deno.test("creates a revision draft for a legacy sent BOQ", () => {
   const store = window.BOQStore;
   const userId = "legacy-revision-draft-user";

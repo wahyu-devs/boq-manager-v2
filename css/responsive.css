@@ -233,8 +233,13 @@
   }
 
   .editor-page-header .page-actions [data-save],
-  .editor-page-header .page-actions [data-create-revision] {
+  .editor-page-header .page-actions [data-create-revision],
+  .editor-page-header .page-actions [data-mark-won] {
     display: none;
+  }
+
+  body[data-page="boq-editor"].boq-won .main-content {
+    padding-bottom: 40px;
   }
 
   .panel-header,

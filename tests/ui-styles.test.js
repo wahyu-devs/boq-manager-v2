@@ -28,6 +28,9 @@ const productsHtml = await Deno.readTextFile(
 const boqSource = await Deno.readTextFile(
   new URL("../js/boq.js", import.meta.url),
 );
+const appSource = await Deno.readTextFile(
+  new URL("../js/app.js", import.meta.url),
+);
 const modalSource = await Deno.readTextFile(
   new URL("../js/modal.js", import.meta.url),
 );
@@ -108,6 +111,45 @@ Deno.test("shows an icon on every Create Revision action", () => {
   if (iconCount !== 2) {
     throw new Error(`expected 2 Create Revision icons, received ${iconCount}`);
   }
+});
+
+Deno.test("exposes the Issued to Won editor workflow", () => {
+  const markWonCount = editorHtml.split(
+    'data-confirm-event="boq:mark-won"',
+  ).length - 1;
+  if (markWonCount !== 2) {
+    throw new Error(`expected 2 Mark as Won actions, received ${markWonCount}`);
+  }
+  assertIncludes(
+    editorHtml,
+    'data-confirm-event="boq:revert-issued"',
+    "Won BOQs must offer Revert to Issued",
+  );
+  assertIncludes(
+    editorHtml,
+    "<option>Won</option>",
+    "BOQ information must display the Won status",
+  );
+  assertIncludes(
+    boqSource,
+    "store.markBoqWon(currentRecordId)",
+    "Mark as Won must use the store transition",
+  );
+  assertIncludes(
+    boqSource,
+    "store.revertBoqToIssued(currentRecordId)",
+    "Revert to Issued must use the store transition",
+  );
+  assertIncludes(
+    appSource,
+    'trigger.dataset.confirmTone === "primary"',
+    "status confirmations must use a non-destructive primary action",
+  );
+  assertIncludes(
+    dashboardSource,
+    'const wonBoqs = boqs.filter((boq) => boq.status === "Won");',
+    "Dashboard must retain Won BOQs as a distinct status",
+  );
 });
 
 Deno.test("uses formatted monetary inputs in the product form", () => {

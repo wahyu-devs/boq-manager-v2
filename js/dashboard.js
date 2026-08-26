@@ -11,7 +11,9 @@
   updateGreeting();
   const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
     ...boq,
-    status: boq.status === "Issued" ? "Issued" : "Draft",
+    status: ["Draft", "Issued", "Won"].includes(boq.status)
+      ? boq.status
+      : "Draft",
     ...window.BOQCalculations.calculateSummary(boq.items || [], {
       commission: boq.commission,
     }),
@@ -21,6 +23,7 @@
   const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
   const draftBoqs = boqs.filter((boq) => boq.status === "Draft");
   const issuedBoqs = boqs.filter((boq) => boq.status === "Issued");
+  const wonBoqs = boqs.filter((boq) => boq.status === "Won");
   const today = startOfDay(new Date());
   const expiringSoon = issuedBoqs.filter((boq) => {
     const days = daysUntil(boq.validUntil, today);
@@ -55,7 +58,9 @@
   });
   const metricDetails = {
     boqCount: boqs.length
-      ? `${plural(draftBoqs.length, "draft")} · ${plural(issuedBoqs.length, "issued")}`
+      ? `${plural(draftBoqs.length, "draft")} · ${
+        plural(issuedBoqs.length, "issued")
+      } · ${wonBoqs.length} won`
       : "No documents yet",
     productCount: products.length
       ? `${plural(activeProducts.length, "active product")}`

@@ -71,6 +71,10 @@
     return value === "Issued" || value === "Sent";
   }
 
+  function isWonStatus(value) {
+    return value === "Won";
+  }
+
   function isIssuedRevision(revision) {
     return revision?.state === "Issued" || revision?.state === "Sent";
   }
@@ -79,7 +83,9 @@
     const value = record || {};
     return cloneValue({
       number: value.number || "",
-      status: isIssuedStatus(value.status) ? "Issued" : "Draft",
+      status: isIssuedStatus(value.status) || isWonStatus(value.status)
+        ? "Issued"
+        : "Draft",
       projectName: value.projectName || "",
       customerId: value.customerId || "",
       customerName: value.customerName || "",
@@ -207,7 +213,9 @@
       : Math.max(0, Number(value.workingRevision) || 0);
     return {
       ...value,
-      status: activeRevision || isIssuedStatus(value.status)
+      status: isWonStatus(value.status)
+        ? "Won"
+        : activeRevision || isIssuedStatus(value.status)
         ? "Issued"
         : "Draft",
       projectName,
@@ -222,6 +230,7 @@
       activeRevisionNumber: activeRevision?.number ?? null,
       workingRevision,
       hasDraftChanges: Boolean(value.hasDraftChanges && workingRevision !== null),
+      wonAt: isWonStatus(value.status) ? isoTimestamp(value.wonAt) : undefined,
     };
   }
 
@@ -291,7 +300,8 @@
     if (!collections.includes(collection)) return false;
     if (collection === "boqs") {
       const record = get("boqs", id);
-      if (record?.status === "Issued" || record?.revisions?.length) return false;
+      if (["Issued", "Won"].includes(record?.status) ||
+          record?.revisions?.length) return false;
     }
     write(collection, list(collection).filter((record) => record.id !== id));
     return true;
@@ -299,6 +309,9 @@
 
   function saveBoqDraft(record) {
     const existing = record?.id ? get("boqs", record.id) : null;
+    if (existing?.status === "Won") {
+      throw new Error("Revert this BOQ to Issued before creating a revision.");
+    }
     const activeRevision = latestIssuedRevision(existing);
     let workingRevision = existing?.workingRevision ?? null;
     let draftBaseRevisionNumber = existing?.draftBaseRevisionNumber ?? null;
@@ -458,7 +471,44 @@
       draftBaseRevisionNumber: null,
       hasDraftChanges: false,
       issuedAt,
+      wonAt: undefined,
       createdAt: existing?.createdAt || record?.createdAt,
+    });
+  }
+
+  function markBoqWon(id, currentDate = new Date()) {
+    let record = get("boqs", id);
+    if (record?.status === "Issued" && !record.revisions.length) {
+      record = migratedRevisionRecord([{
+        record,
+        parsed: { revision: null },
+      }], record.projectName);
+    }
+    if (!record || record.status !== "Issued" ||
+        record.workingRevision !== null || !latestIssuedRevision(record)) {
+      return null;
+    }
+    const date = new Date(currentDate);
+    const wonAt = Number.isNaN(date.getTime())
+      ? new Date().toISOString()
+      : date.toISOString();
+    return save("boqs", {
+      ...record,
+      status: "Won",
+      wonAt,
+    });
+  }
+
+  function revertBoqToIssued(id) {
+    const record = get("boqs", id);
+    if (!record || record.status !== "Won" ||
+        record.workingRevision !== null || !latestIssuedRevision(record)) {
+      return null;
+    }
+    return save("boqs", {
+      ...record,
+      status: "Issued",
+      wonAt: undefined,
     });
   }
 
@@ -495,7 +545,8 @@
     const sourceRevision = sourceNumber === undefined || sourceNumber === null
       ? activeRevision
       : getRevision(record, sourceNumber);
-    if (!record || !activeRevision || record.workingRevision !== null) {
+    if (!record || record.status !== "Issued" || !activeRevision ||
+        record.workingRevision !== null) {
       return null;
     }
     if (!sourceRevision || !isIssuedRevision(sourceRevision)) return null;
@@ -553,6 +604,7 @@
       workingRevision: null,
       draftBaseRevisionNumber: null,
       hasDraftChanges: false,
+      wonAt: undefined,
       createdAt: record.createdAt,
     });
   }
@@ -560,7 +612,8 @@
   function voidLatestRevision(id, reason) {
     const record = get("boqs", id);
     const explanation = String(reason || "").trim();
-    if (!record || !explanation || record.workingRevision !== null) return null;
+    if (!record || record.status !== "Issued" || !explanation ||
+        record.workingRevision !== null) return null;
     const revisions = record.revisions.slice();
     const latest = revisions.at(-1);
     if (!latest || !isIssuedRevision(latest)) return null;
@@ -586,6 +639,7 @@
       workingRevision: previous ? null : nextRevisionNumber({ revisions }),
       draftBaseRevisionNumber: previous ? null : latest.number,
       hasDraftChanges: !previous,
+      wonAt: undefined,
       createdAt: record.createdAt,
     });
   }
@@ -1643,6 +1697,8 @@
     saveBoqDraft,
     validateBoqForIssue,
     issueBoq,
+    markBoqWon,
+    revertBoqToIssued,
     prepareRevisionDraft,
     createRevisionDraft,
     discardBoqDraft,

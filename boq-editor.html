@@ -51,7 +51,7 @@
                 </svg>Preview
               </button>
               <button
-                class="button button-primary"
+                class="button button-secondary"
                 type="button"
                 data-create-revision
                 hidden
@@ -61,6 +61,22 @@
                   <path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" />
                   <path d="M15 12v6M12 15h6" />
                 </svg>Create Revision
+              </button>
+              <button
+                class="button button-primary"
+                type="button"
+                data-mark-won
+                data-confirm
+                data-confirm-event="boq:mark-won"
+                data-confirm-title="Mark BOQ as Won?"
+                data-confirm-message="This confirms that a customer PO has been received. The issued BOQ will remain locked."
+                data-confirm-label="Mark as Won"
+                data-confirm-tone="primary"
+                hidden
+              >
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="m5 12 4 4L19 6" />
+                </svg>Mark as Won
               </button>
               <button
                 class="button button-secondary"
@@ -112,6 +128,18 @@
                     data-open-revision-history
                     hidden
                   >Revision History</button>
+                  <button
+                    class="menu-item"
+                    type="button"
+                    data-revert-issued
+                    data-confirm
+                    data-confirm-event="boq:revert-issued"
+                    data-confirm-title="Revert BOQ to Issued?"
+                    data-confirm-message="This removes the Won status without changing the issued revision."
+                    data-confirm-label="Revert to Issued"
+                    data-confirm-tone="primary"
+                    hidden
+                  >Revert to Issued</button>
                   <button
                     class="menu-item danger-text"
                     type="button"
@@ -165,6 +193,7 @@
                       >
                         <option>Draft</option>
                         <option>Issued</option>
+                        <option>Won</option>
                       </select></label>
                     <label class="field col-4"><span class="field-label"
                       >Customer</span><select
@@ -456,7 +485,7 @@
       </div>
       <div class="mobile-save-actions">
         <button
-          class="button button-primary"
+          class="button button-secondary"
           type="button"
           data-create-revision
           hidden
@@ -466,6 +495,22 @@
             <path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" />
             <path d="M15 12v6M12 15h6" />
           </svg>Create Revision
+        </button>
+        <button
+          class="button button-primary"
+          type="button"
+          data-mark-won
+          data-confirm
+          data-confirm-event="boq:mark-won"
+          data-confirm-title="Mark BOQ as Won?"
+          data-confirm-message="This confirms that a customer PO has been received. The issued BOQ will remain locked."
+          data-confirm-label="Mark as Won"
+          data-confirm-tone="primary"
+          hidden
+        >
+          <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="m5 12 4 4L19 6" />
+          </svg>Mark as Won
         </button>
         <button
           class="button button-secondary"

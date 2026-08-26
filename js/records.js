@@ -35,6 +35,7 @@
     const map = {
       Draft: "draft",
       Issued: "issued",
+      Won: "won",
       Active: "active",
       Prospect: "review",
       Inactive: "inactive",
@@ -62,7 +63,9 @@
     record = window.BOQStore.registerBoqView(record);
     record = {
       ...record,
-      status: record.status === "Issued" ? "Issued" : "Draft",
+      status: ["Draft", "Issued", "Won"].includes(record.status)
+        ? record.status
+        : "Draft",
       ...window.BOQCalculations.calculateSummary(record.items || [], {
         commission: record.commission,
       }),
@@ -145,7 +148,7 @@
           dateText(record.updatedAt)
         }</span><a class="button button-secondary button-sm" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
-        }">${record.status === "Issued" && record.workingRevision === null ? "View" : "Edit"}</a></div></article>`,
+        }">${["Issued", "Won"].includes(record.status) && record.workingRevision === null ? "View" : "Edit"}</a></div></article>`,
     };
   }
 
@@ -515,6 +518,7 @@
         workingRevision: null,
         hasDraftChanges: false,
         issuedAt: undefined,
+        wonAt: undefined,
       };
       save(collection, duplicate);
       render();
@@ -526,9 +530,10 @@
   document.addEventListener("records:delete", (event) => {
     const record = get(collection, event.detail.targetId);
     if (collection === "boqs" &&
-        (record?.status === "Issued" || record?.revisions?.length)) {
+        (["Issued", "Won"].includes(record?.status) ||
+          record?.revisions?.length)) {
       window.BOQApp.showToast(
-        "Issued BOQs cannot be deleted. Void the latest revision instead.",
+        "Issued or Won BOQs cannot be deleted.",
         "error",
       );
       return;

@@ -158,8 +158,8 @@
         "#boq-status",
         record.workingRevision !== null
           ? "Draft"
-          : record.status === "Issued"
-          ? "Issued"
+          : ["Issued", "Won"].includes(record.status)
+          ? record.status
           : "Draft",
       );
       setFormValue("#boq-project", record.projectName);
@@ -176,6 +176,8 @@
       document.querySelector("[data-save-state]").textContent =
         record.workingRevision !== null
           ? `Draft changes for ${store.revisionLabel(record.workingRevision)}`
+          : record.status === "Won"
+          ? `${store.revisionLabel(record.activeRevisionNumber)} won and locked`
           : record.status === "Issued"
           ? `${store.revisionLabel(record.activeRevisionNumber)} issued and locked`
           : "All changes saved";
@@ -210,6 +212,8 @@
       currentRecord?.activeRevisionNumber !== undefined;
     const status = hasWorkingRevision
       ? "Draft"
+      : currentRecord?.status === "Won"
+      ? "Won"
       : hasIssuedRevision
       ? "Issued"
       : selectedStatus;
@@ -236,7 +240,21 @@
 
   function isIssuedLocked() {
     return Boolean(
+      ["Issued", "Won"].includes(currentRecord?.status) &&
+        currentRecord.workingRevision === null,
+    );
+  }
+
+  function isRevisableIssued() {
+    return Boolean(
       currentRecord?.status === "Issued" &&
+        currentRecord.workingRevision === null,
+    );
+  }
+
+  function isWonLocked() {
+    return Boolean(
+      currentRecord?.status === "Won" &&
         currentRecord.workingRevision === null,
     );
   }
@@ -255,7 +273,10 @@
 
   function applyEditorMode() {
     const locked = isIssuedLocked();
+    const revisableIssued = isRevisableIssued();
+    const won = isWonLocked();
     editor.classList.toggle("editor-readonly", locked);
+    document.body.classList.toggle("boq-won", won);
     document.querySelectorAll("#boq-info input, #boq-info select, #boq-info textarea")
       .forEach((control) => control.disabled = locked);
     const statusControl = document.querySelector("#boq-status");
@@ -269,7 +290,13 @@
       button.hidden = locked
     );
     document.querySelectorAll("[data-create-revision]").forEach((button) =>
-      button.hidden = !locked
+      button.hidden = !revisableIssued
+    );
+    document.querySelectorAll("[data-mark-won]").forEach((button) =>
+      button.hidden = !revisableIssued
+    );
+    document.querySelectorAll("[data-revert-issued]").forEach((button) =>
+      button.hidden = !won
     );
     document.querySelectorAll("[data-open-revision-history]").forEach((button) =>
       button.hidden = !currentRecord?.revisions?.length
@@ -278,6 +305,8 @@
       button.hidden = !(currentRecord?.workingRevision !== null &&
         currentRecord?.revisions?.length)
     );
+    const mobileSaveBar = document.querySelector(".mobile-save-bar");
+    if (mobileSaveBar) mobileSaveBar.hidden = won;
     const itemsEditable = canEditItems();
     editor.classList.toggle("items-readonly", !itemsEditable);
     editor.querySelectorAll(
@@ -411,10 +440,10 @@
     host.innerHTML = entries.length
       ? [...entries].reverse().map((revision) => {
         const isDraft = revision.state === "Draft";
-        const canVoid = latest?.id === revision.id &&
+        const canVoid = isRevisableIssued() && latest?.id === revision.id &&
           revision.state === "Issued" &&
           currentRecord?.workingRevision === null;
-        const canCreateDraft = isIssuedLocked() &&
+        const canCreateDraft = isRevisableIssued() &&
           revision.state === "Issued";
         const reason = isDraft
           ? revision.draftBaseRevisionNumber === null ||
@@ -819,7 +848,9 @@
       revisionLabel: revisionNumber === null || revisionNumber === undefined
         ? ""
         : visibleRevisionLabel(store.revisionLabel(revisionNumber)),
-      revisionState: document.querySelector("#boq-status").value === "Issued"
+      revisionState: ["Issued", "Won"].includes(
+          document.querySelector("#boq-status").value,
+        )
         ? "Issued"
         : "Draft",
       ...summary,
@@ -1596,6 +1627,50 @@
     initializeDocument();
     renderItems();
     window.BOQApp.showToast("Draft revision discarded.");
+  });
+
+  function applyStatusTransition(record, successMessage) {
+    if (!record) {
+      window.BOQApp.showToast(
+        "The BOQ status could not be changed. Reload and try again.",
+        "error",
+      );
+      return;
+    }
+    currentRecord = record;
+    dirty = false;
+    initializeDocument(record);
+    renderItems();
+    renderRevisionHistory();
+    window.BOQApp.showToast(successMessage);
+    if (!window.BOQAuth?.push) return;
+    void window.BOQAuth.push().then((synced) => {
+      if (synced === false) {
+        window.BOQApp.showToast(
+          "Status saved locally. Cloud sync is pending.",
+          "error",
+        );
+      }
+    }).catch(() => {
+      window.BOQApp.showToast(
+        "Status saved locally. Cloud sync is pending.",
+        "error",
+      );
+    });
+  }
+
+  document.addEventListener("boq:mark-won", () => {
+    applyStatusTransition(
+      store.markBoqWon(currentRecordId),
+      "BOQ marked as Won.",
+    );
+  });
+
+  document.addEventListener("boq:revert-issued", () => {
+    applyStatusTransition(
+      store.revertBoqToIssued(currentRecordId),
+      "BOQ reverted to Issued.",
+    );
   });
 
   document.querySelector("[data-void-revision-form]")?.addEventListener(

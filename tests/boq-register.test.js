@@ -21,6 +21,16 @@ Deno.test("filters the BOQ Register by customer", () => {
     "customer options must be populated dynamically",
   );
   assertIncludes(
+    registerHtml,
+    '<option value="won">Won</option>',
+    "BOQ Register must offer the Won status filter",
+  );
+  assertIncludes(
+    recordsScript,
+    'Won: "won",',
+    "BOQ Register must render the Won semantic status",
+  );
+  assertIncludes(
     recordsScript,
     'data-customer="${escapeHtml((record.customerName || "").toLowerCase())}"',
     "desktop BOQ rows must include the customer filter value",
