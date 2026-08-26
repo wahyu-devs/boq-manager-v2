@@ -135,6 +135,20 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
       `Customer Preview Grand Total is missing ${rule}`,
     )
   );
+  const previewTotalStart = componentsCss.indexOf(".pdf-preview-total {");
+  const previewTotalEnd = componentsCss.indexOf("}", previewTotalStart);
+  const previewTotalSource = componentsCss.slice(
+    previewTotalStart,
+    previewTotalEnd,
+  );
+  assertIncludes(
+    previewTotalSource,
+    "padding: 5px 0;",
+    "Customer Preview Grand Total height must follow its content and padding",
+  );
+  if (previewTotalSource.includes("height:")) {
+    throw new Error("Customer Preview Grand Total must not set a fixed height");
+  }
   assertIncludes(
     pdfScript,
     'doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {',
