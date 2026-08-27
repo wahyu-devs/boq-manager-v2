@@ -95,8 +95,8 @@
     const basename = [
       data.document.number,
       data.document.projectName,
-      ...descriptors,
       revisionLabel(data.document),
+      ...descriptors,
     ].filter(Boolean).map(safeFilename).join(" - ") || "BOQ";
     return `${basename}.${extension}`;
   }
