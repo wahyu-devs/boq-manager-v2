@@ -118,6 +118,16 @@ Deno.test("opens dashboard attention links as BOQ Register filters", () => {
     "BOQ Register must opt into attention query filtering",
   );
   assertIncludes(
+    registerHtml,
+    'data-table-filter="attention"',
+    "BOQ Register must always expose the attention filter",
+  );
+  assertIncludes(
+    registerHtml,
+    '<option value="expiring-soon">Expiring soon</option>',
+    "users must be able to select upcoming expiry attention themselves",
+  );
+  assertIncludes(
     recordsScript,
     'data-attention="${escapeHtml(attention)}"',
     "BOQ rows and cards must expose their shared attention classification",
@@ -129,17 +139,7 @@ Deno.test("opens dashboard attention links as BOQ Register filters", () => {
   );
   assertIncludes(
     appScript,
-    "row.dataset.attention === attention",
-    "desktop BOQ rows must be limited to the requested attention subset",
-  );
-  assertIncludes(
-    appScript,
-    "card.dataset.attention === attention",
-    "mobile BOQ cards must be limited to the requested attention subset",
-  );
-  assertIncludes(
-    registerHtml,
-    "data-attention-filter-context",
-    "BOQ Register must explain the active attention filter",
+    'url.searchParams.set("attention", attentionFilter.value)',
+    "manually selected attention filters must remain in the page URL",
   );
 });

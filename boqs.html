@@ -84,6 +84,16 @@
                     <option value="issued">Issued</option>
                     <option value="won">Won</option>
                   </select></label>
+                <label><span class="sr-only">Filter by attention</span><select
+                    class="select select-sm"
+                    data-table-filter="attention"
+                    data-attention-filter
+                  >
+                    <option value="">All attention</option>
+                    <option value="expired">Expired</option>
+                    <option value="expiring-soon">Expiring soon</option>
+                    <option value="stale-draft">Stale drafts</option>
+                  </select></label>
                 <label><span class="sr-only">Filter by customer</span><select
                     class="select select-sm"
                     data-table-filter="customer"
@@ -92,16 +102,6 @@
                     <option value="">All customers</option>
                   </select></label>
               </div>
-            </div>
-            <div
-              class="register-filter-context"
-              data-attention-filter-context
-              hidden
-            >
-              <span>Filtered by <strong
-                  data-attention-filter-label
-                ></strong></span><a class="link" href="boqs.html"
-              >Clear filter</a>
             </div>
             <div class="table-wrap" data-records-table hidden>
               <table class="data-table boq-register-table">

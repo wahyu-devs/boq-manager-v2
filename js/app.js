@@ -119,24 +119,14 @@
       const filters = [...scope.querySelectorAll("[data-table-filter]")];
       let rows = [...scope.querySelectorAll("[data-table-row]")];
       const cardList = scope.querySelector(".record-card-list");
-      const attentionLabels = {
-        expired: "Expired issued BOQs",
-        "expiring-soon": "Issued BOQs expiring within 7 days",
-        "stale-draft": "Draft BOQs not updated for 14 days",
-      };
+      const attentionFilter = scope.querySelector("[data-attention-filter]");
       const requestedAttention = scope.hasAttribute("data-boq-attention-scope")
         ? new URLSearchParams(window.location.search).get("attention") || ""
         : "";
-      const attention = attentionLabels[requestedAttention]
-        ? requestedAttention
-        : "";
-      const attentionContext = scope.querySelector(
-        "[data-attention-filter-context]",
-      );
-      if (attentionContext && attention) {
-        attentionContext.hidden = false;
-        attentionContext.querySelector("[data-attention-filter-label]")
-          ?.replaceChildren(document.createTextNode(attentionLabels[attention]));
+      if (attentionFilter && [...attentionFilter.options].some((option) =>
+        option.value === requestedAttention
+      )) {
+        attentionFilter.value = requestedAttention;
       }
 
       if (cardList) {
@@ -199,9 +189,7 @@
           const matchesFilters = activeFilters.every(({ key, value }) =>
             !value || (row.dataset[key] || "").toLowerCase() === value
           );
-          const matchesAttention = !attention ||
-            row.dataset.attention === attention;
-          const visible = matchesQuery && matchesFilters && matchesAttention;
+          const visible = matchesQuery && matchesFilters;
           row.hidden = !visible;
           if (visible) visibleCount += 1;
         });
@@ -215,14 +203,11 @@
           const matchesFilters = activeFilters.every(({ key, value }) =>
             !value || (card.dataset[key] || "").toLowerCase() === value
           );
-          const matchesAttention = !attention ||
-            card.dataset.attention === attention;
-          card.hidden = !(matchesQuery && matchesFilters && matchesAttention);
+          card.hidden = !(matchesQuery && matchesFilters);
         });
 
         const hasCriteria = Boolean(query) ||
-          activeFilters.some(({ value }) => Boolean(value)) ||
-          Boolean(attention);
+          activeFilters.some(({ value }) => Boolean(value));
         if (noResults) {
           noResults.hidden = visibleCount > 0 || rows.length === 0 ||
             !hasCriteria;
@@ -236,6 +221,15 @@
 
       search?.addEventListener("input", window.BOQUtils.debounce(update, 100));
       filters.forEach((filter) => filter.addEventListener("change", update));
+      attentionFilter?.addEventListener("change", () => {
+        const url = new URL(window.location.href);
+        if (attentionFilter.value) {
+          url.searchParams.set("attention", attentionFilter.value);
+        } else {
+          url.searchParams.delete("attention");
+        }
+        window.history.replaceState(window.history.state, "", url);
+      });
       document.addEventListener("records:changed", update);
       update();
     });
