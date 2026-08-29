@@ -537,6 +537,42 @@ Deno.test("only allows BOQ item changes while Edit is on", () => {
   }
 });
 
+Deno.test("adds a custom BOQ item with Enter while editing", () => {
+  assertIncludes(
+    editorHtml,
+    "Enter adds a custom item",
+    "the BOQ Items keyboard hint must describe the Enter action",
+  );
+  if (editorHtml.includes("Enter moves to the next field")) {
+    throw new Error("the previous Enter navigation hint must be removed");
+  }
+  assertIncludes(
+    boqSource,
+    'if (event.key === "Enter") {',
+    "BOQ item inputs must handle Enter separately from arrow navigation",
+  );
+  assertIncludes(
+    boqSource,
+    "event.repeat || event.isComposing ||",
+    "Enter must guard against repeated and composing key events",
+  );
+  assertIncludes(
+    boqSource,
+    "const addedItem = addItem();",
+    "Enter must create the same custom item as the existing Add action",
+  );
+  assertIncludes(
+    boqSource,
+    "if (addedItem) focusDesktopItemField(addedItem.id);",
+    "focus must move to the new custom item's Item field",
+  );
+  assertIncludes(
+    boqSource,
+    'if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;',
+    "arrow-key field navigation must remain available independently",
+  );
+});
+
 Deno.test("collapses hidden BOQ pricing columns without an empty scroll area", () => {
   assertIncludes(
     editorHtml,

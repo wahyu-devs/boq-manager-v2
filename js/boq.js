@@ -872,7 +872,7 @@
   }
 
   function addItem(source = {}) {
-    if (!canEditItems()) return;
+    if (!canEditItems()) return null;
     const item = normalizeItem({
       qty: 1,
       unit: "Each",
@@ -887,6 +887,19 @@
     window.BOQApp.showToast(
       source.item ? `${source.item} added.` : "Custom item added.",
     );
+    return item;
+  }
+
+  function focusDesktopItemField(id, field = "item") {
+    requestAnimationFrame(() => {
+      const input = editor.querySelector(
+        `.editor-table [data-item-input][data-item-id="${
+          CSS.escape(id)
+        }"][data-field="${CSS.escape(field)}"]`,
+      );
+      input?.focus();
+      input?.select?.();
+    });
   }
 
   function duplicateItem(id) {
@@ -1456,7 +1469,26 @@
       return;
     }
     const input = event.target.closest(".editor-table [data-item-input]");
-    if (!input || !["Enter", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    if (!input) return;
+    if (event.key === "Enter") {
+      if (!canEditItems() || event.repeat || event.isComposing ||
+          event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+        return;
+      }
+      event.preventDefault();
+      const currentItem = items.find((item) =>
+        item.id === input.dataset.itemId
+      );
+      if (currentItem && input.dataset.field === "item") {
+        applyCatalogMatch(currentItem);
+      } else if (currentItem && input.dataset.field === "category") {
+        currentItem.category = input.value.trim() || "Uncategorized";
+      }
+      const addedItem = addItem();
+      if (addedItem) focusDesktopItemField(addedItem.id);
+      return;
+    }
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
     if ((event.key === "ArrowLeft" || event.key === "ArrowRight") &&
         (input.selectionStart !== input.selectionEnd ||
           (event.key === "ArrowLeft" && input.selectionStart > 0) ||
