@@ -1606,6 +1606,10 @@
   color: var(--color-text);
 }
 
+.settings-section {
+  scroll-margin-top: calc(var(--header-height) + 20px);
+}
+
 .settings-section + .settings-section {
   margin-top: 18px;
 }

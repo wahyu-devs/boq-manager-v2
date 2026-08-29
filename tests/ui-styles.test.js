@@ -111,6 +111,14 @@ Deno.test("contains tablet layouts and balances mobile editor controls", () => {
   );
 });
 
+Deno.test("keeps Settings anchor targets below the sticky topbar", () => {
+  assertIncludes(
+    componentsCss,
+    ".settings-section {\n  scroll-margin-top: calc(var(--header-height) + 20px);\n}",
+    "Settings sections need a scroll offset for the sticky application header",
+  );
+});
+
 Deno.test("labels the compact New BOQ action", () => {
   assertIncludes(
     navigationSource,
