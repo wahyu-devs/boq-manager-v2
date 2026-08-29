@@ -266,3 +266,23 @@ Deno.test("centers every Customer PDF Preview table header", () => {
     "right alignment must remain limited to Customer PDF Preview body values",
   );
 });
+
+Deno.test("aligns Customer PDF Preview summary currency with line totals", () => {
+  assertIncludes(
+    componentsCss,
+    "--pdf-summary-amount-width: 39.6%;",
+    "the full customer layout must align its summary amount column",
+  );
+  assertIncludes(
+    componentsCss,
+    "calc(100% - var(--pdf-summary-amount-width))",
+    "summary labels must yield to the aligned amount column",
+  );
+  ["46.44%", "46.21%", "57.26%"].forEach((width) => {
+    assertIncludes(
+      componentsCss,
+      `--pdf-summary-amount-width: ${width};`,
+      `the customer summary layout is missing its ${width} visibility profile`,
+    );
+  });
+});

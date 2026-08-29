@@ -2259,9 +2259,12 @@
 }
 
 .pdf-preview-total {
+  --pdf-summary-amount-width: 39.6%;
   display: grid;
   width: 39.3%;
-  grid-template-columns: 58.1% 41.9%;
+  grid-template-columns:
+    calc(100% - var(--pdf-summary-amount-width))
+    var(--pdf-summary-amount-width);
   align-items: center;
   margin: 23px 0 0 auto;
   padding: 6px 0;
@@ -2285,6 +2288,7 @@
 }
 
 .pdf-preview-totals {
+  --pdf-summary-amount-width: 39.6%;
   width: 39.3%;
   margin: 23px 0 0 auto;
   border-top: 1px solid #dce2e8;
@@ -2296,7 +2300,9 @@
 
 .pdf-preview-total-row {
   display: grid;
-  grid-template-columns: 58.1% 41.9%;
+  grid-template-columns:
+    calc(100% - var(--pdf-summary-amount-width))
+    var(--pdf-summary-amount-width);
   align-items: center;
   min-height: 30px;
 }
@@ -2319,6 +2325,23 @@
 .pdf-preview-total-row.is-grand-total {
   background: #e9f1f7;
   font-weight: 700;
+}
+
+.pdf-preview-table:not(.has-part-number) + .pdf-preview-total,
+.pdf-preview-table:not(.has-part-number) + .pdf-preview-totals {
+  --pdf-summary-amount-width: 46.44%;
+}
+
+.pdf-preview-table:not(.has-unit-price) + .pdf-preview-total,
+.pdf-preview-table:not(.has-unit-price) + .pdf-preview-totals {
+  --pdf-summary-amount-width: 46.21%;
+}
+
+.pdf-preview-table:not(.has-part-number):not(.has-unit-price) +
+  .pdf-preview-total,
+.pdf-preview-table:not(.has-part-number):not(.has-unit-price) +
+  .pdf-preview-totals {
+  --pdf-summary-amount-width: 57.26%;
 }
 
 @media print {
