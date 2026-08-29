@@ -253,3 +253,16 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
     throw new Error("Excel Grand Total cells must share font size and borders");
   }
 });
+
+Deno.test("centers every Customer PDF Preview table header", () => {
+  assertIncludes(
+    componentsCss,
+    ".pdf-preview-table thead th {\n  text-align: center;\n}",
+    "Customer PDF Preview headers from No through Total must be centered",
+  );
+  assertIncludes(
+    componentsCss,
+    ".pdf-preview-table tbody .align-right {\n  text-align: right;\n}",
+    "right alignment must remain limited to Customer PDF Preview body values",
+  );
+});

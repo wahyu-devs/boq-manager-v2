@@ -2250,8 +2250,12 @@
   text-align: left;
 }
 
-.pdf-preview-table .align-right {
+.pdf-preview-table tbody .align-right {
   text-align: right;
+}
+
+.pdf-preview-table thead th {
+  text-align: center;
 }
 
 .pdf-preview-total {
