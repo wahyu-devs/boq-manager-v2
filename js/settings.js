@@ -19,6 +19,57 @@
   };
   let companyLogo = "";
   let formDirty = false;
+  const sectionNavigation = document.querySelector(".settings-nav");
+  const sectionLinks = [...sectionNavigation.querySelectorAll('a[href^="#"]')];
+  const sections = sectionLinks.map((link) =>
+    document.querySelector(link.hash)
+  ).filter(Boolean);
+  let sectionNavigationFrame = 0;
+
+  function setActiveSection(sectionId) {
+    sectionLinks.forEach((link) => {
+      if (link.hash === `#${sectionId}`) {
+        link.setAttribute("aria-current", "true");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    });
+  }
+
+  function updateActiveSectionFromScroll() {
+    sectionNavigationFrame = 0;
+    const topbarBottom = document.querySelector(".topbar")
+      ?.getBoundingClientRect().bottom || 0;
+    const activationLine = topbarBottom + 18;
+    let activeSection = sections[0];
+    sections.forEach((section) => {
+      if (section.getBoundingClientRect().top <= activationLine) {
+        activeSection = section;
+      }
+    });
+    if (activeSection) setActiveSection(activeSection.id);
+  }
+
+  function scheduleSectionNavigationUpdate() {
+    if (sectionNavigationFrame) return;
+    sectionNavigationFrame = window.requestAnimationFrame(
+      updateActiveSectionFromScroll,
+    );
+  }
+
+  sectionLinks.forEach((link) => {
+    link.addEventListener("click", () => setActiveSection(link.hash.slice(1)));
+  });
+  window.addEventListener("hashchange", () => {
+    const sectionId = location.hash.slice(1);
+    if (sections.some((section) => section.id === sectionId)) {
+      setActiveSection(sectionId);
+    }
+  });
+  window.addEventListener("scroll", scheduleSectionNavigationUpdate, {
+    passive: true,
+  });
+  window.addEventListener("resize", scheduleSectionNavigationUpdate);
 
   function applyStoredSettings() {
     const saved = store.getSettings();
@@ -233,4 +284,10 @@
   updateLogoPreview();
   updateSyncStatus();
   updateNumberingPreview();
+  const initialSectionId = location.hash.slice(1);
+  if (sections.some((section) => section.id === initialSectionId)) {
+    setActiveSection(initialSectionId);
+  } else {
+    updateActiveSectionFromScroll();
+  }
 })();

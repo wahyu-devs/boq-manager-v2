@@ -42,6 +42,29 @@ Deno.test("provides a Show pricing document setting", () => {
   );
 });
 
+Deno.test("updates the active Settings section navigation", () => {
+  assertIncludes(
+    settingsScript,
+    'link.addEventListener("click", () => setActiveSection(link.hash.slice(1)))',
+    "clicking a Settings section must move the active navigation state",
+  );
+  assertIncludes(
+    settingsScript,
+    'link.setAttribute("aria-current", "true");',
+    "the active Settings link must expose its current state",
+  );
+  assertIncludes(
+    settingsScript,
+    'window.addEventListener("scroll", scheduleSectionNavigationUpdate, {',
+    "manual scrolling must keep the Settings navigation synchronized",
+  );
+  assertIncludes(
+    settingsScript,
+    "const initialSectionId = location.hash.slice(1);",
+    "direct Settings section links must initialize the correct active state",
+  );
+});
+
 Deno.test("uses current visibility settings for issued revisions only", () => {
   const helperStart = editorScript.indexOf(
     "function currentDocumentVisibilitySettings()",
