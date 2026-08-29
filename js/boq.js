@@ -231,7 +231,7 @@
     if (customerPoNode) {
       customerPoNode.hidden = status !== "Won" || !customerPoNumber;
       customerPoNode.textContent = status === "Won" && customerPoNumber
-        ? `Customer PO: ${customerPoNumber}`
+        ? customerPoNumber
         : "";
     }
     const revisionNode = document.querySelector("[data-editor-revision]");

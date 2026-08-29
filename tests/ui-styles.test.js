@@ -228,9 +228,12 @@ Deno.test("shows the Customer PO beside the Won editor status", () => {
   );
   assertIncludes(
     boqSource,
-    "`Customer PO: ${customerPoNumber}`",
-    "the Customer PO badge must display the saved PO number",
+    "? customerPoNumber\n        : \"\";",
+    "the Customer PO badge must display only the saved PO number",
   );
+  if (boqSource.includes("`Customer PO: ${customerPoNumber}`")) {
+    throw new Error("the Customer PO badge must not repeat its label");
+  }
 });
 
 Deno.test("uses formatted monetary inputs in the product form", () => {
