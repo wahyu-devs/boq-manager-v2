@@ -51,6 +51,31 @@ Deno.test("filters the BOQ Register by customer", () => {
     "mobile BOQ cards must display the Customer PO number",
   );
   assertIncludes(
+    registerHtml,
+    'data-sort-key="validUntil"',
+    "BOQ Register must provide Valid Until sorting",
+  );
+  assertIncludes(
+    recordsScript,
+    'data-valid-until="${escapeHtml(record.validUntil || "")}"',
+    "desktop BOQ rows must include the validity sort value",
+  );
+  assertIncludes(
+    recordsScript,
+    '<td class="boq-validity-cell">${',
+    "desktop validity dates must remain on one line",
+  );
+  assertIncludes(
+    recordsScript,
+    "<dt>Valid until</dt><dd>",
+    "mobile BOQ cards must display the validity date",
+  );
+  assertIncludes(
+    recordsScript,
+    '<dt class="muted">Valid until</dt><dd>',
+    "BOQ Register preview must display the validity date",
+  );
+  assertIncludes(
     recordsScript,
     'data-customer="${escapeHtml((record.customerName || "").toLowerCase())}"',
     "desktop BOQ rows must include the customer filter value",

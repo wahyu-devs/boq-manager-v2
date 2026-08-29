@@ -101,7 +101,7 @@
         escapeHtml(record.projectName || "")
       }" data-customer-po="${escapeHtml(record.customerPoNumber || "")}" data-value="${Number(record.totalSelling || 0)}" data-margin="${
         Number(record.marginPercent || 0)
-      }" data-created="${escapeHtml(record.createdAt || "")}" data-updated="${
+      }" data-valid-until="${escapeHtml(record.validUntil || "")}" data-created="${escapeHtml(record.createdAt || "")}" data-updated="${
         escapeHtml(record.updatedAt || "")
       }"><td class="boq-number-cell"><a class="cell-primary" href="boq-editor.html?id=${
         encodeURIComponent(record.id)
@@ -115,7 +115,9 @@
         escapeHtml(record.customerPoNumber || "")
       }</td><td class="align-right currency">${
         formatCurrencyMarkup(record.totalSelling || 0, record.currency || "USD")
-      }</td><td class="align-right number">${margin}</td><td>${
+      }</td><td class="align-right number">${margin}</td><td class="boq-validity-cell">${
+        dateText(record.validUntil)
+      }</td><td>${
         dateText(record.createdAt)
       }</td><td>${
         dateText(record.updatedAt)
@@ -143,6 +145,8 @@
           statusHtml(record.status)
         }</div><dl class="record-card-grid"><div><dt>Date</dt><dd>${
           dateText(record.date)
+        }</dd></div><div><dt>Valid until</dt><dd>${
+          dateText(record.validUntil)
         }</dd></div><div><dt>Customer</dt><dd>${
           escapeHtml(record.customerName || "—")
         }</dd></div><div><dt>Customer PO</dt><dd>${
@@ -442,6 +446,8 @@
           statusHtml(record.status)
         }</dd></div><div class="cluster space-between"><dt class="muted">Customer PO</dt><dd>${
           escapeHtml(record.customerPoNumber || "—")
+        }</dd></div><div class="cluster space-between"><dt class="muted">Valid until</dt><dd>${
+          dateText(record.validUntil)
         }</dd></div><div class="cluster space-between"><dt class="muted">Revision</dt><dd>${
           escapeHtml(revision || "Not issued")
         }</dd></div><div class="cluster space-between"><dt class="muted">Items</dt><dd>${

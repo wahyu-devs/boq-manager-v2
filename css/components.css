@@ -428,11 +428,16 @@
 }
 
 .boq-register-table {
-  min-width: 1040px;
+  min-width: 1160px;
 }
 
 .data-table .boq-po-cell {
   min-width: 120px;
+  white-space: nowrap;
+}
+
+.data-table .boq-validity-cell {
+  min-width: 104px;
   white-space: nowrap;
 }
 
