@@ -15,7 +15,6 @@
     taxRate: 0,
     dateFormat: "dmy",
     numberFormat: "comma",
-    compactTables: false,
   };
   let companyLogo = "";
   let formDirty = false;

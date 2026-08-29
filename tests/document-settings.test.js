@@ -65,6 +65,14 @@ Deno.test("updates the active Settings section navigation", () => {
   );
 });
 
+Deno.test("omits the unused compact table preference", () => {
+  if (settingsHtml.includes("Compact tables") ||
+      settingsHtml.includes('name="compactTables"') ||
+      settingsScript.includes("compactTables")) {
+    throw new Error("Settings must not expose or default an unused table mode");
+  }
+});
+
 Deno.test("uses current visibility settings for issued revisions only", () => {
   const helperStart = editorScript.indexOf(
     "function currentDocumentVisibilitySettings()",
