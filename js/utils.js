@@ -214,6 +214,53 @@
     return "Good night";
   }
 
+  function boqAttentionType(boq, referenceDate = new Date()) {
+    if (!boq) return "";
+    const today = localDay(referenceDate);
+    if (!today) return "";
+    const status = String(boq.status || "").trim().toLowerCase();
+
+    if (status === "issued" || status === "sent") {
+      const expiry = localDay(boq.validUntil);
+      if (!expiry) return "";
+      const daysUntilExpiry = Math.ceil(
+        (expiry.getTime() - today.getTime()) / 86400000,
+      );
+      if (daysUntilExpiry < 0) return "expired";
+      if (daysUntilExpiry <= 7) return "expiring-soon";
+      return "";
+    }
+
+    if (status === "draft") {
+      const updated = validDate(boq.updatedAt);
+      if (updated && today.getTime() - updated.getTime() > 14 * 86400000) {
+        return "stale-draft";
+      }
+    }
+    return "";
+  }
+
+  function localDay(value) {
+    if (!value) return null;
+    const dateOnly = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = dateOnly
+      ? new Date(
+        Number(dateOnly[1]),
+        Number(dateOnly[2]) - 1,
+        Number(dateOnly[3]),
+      )
+      : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function validDate(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
   function collectUniqueTextValues(...groups) {
     const seen = new Set();
     const values = [];
@@ -301,6 +348,7 @@
     escapeHtml,
     visibleRevisionLabel,
     greetingForHour,
+    boqAttentionType,
     collectUniqueTextValues,
     matchesSearchQuery,
     reorderItemsWithinCategory,

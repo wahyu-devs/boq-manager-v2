@@ -46,6 +46,7 @@
           <section
             class="panel responsive-table"
             data-filter-scope
+            data-boq-attention-scope
             aria-labelledby="boq-register-heading"
           >
             <div class="panel-header">
@@ -91,6 +92,16 @@
                     <option value="">All customers</option>
                   </select></label>
               </div>
+            </div>
+            <div
+              class="register-filter-context"
+              data-attention-filter-context
+              hidden
+            >
+              <span>Filtered by <strong
+                  data-attention-filter-label
+                ></strong></span><a class="link" href="boqs.html"
+              >Clear filter</a>
             </div>
             <div class="table-wrap" data-records-table hidden>
               <table class="data-table boq-register-table">

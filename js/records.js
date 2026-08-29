@@ -19,6 +19,7 @@
     parseNumberInput,
     collectUniqueTextValues,
     visibleRevisionLabel,
+    boqAttentionType,
   } = window.BOQUtils;
   let defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -77,6 +78,7 @@
       record.customerPoNumber,
     ].filter(Boolean).join(" ");
     const margin = formatPercent(record.marginPercent || 0);
+    const attention = boqAttentionType(record);
     const revision = record.displayRevisionNumber === null ||
         record.displayRevisionNumber === undefined
       ? ""
@@ -99,7 +101,7 @@
         escapeHtml(record.number || "")
       }" data-project-name="${
         escapeHtml(record.projectName || "")
-      }" data-customer-po="${escapeHtml(record.customerPoNumber || "")}" data-value="${Number(record.totalSelling || 0)}" data-margin="${
+      }" data-customer-po="${escapeHtml(record.customerPoNumber || "")}" data-attention="${escapeHtml(attention)}" data-value="${Number(record.totalSelling || 0)}" data-margin="${
         Number(record.marginPercent || 0)
       }" data-valid-until="${escapeHtml(record.validUntil || "")}" data-created="${escapeHtml(record.createdAt || "")}" data-updated="${
         escapeHtml(record.updatedAt || "")
@@ -135,7 +137,7 @@
           )
         }" data-customer="${
           escapeHtml((record.customerName || "").toLowerCase())
-        }"><div class="record-card-header"><div><a class="cell-primary" href="boq-editor.html?id=${
+        }" data-attention="${escapeHtml(attention)}"><div class="record-card-header"><div><a class="cell-primary" href="boq-editor.html?id=${
           encodeURIComponent(record.id)
         }">${
           escapeHtml(record.number || "Untitled")

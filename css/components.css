@@ -299,6 +299,28 @@
   gap: 8px;
 }
 
+.register-filter-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.register-filter-context strong {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.register-filter-context .link {
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+
 .badge,
 .status {
   display: inline-flex;

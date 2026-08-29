@@ -119,6 +119,25 @@
       const filters = [...scope.querySelectorAll("[data-table-filter]")];
       let rows = [...scope.querySelectorAll("[data-table-row]")];
       const cardList = scope.querySelector(".record-card-list");
+      const attentionLabels = {
+        expired: "Expired issued BOQs",
+        "expiring-soon": "Issued BOQs expiring within 7 days",
+        "stale-draft": "Draft BOQs not updated for 14 days",
+      };
+      const requestedAttention = scope.hasAttribute("data-boq-attention-scope")
+        ? new URLSearchParams(window.location.search).get("attention") || ""
+        : "";
+      const attention = attentionLabels[requestedAttention]
+        ? requestedAttention
+        : "";
+      const attentionContext = scope.querySelector(
+        "[data-attention-filter-context]",
+      );
+      if (attentionContext && attention) {
+        attentionContext.hidden = false;
+        attentionContext.querySelector("[data-attention-filter-label]")
+          ?.replaceChildren(document.createTextNode(attentionLabels[attention]));
+      }
 
       if (cardList) {
         const existingSearchValues = new Set(
@@ -180,7 +199,9 @@
           const matchesFilters = activeFilters.every(({ key, value }) =>
             !value || (row.dataset[key] || "").toLowerCase() === value
           );
-          const visible = matchesQuery && matchesFilters;
+          const matchesAttention = !attention ||
+            row.dataset.attention === attention;
+          const visible = matchesQuery && matchesFilters && matchesAttention;
           row.hidden = !visible;
           if (visible) visibleCount += 1;
         });
@@ -194,11 +215,14 @@
           const matchesFilters = activeFilters.every(({ key, value }) =>
             !value || (card.dataset[key] || "").toLowerCase() === value
           );
-          card.hidden = !(matchesQuery && matchesFilters);
+          const matchesAttention = !attention ||
+            card.dataset.attention === attention;
+          card.hidden = !(matchesQuery && matchesFilters && matchesAttention);
         });
 
         const hasCriteria = Boolean(query) ||
-          activeFilters.some(({ value }) => Boolean(value));
+          activeFilters.some(({ value }) => Boolean(value)) ||
+          Boolean(attention);
         if (noResults) {
           noResults.hidden = visibleCount > 0 || rows.length === 0 ||
             !hasCriteria;

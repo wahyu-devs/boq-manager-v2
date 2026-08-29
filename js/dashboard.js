@@ -7,6 +7,7 @@
     debounce,
     visibleRevisionLabel,
     greetingForHour,
+    boqAttentionType,
   } = window.BOQUtils;
   updateGreeting();
   const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
@@ -24,19 +25,16 @@
   const draftBoqs = boqs.filter((boq) => boq.status === "Draft");
   const issuedBoqs = boqs.filter((boq) => boq.status === "Issued");
   const wonBoqs = boqs.filter((boq) => boq.status === "Won");
-  const today = startOfDay(new Date());
-  const expiringSoon = issuedBoqs.filter((boq) => {
-    const days = daysUntil(boq.validUntil, today);
-    return days !== null && days >= 0 && days <= 7;
-  });
-  const expired = issuedBoqs.filter((boq) => {
-    const days = daysUntil(boq.validUntil, today);
-    return days !== null && days < 0;
-  });
-  const staleDrafts = draftBoqs.filter((boq) => {
-    const updated = validDate(boq.updatedAt);
-    return updated && today - updated > 14 * 86400000;
-  });
+  const attentionReference = new Date();
+  const expiringSoon = issuedBoqs.filter((boq) =>
+    boqAttentionType(boq, attentionReference) === "expiring-soon"
+  );
+  const expired = issuedBoqs.filter((boq) =>
+    boqAttentionType(boq, attentionReference) === "expired"
+  );
+  const staleDrafts = draftBoqs.filter((boq) =>
+    boqAttentionType(boq, attentionReference) === "stale-draft"
+  );
   const activeProducts = products.filter((product) =>
     product.status !== "Inactive"
   );
@@ -127,44 +125,29 @@
       title: `${plural(expired.length, "issued BOQ")} expired`,
       detail: "Review validity before customer follow-up.",
       tone: "danger",
+      filter: "expired",
     },
     {
       count: expiringSoon.length,
       title: `${plural(expiringSoon.length, "issued BOQ")} ${expiryVerb} soon`,
       detail: "Validity ends within the next seven days.",
       tone: "warning",
+      filter: "expiring-soon",
     },
     {
       count: staleDrafts.length,
       title: `${plural(staleDrafts.length, "draft")} ${draftReviewVerb} review`,
       detail: "These drafts have not been updated for 14 days.",
       tone: "info",
+      filter: "stale-draft",
     },
   ].filter((item) => item.count > 0);
   const insightHost = document.querySelector("[data-insights]");
   const insightEmpty = document.querySelector("[data-insights-empty]");
   insightHost.innerHTML = attentionItems.map((item) =>
-    `<li class="insight-item"><span class="insight-icon insight-icon-${item.tone}" aria-hidden="true">!</span><div><a class="insight-title" href="boqs.html">${escapeHtml(item.title)}</a><p>${escapeHtml(item.detail)}</p></div></li>`
+    `<li class="insight-item"><span class="insight-icon insight-icon-${item.tone}" aria-hidden="true">!</span><div><a class="insight-title" href="boqs.html?attention=${encodeURIComponent(item.filter)}">${escapeHtml(item.title)}</a><p>${escapeHtml(item.detail)}</p></div></li>`
   ).join("");
   insightEmpty.hidden = attentionItems.length > 0;
-
-  function startOfDay(value) {
-    const date = new Date(value);
-    date.setHours(0, 0, 0, 0);
-    return date;
-  }
-
-  function validDate(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  function daysUntil(value, fromDate) {
-    const date = validDate(value);
-    if (!date) return null;
-    return Math.ceil((startOfDay(date) - fromDate) / 86400000);
-  }
 
   function plural(count, singular) {
     return `${count} ${singular}${count === 1 ? "" : "s"}`;

@@ -4,6 +4,12 @@ const registerHtml = await Deno.readTextFile(
 const recordsScript = await Deno.readTextFile(
   new URL("../js/records.js", import.meta.url),
 );
+const dashboardScript = await Deno.readTextFile(
+  new URL("../js/dashboard.js", import.meta.url),
+);
+const appScript = await Deno.readTextFile(
+  new URL("../js/app.js", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -98,4 +104,42 @@ Deno.test("filters the BOQ Register by customer", () => {
       recordsScript.includes("data-project-filter")) {
     throw new Error("the previous project filter must be removed");
   }
+});
+
+Deno.test("opens dashboard attention links as BOQ Register filters", () => {
+  assertIncludes(
+    dashboardScript,
+    'href="boqs.html?attention=${encodeURIComponent(item.filter)}"',
+    "dashboard attention links must carry their filter to the register",
+  );
+  assertIncludes(
+    registerHtml,
+    "data-boq-attention-scope",
+    "BOQ Register must opt into attention query filtering",
+  );
+  assertIncludes(
+    recordsScript,
+    'data-attention="${escapeHtml(attention)}"',
+    "BOQ rows and cards must expose their shared attention classification",
+  );
+  assertIncludes(
+    appScript,
+    'new URLSearchParams(window.location.search).get("attention")',
+    "table filtering must read the dashboard attention query",
+  );
+  assertIncludes(
+    appScript,
+    "row.dataset.attention === attention",
+    "desktop BOQ rows must be limited to the requested attention subset",
+  );
+  assertIncludes(
+    appScript,
+    "card.dataset.attention === attention",
+    "mobile BOQ cards must be limited to the requested attention subset",
+  );
+  assertIncludes(
+    registerHtml,
+    "data-attention-filter-context",
+    "BOQ Register must explain the active attention filter",
+  );
 });

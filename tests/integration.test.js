@@ -109,6 +109,47 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     "Good night",
     "night greeting starts at 21:00",
   );
+  const attentionReference = new Date(2026, 7, 29, 12, 0, 0);
+  equal(
+    window.BOQUtils.boqAttentionType({
+      status: "Issued",
+      validUntil: "2026-08-28",
+    }, attentionReference),
+    "expired",
+    "issued BOQs past their validity date need expired attention",
+  );
+  equal(
+    window.BOQUtils.boqAttentionType({
+      status: "Issued",
+      validUntil: "2026-09-05",
+    }, attentionReference),
+    "expiring-soon",
+    "issued BOQs expiring in seven days need upcoming expiry attention",
+  );
+  equal(
+    window.BOQUtils.boqAttentionType({
+      status: "Issued",
+      validUntil: "2026-09-06",
+    }, attentionReference),
+    "",
+    "issued BOQs outside the seven-day window need no expiry attention",
+  );
+  equal(
+    window.BOQUtils.boqAttentionType({
+      status: "Draft",
+      updatedAt: new Date(2026, 7, 14, 0, 0, 0).toISOString(),
+    }, attentionReference),
+    "stale-draft",
+    "draft BOQs older than fourteen days need review attention",
+  );
+  equal(
+    window.BOQUtils.boqAttentionType({
+      status: "Won",
+      validUntil: "2026-08-28",
+    }, attentionReference),
+    "",
+    "won BOQs do not appear in issued expiry attention",
+  );
   equal(
     window.BOQCustomerDocument.documentReference({
       number: "BOQ-260801",
