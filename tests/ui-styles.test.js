@@ -208,6 +208,31 @@ Deno.test("exposes the Issued to Won editor workflow", () => {
   );
 });
 
+Deno.test("shows the Customer PO beside the Won editor status", () => {
+  assertIncludes(
+    editorHtml,
+    'class="status status-won"\n                  data-editor-customer-po',
+    "the Customer PO must use the Won badge treatment",
+  );
+  const statusBadge = editorHtml.indexOf("data-editor-status");
+  const customerPoBadge = editorHtml.indexOf("data-editor-customer-po");
+  const revisionBadge = editorHtml.indexOf("data-editor-revision");
+  if (statusBadge < 0 || customerPoBadge <= statusBadge ||
+      revisionBadge <= customerPoBadge) {
+    throw new Error("Customer PO badge must follow Won before the revision badge");
+  }
+  assertIncludes(
+    boqSource,
+    "customerPoNode.hidden = status !== \"Won\" || !customerPoNumber;",
+    "the Customer PO badge must only appear for a Won BOQ with a PO number",
+  );
+  assertIncludes(
+    boqSource,
+    "`Customer PO: ${customerPoNumber}`",
+    "the Customer PO badge must display the saved PO number",
+  );
+});
+
 Deno.test("uses formatted monetary inputs in the product form", () => {
   const inputCount = productsHtml.split("data-product-number-input").length - 1;
   if (inputCount !== 2) {

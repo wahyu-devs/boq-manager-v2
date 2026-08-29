@@ -224,6 +224,16 @@
     const statusNode = document.querySelector("[data-editor-status]");
     statusNode.textContent = status;
     statusNode.className = `status status-${status.toLowerCase()}`;
+    const customerPoNode = document.querySelector("[data-editor-customer-po]");
+    const customerPoNumber = String(
+      currentRecord?.customerPoNumber || "",
+    ).trim();
+    if (customerPoNode) {
+      customerPoNode.hidden = status !== "Won" || !customerPoNumber;
+      customerPoNode.textContent = status === "Won" && customerPoNumber
+        ? `Customer PO: ${customerPoNumber}`
+        : "";
+    }
     const revisionNode = document.querySelector("[data-editor-revision]");
     const revisionNumber = currentRecord?.workingRevision ??
       currentRecord?.activeRevisionNumber;
