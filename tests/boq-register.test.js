@@ -65,6 +65,16 @@ Deno.test("filters the BOQ Register by customer", () => {
     '<td class="boq-validity-cell">${',
     "desktop validity dates must remain on one line",
   );
+  const updatedHeader = registerHtml.indexOf('data-sort-key="updated"');
+  const validityHeader = registerHtml.indexOf('data-sort-key="validUntil"');
+  if (updatedHeader < 0 || validityHeader <= updatedHeader) {
+    throw new Error("Valid Until must appear after Updated in the desktop header");
+  }
+  const updatedCell = recordsScript.indexOf("dateText(record.updatedAt)");
+  const validityCell = recordsScript.indexOf("dateText(record.validUntil)");
+  if (updatedCell < 0 || validityCell <= updatedCell) {
+    throw new Error("Valid Until must appear after Updated in desktop rows");
+  }
   assertIncludes(
     recordsScript,
     "<dt>Valid until</dt><dd>",

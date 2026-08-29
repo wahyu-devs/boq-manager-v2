@@ -115,12 +115,12 @@
         escapeHtml(record.customerPoNumber || "")
       }</td><td class="align-right currency">${
         formatCurrencyMarkup(record.totalSelling || 0, record.currency || "USD")
-      }</td><td class="align-right number">${margin}</td><td class="boq-validity-cell">${
-        dateText(record.validUntil)
-      }</td><td>${
+      }</td><td class="align-right number">${margin}</td><td>${
         dateText(record.createdAt)
       }</td><td>${
         dateText(record.updatedAt)
+      }</td><td class="boq-validity-cell">${
+        dateText(record.validUntil)
       }</td><td><div class="row-actions"><a class="icon-button" href="boq-editor.html?id=${
         encodeURIComponent(record.id)
       }" aria-label="Edit ${
