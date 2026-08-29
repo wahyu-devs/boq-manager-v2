@@ -408,6 +408,37 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(summary.marginValue, 20000, "profit after commission");
   equal(summary.marginPercent, 16, "margin percentage after commission");
 
+  const taxedSummary = calculations.calculateSummary([{
+    qty: 1,
+    unitCogs: 100000,
+    margin: 20,
+  }], {
+    commission: 5000,
+    taxEnabled: true,
+    taxRate: 11,
+  });
+  equal(taxedSummary.totalSelling, 125000, "tax base uses total selling");
+  equal(taxedSummary.taxValue, 13750, "tax value");
+  equal(taxedSummary.grandTotal, 138750, "tax-inclusive grand total");
+  equal(taxedSummary.marginValue, 20000, "tax does not change gross profit");
+  equal(taxedSummary.marginPercent, 16, "tax does not change gross margin");
+
+  equal(
+    window.BOQUtils.formatDate("2026-08-05", "mdy"),
+    "08/05/2026",
+    "month-first date format",
+  );
+  equal(
+    window.BOQUtils.formatDate("2026-08-05", "dmy"),
+    "05 Aug 2026",
+    "day-first date format",
+  );
+  equal(
+    window.BOQUtils.formatDate("2026-08-05", "iso"),
+    "2026-08-05",
+    "ISO date format",
+  );
+
   const backup = store.exportState();
   equal(backup.application, "BOQ Manager", "backup application metadata");
   equal(backup.meta.schemaVersion, 5, "backup schema version");

@@ -988,6 +988,10 @@
   min-width: 108px;
 }
 
+.summary-row[hidden] {
+  display: none;
+}
+
 .summary-input-wrap {
   display: grid;
   width: 108px;
@@ -2274,6 +2278,43 @@
   padding: 0 8px;
   color: #2d6089;
   font-size: inherit;
+}
+
+.pdf-preview-totals {
+  width: 39.3%;
+  margin: 23px 0 0 auto;
+  border-top: 1px solid #dce2e8;
+  border-bottom: 1px solid #dce2e8;
+  background: #f5f7f9;
+  color: #2d6089;
+  font-size: 13px;
+}
+
+.pdf-preview-total-row {
+  display: grid;
+  grid-template-columns: 58.1% 41.9%;
+  align-items: center;
+  min-height: 30px;
+}
+
+.pdf-preview-total-row + .pdf-preview-total-row {
+  border-top: 1px solid #dce2e8;
+}
+
+.pdf-preview-total-row > span {
+  padding: 0 10px;
+  text-align: center;
+}
+
+.pdf-preview-total-row > strong {
+  padding: 0 8px;
+  color: inherit;
+  font-size: inherit;
+}
+
+.pdf-preview-total-row.is-grand-total {
+  background: #e9f1f7;
+  font-weight: 700;
 }
 
 @media print {

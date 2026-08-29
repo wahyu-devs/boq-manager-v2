@@ -269,6 +269,11 @@
           ? `Registration no.: ${settings.registrationNumber}`
           : "",
       },
+      {
+        text: settings.taxEnabled && settings.taxRegistrationNumber
+          ? `Tax registration no.: ${settings.taxRegistrationNumber}`
+          : "",
+      },
       { text: settings.address },
       { text: contact },
     ].filter((entry) => entry.text);
@@ -390,7 +395,18 @@
             ),
             partyCell(
               "Issued / Valid Until",
-              [data.document.date || "-", data.document.validUntil || "-"],
+              [
+                window.BOQUtils.formatDate(
+                  data.document.date,
+                  data.settings.dateFormat,
+                  "-",
+                ),
+                window.BOQUtils.formatDate(
+                  data.document.validUntil,
+                  data.settings.dateFormat,
+                  "-",
+                ),
+              ],
               dateWidth,
               { bold: false },
             ),
@@ -460,6 +476,12 @@
   }
 
   function grandTotalRow(data, columns, columnWidths) {
+    const summary = window.BOQCalculations.calculateSummary(data.items, {
+      commission: data.document.commission,
+      rounding: data.settings.rounding,
+      taxEnabled: data.settings.taxEnabled === true,
+      taxRate: data.settings.taxRate,
+    });
     const amountIndex = columns.length - 1;
     const labelStart = Math.max(0, amountIndex - 2);
     const blankWidth = columnWidths.slice(0, labelStart).reduce(
@@ -490,7 +512,7 @@
         borders: horizontalBorders(),
       }),
       currencyCell(
-        data.document.totalSelling,
+        summary.grandTotal,
         data.document.currency,
         columnWidths[amountIndex],
         data.settings,
@@ -500,6 +522,51 @@
           bold: true,
           size: 20,
           borders: horizontalBorders(),
+        },
+      ),
+    );
+    return new window.docx.TableRow({ cantSplit: true, children });
+  }
+
+  function taxTotalRow(data, columns, columnWidths, label, amount) {
+    const amountIndex = columns.length - 1;
+    const labelStart = Math.max(0, amountIndex - 2);
+    const blankWidth = columnWidths.slice(0, labelStart).reduce(
+      (sum, width) => sum + width,
+      0,
+    );
+    const labelWidth = columnWidths.slice(labelStart, amountIndex).reduce(
+      (sum, width) => sum + width,
+      0,
+    );
+    const children = [];
+    if (labelStart > 0) {
+      children.push(cell([paragraph("")], {
+        width: blankWidth,
+        columnSpan: labelStart,
+        margins: margins(0),
+      }));
+    }
+    children.push(
+      textCell(label, {
+        width: labelWidth,
+        columnSpan: amountIndex - labelStart,
+        fill: COLORS.surface,
+        color: COLORS.heading,
+        size: 16,
+        alignment: window.docx.AlignmentType.CENTER,
+        borders: bottomBorder(),
+      }),
+      currencyCell(
+        amount,
+        data.document.currency,
+        columnWidths[amountIndex],
+        data.settings,
+        {
+          fill: COLORS.surface,
+          color: COLORS.heading,
+          size: 16,
+          borders: bottomBorder(),
         },
       ),
     );
@@ -576,6 +643,31 @@
     }
     if (customerDocument.visibility(data.settings).showPricing) {
       rows.push(grandTotalSpacerRow(columns));
+      if (data.settings.taxEnabled === true) {
+        const summary = window.BOQCalculations.calculateSummary(data.items, {
+          commission: data.document.commission,
+          rounding: data.settings.rounding,
+          taxEnabled: true,
+          taxRate: data.settings.taxRate,
+        });
+        rows.push(taxTotalRow(
+          data,
+          columns,
+          columnWidths,
+          "Subtotal",
+          summary.totalSelling,
+        ));
+        rows.push(taxTotalRow(
+          data,
+          columns,
+          columnWidths,
+          `Tax ${window.BOQUtils.formatPercent(
+            summary.taxRate,
+            data.settings.numberFormat,
+          )}`,
+          summary.taxValue,
+        ));
+      }
       rows.push(grandTotalRow(data, columns, columnWidths));
     }
     return new window.docx.Table({

@@ -21,6 +21,7 @@
     collectUniqueTextValues,
     visibleRevisionLabel,
     boqAttentionType,
+    formatDate,
   } = window.BOQUtils;
   let defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -53,12 +54,7 @@
   }
 
   function dateText(value) {
-    if (!value) return "—";
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(value));
+    return formatDate(value);
   }
 
   function renderBoq(record) {
@@ -371,6 +367,11 @@
       ? `Edit ${headingLabel}`
       : `Add ${headingLabel}`;
     if (!record) {
+      if (collection === "products") {
+        form.elements.defaultMargin.value = Number(
+          window.BOQStore.getSettings().defaultMargin || 0,
+        );
+      }
       updateCalculatedProductPrice();
       formatProductNumberFields(form);
       return;

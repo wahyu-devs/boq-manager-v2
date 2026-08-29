@@ -10,6 +10,18 @@
     return Math.max(0, Math.min(number, 99.99));
   }
 
+  function safeTaxRate(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return 0;
+    return Math.max(0, Math.min(number, 100));
+  }
+
+  function roundMoney(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return 0;
+    return Math.round((number + Number.EPSILON) * 100) / 100;
+  }
+
   function activeRounding(options = {}) {
     return options.rounding ?? window.BOQStore?.getSettings?.().rounding ?? "2";
   }
@@ -79,6 +91,12 @@
     totals.marginPercent = totals.totalSelling > 0
       ? totals.marginValue / totals.totalSelling * 100
       : 0;
+    totals.taxEnabled = options.taxEnabled === true;
+    totals.taxRate = safeTaxRate(options.taxRate);
+    totals.taxValue = totals.taxEnabled
+      ? roundMoney(totals.totalSelling * totals.taxRate / 100)
+      : 0;
+    totals.grandTotal = roundMoney(totals.totalSelling + totals.taxValue);
     return totals;
   }
 
@@ -98,5 +116,6 @@
     calculateCategorySummary,
     roundSelling,
     safeMargin,
+    safeTaxRate,
   };
 })();

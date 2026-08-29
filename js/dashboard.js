@@ -8,6 +8,7 @@
     visibleRevisionLabel,
     greetingForHour,
     boqAttentionType,
+    formatDate,
   } = window.BOQUtils;
   updateGreeting();
   const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
@@ -110,7 +111,7 @@
       }</td><td class="align-right number dashboard-financial-column">${
         formatPercent(boq.marginPercent || 0)
       }</td><td class="dashboard-updated-column">${
-        formatDateTime(boq.updatedAt)
+        formatDate(boq.updatedAt)
       }</td></tr>`
     }).join("");
   } else {
@@ -151,15 +152,6 @@
 
   function plural(count, singular) {
     return `${count} ${singular}${count === 1 ? "" : "s"}`;
-  }
-
-  function formatDateTime(value) {
-    if (!value) return "—";
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(value));
   }
 
   function updateGreeting() {

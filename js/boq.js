@@ -15,6 +15,8 @@
     escapeHtml,
     visibleRevisionLabel,
     collectUniqueTextValues,
+    formatDate,
+    formatDateTime,
     reorderItemsWithinCategory,
     reorderValues,
   } = window.BOQUtils;
@@ -80,6 +82,25 @@
       showSku: settings.showSku === true,
       showUnitPricing: settings.showUnitPricing !== false,
     };
+  }
+
+  function taxOptions(source = settings) {
+    return {
+      taxEnabled: source.taxEnabled === true,
+      taxRate: source.taxRate,
+    };
+  }
+
+  function editorTaxOptions() {
+    if (!isIssuedLocked()) return taxOptions();
+    const revision = (currentRecord?.revisions || []).find((entry) =>
+      Number(entry.number) === Number(currentRecord.activeRevisionNumber)
+    );
+    const storedSettings = revision?.companySettings || {};
+    return taxOptions({
+      taxEnabled: storedSettings.taxEnabled === true,
+      taxRate: storedSettings.taxRate ?? 0,
+    });
   }
 
   function localDate(date) {
@@ -374,13 +395,7 @@
   }
 
   function revisionDate(value) {
-    if (!value) return "Unknown date";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Unknown date";
-    return new Intl.DateTimeFormat("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(date);
+    return formatDateTime(value, settings.dateFormat, "Unknown date");
   }
 
   function revisionExportData(number) {
@@ -400,12 +415,30 @@
       issuedAt: revision.issuedAt || "",
     };
     const revisionItems = (documentValue.items || []).map(normalizeItem);
+    const storedSettings = revision.companySettings || {};
+    const revisionSettingsBase = isDraft
+      ? { ...settings }
+      : {
+        ...settings,
+        ...storedSettings,
+        taxEnabled: storedSettings.taxEnabled === true,
+        taxRate: storedSettings.taxRate ?? 0,
+        taxRegistrationNumber: storedSettings.taxRegistrationNumber || "",
+      };
+    revisionSettingsBase.rounding = revision.calculation?.rounding ||
+      storedSettings.rounding || settings.rounding;
+    revisionSettingsBase.numberFormat = revision.calculation?.numberFormat ||
+      storedSettings.numberFormat || settings.numberFormat;
+    const revisionSettings = {
+      ...revisionSettingsBase,
+      ...currentDocumentVisibilitySettings(),
+    };
     documentValue = {
       ...documentValue,
       ...calculateSummary(revisionItems, {
         commission: documentValue.commission,
-        rounding: revision.calculation?.rounding ||
-          revision.companySettings?.rounding || settings.rounding,
+        rounding: revisionSettings.rounding,
+        ...taxOptions(revisionSettings),
       }),
     };
     const presentCategories = [...new Set(revisionItems.map((item) =>
@@ -421,15 +454,7 @@
         ...savedOrder.filter((category) => presentCategories.includes(category)),
         ...presentCategories.filter((category) => !savedOrder.includes(category)),
       ],
-      settings: {
-        ...settings,
-        ...(revision.companySettings || {}),
-        rounding: revision.calculation?.rounding ||
-          revision.companySettings?.rounding || settings.rounding,
-        numberFormat: revision.calculation?.numberFormat ||
-          revision.companySettings?.numberFormat || settings.numberFormat,
-        ...currentDocumentVisibilitySettings(),
-      },
+      settings: revisionSettings,
     };
   }
 
@@ -476,7 +501,8 @@
         const revisionProject = revisionData?.document.projectName ||
           "No project";
         const grandTotal = formatCurrencyMarkup(
-          revisionData?.document.totalSelling || 0,
+          revisionData?.document.grandTotal ??
+            revisionData?.document.totalSelling ?? 0,
           revisionCurrency,
           undefined,
           revisionData?.settings.numberFormat || settings.numberFormat,
@@ -811,11 +837,16 @@
   }
 
   function updateSummary() {
-    const summary = calculateSummary(items, { commission });
+    const summary = calculateSummary(items, {
+      commission,
+      ...editorTaxOptions(),
+    });
     updateCommissionInput();
     const values = {
       totalCogs: formatCurrencyMarkup(summary.totalCogs, currentCurrency()),
       totalSelling: formatCurrencyMarkup(summary.totalSelling, currentCurrency()),
+      taxValue: formatCurrencyMarkup(summary.taxValue, currentCurrency()),
+      finalTotal: formatCurrencyMarkup(summary.grandTotal, currentCurrency()),
       marginValue: formatCurrencyMarkup(summary.marginValue, currentCurrency()),
       marginPercent: formatPercent(summary.marginPercent),
     };
@@ -824,6 +855,21 @@
         element.innerHTML = value
       )
     );
+    document.querySelectorAll("[data-tax-summary-row]").forEach((element) => {
+      element.hidden = !summary.taxEnabled;
+    });
+    document.querySelectorAll("[data-summary-tax-rate]").forEach((element) => {
+      element.textContent = `(${formatPercent(summary.taxRate)})`;
+    });
+    document.querySelectorAll("[data-summary-total-label]").forEach((element) => {
+      element.textContent = summary.taxEnabled ? "Grand total" : "Total selling";
+    });
+    const summaryMeta = document.querySelector("[data-summary-meta]");
+    if (summaryMeta) {
+      summaryMeta.textContent = summary.taxEnabled
+        ? "Gross profit is calculated after commission. Tax does not affect margin."
+        : "Gross profit is calculated after commission.";
+    }
   }
 
   function updateCommissionInput() {
@@ -841,7 +887,10 @@
   function documentPayload() {
     const projectName = document.querySelector("#boq-project").value.trim();
     const customerSelect = document.querySelector("#boq-customer");
-    const summary = calculateSummary(items, { commission });
+    const summary = calculateSummary(items, {
+      commission,
+      ...taxOptions(),
+    });
     const revisionNumber = currentRecord?.workingRevision ??
       currentRecord?.activeRevisionNumber;
     return {
@@ -1162,6 +1211,11 @@
     const showPartNumber = documentVisibility.showSku;
     const showPricing = documentVisibility.showPricing;
     const showUnitPricing = documentVisibility.showUnitPricing;
+    const previewSummary = calculateSummary(previewItems, {
+      commission: payload.commission,
+      rounding: previewSettings.rounding,
+      ...taxOptions(previewSettings),
+    });
     const columnCount = 4 + Number(showPartNumber) + Number(showPricing) +
       Number(showUnitPricing);
     const contactDetails = [previewSettings.email, previewSettings.phone]
@@ -1169,6 +1223,9 @@
     const companyDetails = [
       previewSettings.registrationNumber
         ? `Registration no.: ${escapeHtml(previewSettings.registrationNumber)}`
+        : "",
+      previewSettings.taxEnabled && previewSettings.taxRegistrationNumber
+        ? `Tax registration no.: ${escapeHtml(previewSettings.taxRegistrationNumber)}`
         : "",
       previewSettings.address
         ? escapeHtml(previewSettings.address).replace(/\r?\n/g, "<br>")
@@ -1238,6 +1295,39 @@
     }).join("");
     const tableRows = itemRows ||
       `<tr class="pdf-empty-row"><td colspan="${columnCount}">No BOQ items</td></tr>`;
+    const previewTotals = previewSummary.taxEnabled
+      ? `<div class="pdf-preview-totals"><div class="pdf-preview-total-row"><span>Subtotal</span><strong>${
+        formatCurrencyMarkup(
+          previewSummary.totalSelling,
+          previewCurrency,
+          undefined,
+          previewSettings.numberFormat,
+        )
+      }</strong></div><div class="pdf-preview-total-row"><span>Tax ${escapeHtml(
+        formatPercent(previewSummary.taxRate, previewSettings.numberFormat),
+      )}</span><strong>${
+        formatCurrencyMarkup(
+          previewSummary.taxValue,
+          previewCurrency,
+          undefined,
+          previewSettings.numberFormat,
+        )
+      }</strong></div><div class="pdf-preview-total-row is-grand-total"><span>Grand Total</span><strong>${
+        formatCurrencyMarkup(
+          previewSummary.grandTotal,
+          previewCurrency,
+          undefined,
+          previewSettings.numberFormat,
+        )
+      }</strong></div></div>`
+      : `<div class="pdf-preview-total"><span>Grand Total</span><strong>${
+        formatCurrencyMarkup(
+          previewSummary.totalSelling,
+          previewCurrency,
+          undefined,
+          previewSettings.numberFormat,
+        )
+      }</strong></div>`;
     host.innerHTML = `<div class="pdf-preview-content${companyLogo ? " has-company-logo" : ""}"><header class="pdf-preview-header"><div class="pdf-preview-company">${
       companyLogo ? `<div class="pdf-preview-logo-slot">${companyLogo}</div>` : ""
     }<strong class="pdf-company">${
@@ -1251,19 +1341,12 @@
     }</strong></div><div><span>Project</span><strong>${
       escapeHtml(payload.projectName || "-")
     }</strong></div><div><span>Issued / Valid Until</span><strong>${
-      escapeHtml(payload.date || "-")
+      escapeHtml(formatDate(payload.date, previewSettings.dateFormat, "-"))
     }</strong><strong>${
-      escapeHtml(payload.validUntil || "-")
+      escapeHtml(formatDate(payload.validUntil, previewSettings.dateFormat, "-"))
     }</strong></div></div><table class="${tableClasses}"><thead><tr><th class="pdf-column-no">No</th>${partNumberHeader}<th class="pdf-column-item">Item</th><th class="align-right pdf-column-qty">Qty</th><th class="pdf-column-unit">Unit</th>${unitPriceHeader}${totalHeader}</tr></thead><tbody>${tableRows}</tbody></table>${
       showPricing
-        ? `<div class="pdf-preview-total"><span>Grand Total</span><strong>${
-          formatCurrencyMarkup(
-            payload.totalSelling,
-            previewCurrency,
-            undefined,
-            previewSettings.numberFormat,
-          )
-        }</strong></div>`
+        ? previewTotals
         : ""
     }${
       payload.notes

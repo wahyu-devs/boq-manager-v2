@@ -160,10 +160,7 @@
     if (!node) return;
     const timestamp = Number(store.getMeta().lastSyncedAt || 0);
     node.textContent = timestamp
-      ? new Intl.DateTimeFormat("en-GB", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(timestamp))
+      ? window.BOQUtils.formatDateTime(timestamp)
       : "Not yet";
   }
 

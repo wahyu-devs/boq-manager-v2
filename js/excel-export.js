@@ -120,6 +120,12 @@
     ));
   }
 
+  function excelDateNumberFormat(settings = {}) {
+    if (settings.dateFormat === "mdy") return "mm/dd/yyyy";
+    if (settings.dateFormat === "iso") return "yyyy-mm-dd";
+    return "dd mmm yyyy";
+  }
+
   function thinBottomBorder() {
     return {
       bottom: { style: "thin", color: { argb: COLORS.border } },
@@ -293,6 +299,9 @@
     return [
       settings.registrationNumber
         ? `Registration no.: ${settings.registrationNumber}`
+        : "",
+      settings.taxEnabled && settings.taxRegistrationNumber
+        ? `Tax registration no.: ${settings.taxRegistrationNumber}`
         : "",
       settings.address,
       [settings.email, settings.phone].filter(Boolean).join(" | "),
@@ -515,9 +524,15 @@
     });
     const dateCell = sheet.getCell(`${columnLetter(dateStart)}7`);
     sheet.mergeCells(dateValueRange);
-    dateCell.value = `${data.document.date || "-"}\n${
-      data.document.validUntil || "-"
-    }`;
+    dateCell.value = `${window.BOQUtils.formatDate(
+      data.document.date,
+      data.settings.dateFormat,
+      "-",
+    )}\n${window.BOQUtils.formatDate(
+      data.document.validUntil,
+      data.settings.dateFormat,
+      "-",
+    )}`;
     setCell(dateCell, dateCell.value, {
       fill: COLORS.surface,
       size: 9,
@@ -626,6 +641,61 @@
       rowNumber += 2;
       const totalColumn = columnLetter(columns.length);
       const totalLabelStart = columnLetter(Math.max(1, columns.length - 2));
+      const summary = window.BOQCalculations.calculateSummary(data.items, {
+        commission: data.document.commission,
+        rounding: data.settings.rounding,
+        taxEnabled: data.settings.taxEnabled === true,
+        taxRate: data.settings.taxRate,
+      });
+      let subtotalRow = null;
+      let taxRow = null;
+      if (summary.taxEnabled) {
+        const addTaxDetailRow = (label, result, formula) => {
+          mergeValue(
+            sheet,
+            `${totalLabelStart}${rowNumber}:${
+              columnLetter(columns.length - 1)
+            }${rowNumber}`,
+            label,
+            {
+              fill: COLORS.surface,
+              color: COLORS.primaryDark,
+              align: "center",
+              size: 9,
+              border: thinBottomBorder(),
+            },
+          );
+          const amountCell = sheet.getCell(`${totalColumn}${rowNumber}`);
+          amountCell.value = { formula, result };
+          setCell(amountCell, amountCell.value, {
+            fill: COLORS.surface,
+            color: COLORS.primaryDark,
+            align: "right",
+            size: 9,
+            numFmt: moneyFormat,
+            border: thinBottomBorder(),
+          });
+          sheet.getRow(rowNumber).height = 22;
+        };
+        subtotalRow = rowNumber;
+        const itemTotalFormula = itemRows.length
+          ? `SUM(${totalColumn}${itemRows[0]}:${totalColumn}${
+            itemRows.at(-1)
+          })`
+          : "0";
+        addTaxDetailRow("Subtotal", summary.totalSelling, itemTotalFormula);
+        rowNumber += 1;
+        taxRow = rowNumber;
+        addTaxDetailRow(
+          `Tax ${window.BOQUtils.formatPercent(
+            summary.taxRate,
+            data.settings.numberFormat,
+          )}`,
+          summary.taxValue,
+          `ROUND(${totalColumn}${subtotalRow}*${summary.taxRate / 100},2)`,
+        );
+        rowNumber += 1;
+      }
       mergeValue(
         sheet,
         `${totalLabelStart}${rowNumber}:${
@@ -642,12 +712,17 @@
         },
       );
       const totalCell = sheet.getCell(`${totalColumn}${rowNumber}`);
-      totalCell.value = itemRows.length
+      totalCell.value = summary.taxEnabled
+        ? {
+          formula: `${totalColumn}${subtotalRow}+${totalColumn}${taxRow}`,
+          result: summary.grandTotal,
+        }
+        : itemRows.length
         ? {
           formula: `SUM(${totalColumn}${itemRows[0]}:${totalColumn}${
             itemRows.at(-1)
           })`,
-          result: data.document.totalSelling,
+          result: summary.totalSelling,
         }
         : 0;
       setCell(totalCell, totalCell.value, {
@@ -875,6 +950,8 @@
     const summary = calculateSummary(data.items, {
       commission: data.document.commission,
       rounding: data.settings.rounding,
+      taxEnabled: data.settings.taxEnabled === true,
+      taxRate: data.settings.taxRate,
     });
     const totalRow = rowNumber + 2;
     mergeValue(sheet, `A${totalRow}:I${totalRow}`, "TOTALS", {
@@ -959,8 +1036,65 @@
       fill: COLORS.primarySoft,
     });
 
+    let taxRow = null;
+    let grandTotalRow = null;
+    if (summary.taxEnabled) {
+      taxRow = marginRow + 1;
+      mergeValue(
+        sheet,
+        `A${taxRow}:J${taxRow}`,
+        `Tax ${window.BOQUtils.formatPercent(
+          summary.taxRate,
+          data.settings.numberFormat,
+        )}`,
+        {
+          align: "right",
+          color: COLORS.muted,
+          size: 9,
+        },
+      );
+      const taxCell = sheet.getCell(`K${taxRow}`);
+      taxCell.value = {
+        formula: `ROUND(K${totalRow}*${summary.taxRate / 100},2)`,
+        result: summary.taxValue,
+      };
+      setCell(taxCell, taxCell.value, {
+        align: "right",
+        numFmt: moneyFormat,
+        fill: COLORS.surface,
+        size: 9,
+      });
+      grandTotalRow = taxRow + 1;
+      mergeValue(
+        sheet,
+        `A${grandTotalRow}:J${grandTotalRow}`,
+        "Grand total",
+        {
+          bold: true,
+          align: "right",
+          color: COLORS.primaryDark,
+          fill: COLORS.highlight,
+          size: 10,
+          border: thinHorizontalBorder(),
+        },
+      );
+      const grandTotalCell = sheet.getCell(`K${grandTotalRow}`);
+      grandTotalCell.value = {
+        formula: `K${totalRow}+K${taxRow}`,
+        result: summary.grandTotal,
+      };
+      setCell(grandTotalCell, grandTotalCell.value, {
+        bold: true,
+        align: "right",
+        color: COLORS.primaryDark,
+        fill: COLORS.highlight,
+        numFmt: moneyFormat,
+        border: thinHorizontalBorder(),
+      });
+    }
+
     if (data.items.length) sheet.autoFilter = `A5:K${lastDataRow}`;
-    sheet.pageSetup.printArea = `A1:K${marginRow}`;
+    sheet.pageSetup.printArea = `A1:K${grandTotalRow || marginRow}`;
     sheet.pageSetup.printTitlesRow = "5:5";
     sheet.headerFooter.oddFooter = `&LInternal costing&RPage &P of &N`;
     return {
@@ -970,6 +1104,8 @@
       commissionRow,
       profitRow,
       marginRow,
+      taxRow,
+      grandTotalRow,
     };
   }
 
@@ -1072,7 +1208,9 @@
       fill: COLORS.surface,
       size: 10,
       vertical: "top",
-      numFmt: poDate instanceof Date ? "dd mmm yyyy" : undefined,
+      numFmt: poDate instanceof Date
+        ? excelDateNumberFormat(data.settings)
+        : undefined,
     });
     sheet.getRow(7).height = 18;
     sheet.getRow(8).height = 20;
@@ -1249,6 +1387,8 @@
     const summary = calculateSummary(data.items, {
       commission: data.document.commission,
       rounding: data.settings.rounding,
+      taxEnabled: data.settings.taxEnabled === true,
+      taxRate: data.settings.taxRate,
     });
     const summaryRows = [
       ["Total selling", `'Costing'!K${costing.totalRow}`, summary.totalSelling],
@@ -1261,27 +1401,44 @@
         summary.marginPercent / 100,
       ],
     ];
+    if (summary.taxEnabled) {
+      summaryRows.push(
+        ["Tax", `'Costing'!K${costing.taxRow}`, summary.taxValue],
+        [
+          "Grand total",
+          `'Costing'!K${costing.grandTotalRow}`,
+          summary.grandTotal,
+        ],
+      );
+    }
     const moneyFormat = currencyFormat(data.document.currency);
     summaryRows.forEach(([label, reference, result], index) => {
       const row = 11 + index;
+      const isGrandTotal = label === "Grand total";
       mergeValue(sheet, `A${row}:B${row}`, label, {
-        bold: index === 0 || index === 3,
-        color: index === 0 ? COLORS.primaryDark : COLORS.muted,
-        fill: index === 0 ? COLORS.highlight : COLORS.surface,
+        bold: index === 0 || index === 3 || isGrandTotal,
+        color: index === 0 || isGrandTotal
+          ? COLORS.primaryDark
+          : COLORS.muted,
+        fill: index === 0 || isGrandTotal
+          ? COLORS.highlight
+          : COLORS.surface,
         size: 9,
       });
       mergeValue(sheet, `C${row}:D${row}`, {
         formula: `=${reference}`,
         result,
       }, {
-        bold: index === 0 || index >= 3,
-        fill: index === 0 ? COLORS.highlight : COLORS.surface,
+        bold: index === 0 || index === 3 || index === 4 || isGrandTotal,
+        fill: index === 0 || isGrandTotal
+          ? COLORS.highlight
+          : COLORS.surface,
         color: COLORS.primaryDark,
         align: "right",
         numFmt: index === 4 ? "0.0%" : moneyFormat,
-        size: index === 0 ? 12 : 9,
+        size: index === 0 ? 12 : isGrandTotal ? 11 : 9,
       });
-      sheet.getRow(row).height = index === 0 ? 25 : 20;
+      sheet.getRow(row).height = index === 0 || isGrandTotal ? 25 : 20;
     });
 
     const details = [
@@ -1303,7 +1460,9 @@
         bold: true,
         fill: COLORS.surface,
         align: "right",
-        numFmt: value instanceof Date ? "dd mmm yyyy" : undefined,
+        numFmt: value instanceof Date
+          ? excelDateNumberFormat(data.settings)
+          : undefined,
         size: 9,
       });
     });

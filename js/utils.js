@@ -183,6 +183,61 @@
     return `${formatNumber(value, 1, numberFormat)}%`;
   }
 
+  function dateFormatPreference(preference) {
+    return preference || window.BOQStore?.getSettings?.().dateFormat || "dmy";
+  }
+
+  function dateParts(value) {
+    if (!value) return null;
+    const dateOnly = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnly) {
+      return {
+        year: Number(dateOnly[1]),
+        month: Number(dateOnly[2]),
+        day: Number(dateOnly[3]),
+        date: new Date(
+          Number(dateOnly[1]),
+          Number(dateOnly[2]) - 1,
+          Number(dateOnly[3]),
+        ),
+      };
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      date,
+    };
+  }
+
+  function formatDate(value, preference, fallback = "—") {
+    const parts = dateParts(value);
+    if (!parts) return fallback;
+    const format = dateFormatPreference(preference);
+    const month = String(parts.month).padStart(2, "0");
+    const day = String(parts.day).padStart(2, "0");
+    if (format === "iso") return `${parts.year}-${month}-${day}`;
+    if (format === "mdy") return `${month}/${day}/${parts.year}`;
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(parts.date);
+  }
+
+  function formatDateTime(value, preference, fallback = "—") {
+    const parts = dateParts(value);
+    if (!parts) return fallback;
+    const time = new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(parts.date);
+    return `${formatDate(value, preference, fallback)}, ${time}`;
+  }
+
   function debounce(callback, wait = 160) {
     let timeout;
     return (...args) => {
@@ -344,6 +399,8 @@
     formatCurrencyParts,
     formatCurrencyMarkup,
     formatPercent,
+    formatDate,
+    formatDateTime,
     debounce,
     escapeHtml,
     visibleRevisionLabel,

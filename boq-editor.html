@@ -432,9 +432,18 @@
                       >0.0%</strong>
                     </dd>
                   </div>
+                  <div class="summary-row" data-tax-summary-row hidden>
+                    <dt>Total selling</dt>
+                    <dd><strong data-summary="totalSelling"></strong></dd>
+                  </div>
+                  <div class="summary-row" data-tax-summary-row hidden>
+                    <dt>Tax <span data-summary-tax-rate></span></dt>
+                    <dd><strong data-summary="taxValue"></strong></dd>
+                  </div>
                 </dl>
                 <div class="summary-total">
-                  <span>Total selling</span><strong data-summary="totalSelling"
+                  <span data-summary-total-label>Total selling</span><strong
+                    data-summary="finalTotal"
                   ><span class="currency-accounting" aria-label="$0.00"><span
                         class="currency-accounting-symbol"
                         aria-hidden="true"
@@ -443,9 +452,8 @@
                         aria-hidden="true"
                       >0.00</span></span></strong>
                 </div>
-                <div class="summary-meta">
-                  Gross profit is calculated after commission. Tax is not
-                  included.
+                <div class="summary-meta" data-summary-meta>
+                  Gross profit is calculated after commission.
                 </div>
               </section>
               <div class="stack-sm summary-actions">
@@ -479,14 +487,15 @@
 
     <div class="mobile-save-bar">
       <div>
-        <strong data-summary="totalSelling"><span
+        <strong data-summary="finalTotal"><span
             class="currency-accounting"
             aria-label="$0.00"
           ><span class="currency-accounting-symbol" aria-hidden="true"
             >$</span><span
               class="currency-accounting-value"
               aria-hidden="true"
-            >0.00</span></span></strong><span>Total selling</span>
+            >0.00</span></span></strong><span data-summary-total-label
+          >Total selling</span>
       </div>
       <div class="mobile-save-actions">
         <button

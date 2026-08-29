@@ -49,6 +49,9 @@
       settings.registrationNumber
         ? `Registration no.: ${settings.registrationNumber}`
         : "",
+      settings.taxEnabled && settings.taxRegistrationNumber
+        ? `Tax registration no.: ${settings.taxRegistrationNumber}`
+        : "",
       settings.address,
       [settings.email, settings.phone].filter(Boolean).join(" | "),
     ], width);
@@ -140,8 +143,24 @@
     doc.text(customerLines, PAGE_MARGIN + 2, partiesTop + 9);
     doc.text(projectLines, projectX + 2, partiesTop + 9);
     doc.setFont("helvetica", "normal");
-    doc.text(data.document.date || "-", dateX + 2, partiesTop + 9);
-    doc.text(data.document.validUntil || "-", dateX + 2, partiesTop + 13.2);
+    doc.text(
+      window.BOQUtils.formatDate(
+        data.document.date,
+        data.settings.dateFormat,
+        "-",
+      ),
+      dateX + 2,
+      partiesTop + 9,
+    );
+    doc.text(
+      window.BOQUtils.formatDate(
+        data.document.validUntil,
+        data.settings.dateFormat,
+        "-",
+      ),
+      dateX + 2,
+      partiesTop + 13.2,
+    );
     return partiesTop + partiesHeight + 7;
   }
 
@@ -312,8 +331,14 @@
   }
 
   function drawSummary(doc, data, startY, reserve) {
-    const { formatCurrencyParts } = window.BOQUtils;
+    const { formatCurrencyParts, formatPercent } = window.BOQUtils;
     const showPricing = customerDocument.visibility(data.settings).showPricing;
+    const summary = window.BOQCalculations.calculateSummary(data.items, {
+      commission: data.document.commission,
+      rounding: data.settings.rounding,
+      taxEnabled: data.settings.taxEnabled === true,
+      taxRate: data.settings.taxRate,
+    });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const contentBottom = pageHeight - reserve;
@@ -325,9 +350,48 @@
     const totalHeight = 9;
     let y = startY;
     if (showPricing) {
+      if (summary.taxEnabled) {
+        y = ensureSpace(doc, y, totalHeight * 3, contentBottom);
+        const detailRows = [
+          ["Subtotal", summary.totalSelling],
+          [
+            `Tax ${
+              formatPercent(summary.taxRate, data.settings.numberFormat)
+            }`,
+            summary.taxValue,
+          ],
+        ];
+        detailRows.forEach(([label, amount]) => {
+          const value = formatCurrencyParts(
+            amount,
+            data.document.currency,
+            undefined,
+            data.settings.numberFormat,
+          );
+          doc.setFillColor(...COLORS.surface);
+          doc.rect(totalX, y, totalWidth, totalHeight, "F");
+          doc.setDrawColor(...COLORS.border);
+          doc.setLineWidth(0.2);
+          doc.line(
+            totalX,
+            y + totalHeight,
+            totalX + totalWidth,
+            y + totalHeight,
+          );
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.25);
+          doc.setTextColor(...COLORS.heading);
+          doc.text(label, totalX + labelWidth / 2, y + 5.8, {
+            align: "center",
+          });
+          doc.text(value.symbol, amountX, y + 5.8);
+          doc.text(value.value, amountRightX, y + 5.8, { align: "right" });
+          y += totalHeight;
+        });
+      }
       y = ensureSpace(doc, y, totalHeight, contentBottom);
       const total = formatCurrencyParts(
-        data.document.totalSelling,
+        summary.grandTotal,
         data.document.currency,
         undefined,
         data.settings.numberFormat,
