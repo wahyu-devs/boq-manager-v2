@@ -1141,6 +1141,11 @@
   box-shadow: var(--shadow-popover);
 }
 
+.dropdown-menu.dropdown-menu-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
 .menu-item {
   display: flex;
   width: 100%;

@@ -50,6 +50,39 @@ Deno.test("keeps desktop badges vertically centered", () => {
   );
 });
 
+Deno.test("opens constrained row menus above their trigger", () => {
+  assertIncludes(
+    appSource,
+    "function positionDropdownMenu(trigger, menu) {",
+    "dropdowns must calculate their opening direction",
+  );
+  assertIncludes(
+    appSource,
+    'menu.closest(".table-wrap")?.getBoundingClientRect()',
+    "row menus must use the internal table viewport as their clipping boundary",
+  );
+  assertIncludes(
+    appSource,
+    "if (menuHeight > spaceBelow && spaceAbove > spaceBelow) {",
+    "menus must flip only when they do not fit below and have more room above",
+  );
+  assertIncludes(
+    appSource,
+    'menu.classList.add("dropdown-menu-up");',
+    "the upward placement class must be applied after measurement",
+  );
+  assertIncludes(
+    appSource,
+    "if (willOpen) {\n        positionDropdownMenu(menuTrigger, menu);",
+    "menu placement must run after the menu becomes visible",
+  );
+  assertIncludes(
+    componentsCss,
+    ".dropdown-menu.dropdown-menu-up {\n  top: auto;\n  bottom: calc(100% + 6px);\n}",
+    "upward menus must anchor above their trigger",
+  );
+});
+
 Deno.test("contains tablet layouts and balances mobile editor controls", () => {
   assertIncludes(
     responsiveCss,

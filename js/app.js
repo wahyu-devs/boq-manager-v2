@@ -89,9 +89,28 @@
       (menu) => {
         if (menu === exception) return;
         menu.hidden = true;
+        menu.classList.remove("dropdown-menu-up");
         menu.previousElementSibling?.setAttribute("aria-expanded", "false");
       },
     );
+  }
+
+  function positionDropdownMenu(trigger, menu) {
+    menu.classList.remove("dropdown-menu-up");
+    const triggerRect = trigger.getBoundingClientRect();
+    const menuHeight = menu.getBoundingClientRect().height;
+    const scrollBoundary = menu.closest(".table-wrap")?.getBoundingClientRect();
+    const boundaryTop = Math.max(0, scrollBoundary?.top || 0);
+    const boundaryBottom = Math.min(
+      window.innerHeight,
+      scrollBoundary?.bottom || window.innerHeight,
+    );
+    const gap = 6;
+    const spaceBelow = Math.max(0, boundaryBottom - triggerRect.bottom - gap);
+    const spaceAbove = Math.max(0, triggerRect.top - boundaryTop - gap);
+    if (menuHeight > spaceBelow && spaceAbove > spaceBelow) {
+      menu.classList.add("dropdown-menu-up");
+    }
   }
 
   function initializeFiltering() {
@@ -335,6 +354,11 @@
       closeMenus(menu);
       menu.hidden = !willOpen;
       menuTrigger.setAttribute("aria-expanded", String(willOpen));
+      if (willOpen) {
+        positionDropdownMenu(menuTrigger, menu);
+      } else {
+        menu.classList.remove("dropdown-menu-up");
+      }
       return;
     }
     if (!event.target.closest(".dropdown-menu")) closeMenus();
