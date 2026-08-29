@@ -119,7 +119,7 @@
         dateText(record.createdAt)
       }</td><td>${
         dateText(record.updatedAt)
-      }</td><td class="boq-validity-cell">${
+      }</td><td>${
         dateText(record.validUntil)
       }</td><td><div class="row-actions"><a class="icon-button" href="boq-editor.html?id=${
         encodeURIComponent(record.id)

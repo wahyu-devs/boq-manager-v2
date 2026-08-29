@@ -60,11 +60,10 @@ Deno.test("filters the BOQ Register by customer", () => {
     'data-valid-until="${escapeHtml(record.validUntil || "")}"',
     "desktop BOQ rows must include the validity sort value",
   );
-  assertIncludes(
-    recordsScript,
-    '<td class="boq-validity-cell">${',
-    "desktop validity dates must remain on one line",
-  );
+  if (registerHtml.includes("boq-validity-cell") ||
+      recordsScript.includes("boq-validity-cell")) {
+    throw new Error("Expires must wrap like Created and Updated");
+  }
   const updatedHeader = registerHtml.indexOf('data-sort-key="updated"');
   const validityHeader = registerHtml.indexOf('data-sort-key="validUntil"');
   if (updatedHeader < 0 || validityHeader <= updatedHeader) {
