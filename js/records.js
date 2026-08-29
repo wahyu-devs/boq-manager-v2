@@ -12,6 +12,7 @@
     window.BOQStore;
   const {
     escapeHtml,
+    formatCurrency,
     formatCurrencyMarkup,
     formatPercent,
     formatNumberInput,
@@ -76,6 +77,11 @@
       record.projectName,
       record.customerName,
       record.customerPoNumber,
+      String(record.totalSelling || 0),
+      formatCurrency(
+        record.totalSelling || 0,
+        record.currency || defaultCurrency,
+      ),
     ].filter(Boolean).join(" ");
     const margin = formatPercent(record.marginPercent || 0);
     const attention = boqAttentionType(record);

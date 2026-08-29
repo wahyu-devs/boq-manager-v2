@@ -51,6 +51,21 @@ Deno.test("filters the BOQ Register by customer", () => {
   );
   assertIncludes(
     recordsScript,
+    "String(record.totalSelling || 0),",
+    "unformatted BOQ values must be included in BOQ search data",
+  );
+  assertIncludes(
+    recordsScript,
+    "formatCurrency(\n        record.totalSelling || 0,",
+    "formatted BOQ values must be included in BOQ search data",
+  );
+  assertIncludes(
+    registerHtml,
+    'placeholder="Search BOQ, project, customer, PO, or value"',
+    "BOQ search must communicate that values are searchable",
+  );
+  assertIncludes(
+    recordsScript,
     'data-customer-po="${escapeHtml(record.customerPoNumber || "")}"',
     "desktop BOQ rows must include the Customer PO sort value",
   );
