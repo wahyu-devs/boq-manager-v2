@@ -53,7 +53,7 @@ Deno.test("filters the BOQ Register by customer", () => {
   assertIncludes(
     registerHtml,
     'data-sort-key="validUntil"',
-    "BOQ Register must provide Valid Until sorting",
+    "BOQ Register must provide expiry-date sorting",
   );
   assertIncludes(
     recordsScript,
@@ -68,21 +68,21 @@ Deno.test("filters the BOQ Register by customer", () => {
   const updatedHeader = registerHtml.indexOf('data-sort-key="updated"');
   const validityHeader = registerHtml.indexOf('data-sort-key="validUntil"');
   if (updatedHeader < 0 || validityHeader <= updatedHeader) {
-    throw new Error("Valid Until must appear after Updated in the desktop header");
+    throw new Error("Expires must appear after Updated in the desktop header");
   }
   const updatedCell = recordsScript.indexOf("dateText(record.updatedAt)");
   const validityCell = recordsScript.indexOf("dateText(record.validUntil)");
   if (updatedCell < 0 || validityCell <= updatedCell) {
-    throw new Error("Valid Until must appear after Updated in desktop rows");
+    throw new Error("Expires must appear after Updated in desktop rows");
   }
   assertIncludes(
     recordsScript,
-    "<dt>Valid until</dt><dd>",
+    "<dt>Expires</dt><dd>",
     "mobile BOQ cards must display the validity date",
   );
   assertIncludes(
     recordsScript,
-    '<dt class="muted">Valid until</dt><dd>',
+    '<dt class="muted">Expires</dt><dd>',
     "BOQ Register preview must display the validity date",
   );
   assertIncludes(

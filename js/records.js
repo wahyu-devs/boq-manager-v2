@@ -145,7 +145,7 @@
           statusHtml(record.status)
         }</div><dl class="record-card-grid"><div><dt>Date</dt><dd>${
           dateText(record.date)
-        }</dd></div><div><dt>Valid until</dt><dd>${
+        }</dd></div><div><dt>Expires</dt><dd>${
           dateText(record.validUntil)
         }</dd></div><div><dt>Customer</dt><dd>${
           escapeHtml(record.customerName || "—")
@@ -446,7 +446,7 @@
           statusHtml(record.status)
         }</dd></div><div class="cluster space-between"><dt class="muted">Customer PO</dt><dd>${
           escapeHtml(record.customerPoNumber || "—")
-        }</dd></div><div class="cluster space-between"><dt class="muted">Valid until</dt><dd>${
+        }</dd></div><div class="cluster space-between"><dt class="muted">Expires</dt><dd>${
           dateText(record.validUntil)
         }</dd></div><div class="cluster space-between"><dt class="muted">Revision</dt><dd>${
           escapeHtml(revision || "Not issued")
