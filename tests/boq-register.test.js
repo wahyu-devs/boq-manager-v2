@@ -10,6 +10,9 @@ const dashboardScript = await Deno.readTextFile(
 const appScript = await Deno.readTextFile(
   new URL("../js/app.js", import.meta.url),
 );
+const editorScript = await Deno.readTextFile(
+  new URL("../js/boq.js", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -142,4 +145,25 @@ Deno.test("opens dashboard attention links as BOQ Register filters", () => {
     'url.searchParams.set("attention", attentionFilter.value)',
     "manually selected attention filters must remain in the page URL",
   );
+});
+
+Deno.test("opens BOQ Register previews in Customer PDF Preview", () => {
+  assertIncludes(
+    recordsScript,
+    '&preview=pdf">Preview</a>',
+    "BOQ Register Preview must open the selected BOQ in the editor",
+  );
+  assertIncludes(
+    editorScript,
+    'get("preview") === "pdf"',
+    "BOQ Editor must recognize the Customer PDF Preview request",
+  );
+  assertIncludes(
+    editorScript,
+    'window.BOQModal.open("pdf-modal")',
+    "BOQ Editor must automatically open Customer PDF Preview",
+  );
+  if (recordsScript.includes('data-record-action="preview"')) {
+    throw new Error("BOQ Register must not open the legacy generic preview");
+  }
 });

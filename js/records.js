@@ -127,7 +127,7 @@
         encodeURIComponent(record.id)
       }" aria-label="Edit ${
         escapeHtml(record.number || "BOQ")
-      }">✎</a><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-record-action="preview" data-record-id="${record.id}" data-open-modal="record-detail-modal">Preview</button><button class="menu-item" type="button" data-record-action="duplicate" data-record-id="${record.id}">Duplicate</button><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&history=1">Revision history</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=excel">Export Excel</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=pdf">Download PDF</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=word">Download Word</a>${deleteAction}</div></div></div></td></tr>`,
+      }">✎</a><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions">•••</button><div class="dropdown-menu" hidden><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&preview=pdf">Preview</a><button class="menu-item" type="button" data-record-action="duplicate" data-record-id="${record.id}">Duplicate</button><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&history=1">Revision history</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=excel">Export Excel</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=pdf">Download PDF</a><a class="menu-item" href="boq-editor.html?id=${encodeURIComponent(record.id)}&export=word">Download Word</a>${deleteAction}</div></div></div></td></tr>`,
       card:
         `<article class="record-card" data-record-card data-record-id="${record.id}" data-search="${
           escapeHtml(search)
@@ -517,7 +517,7 @@
     if (!action) return;
     const record = get(collection, action.dataset.recordId);
     if (action.dataset.recordAction === "edit") populateForm(record);
-    if (["detail", "preview"].includes(action.dataset.recordAction)) {
+    if (action.dataset.recordAction === "detail") {
       showDetail(record);
     }
     if (action.dataset.recordAction === "duplicate" && record) {

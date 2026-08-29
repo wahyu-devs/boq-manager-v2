@@ -1945,4 +1945,9 @@
     renderRevisionHistory();
     window.setTimeout(() => window.BOQModal.open("revision-history-modal"), 0);
   }
+  if (new URLSearchParams(location.search).get("preview") === "pdf" &&
+      currentRecord) {
+    buildPdfPreview();
+    window.setTimeout(() => window.BOQModal.open("pdf-modal"), 0);
+  }
 })();
