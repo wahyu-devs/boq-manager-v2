@@ -119,6 +119,14 @@ Deno.test("keeps Settings anchor targets below the sticky topbar", () => {
   );
 });
 
+Deno.test("top-aligns form controls beside fields with supporting text", () => {
+  assertIncludes(
+    componentsCss,
+    ".field {\n  display: grid;\n  align-content: start;",
+    "grid fields must not stretch controls when an adjacent field has a hint",
+  );
+});
+
 Deno.test("labels the compact New BOQ action", () => {
   assertIncludes(
     navigationSource,
