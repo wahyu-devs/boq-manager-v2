@@ -1607,7 +1607,7 @@
 }
 
 .settings-section {
-  scroll-margin-top: calc(var(--header-height) + 20px);
+  scroll-margin-top: calc(var(--header-height) + 18px);
 }
 
 .settings-section + .settings-section {
