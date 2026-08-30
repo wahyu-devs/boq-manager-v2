@@ -145,7 +145,7 @@
             </div>
 
             <aside
-              class="stack-lg dashboard-attention"
+              class="dashboard-attention"
               aria-label="Operational details"
             >
               <section class="panel" aria-labelledby="attention-heading">
@@ -167,6 +167,62 @@
               </section>
             </aside>
           </div>
+
+          <div class="dashboard-secondary-grid">
+            <section class="panel" aria-labelledby="po-period-heading">
+              <div class="panel-header">
+                <div>
+                  <h2 id="po-period-heading">Customer PO by Period</h2>
+                  <p>Won BOQ value by PO date</p>
+                </div>
+              </div>
+              <div class="panel-body panel-body-compact-y">
+                <dl class="customer-po-periods" data-customer-po-periods></dl>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="recent-po-heading">
+              <div class="panel-header">
+                <div>
+                  <h2 id="recent-po-heading">Recent Customer POs</h2>
+                  <p>Latest BOQs marked as Won</p>
+                </div><a class="link text-sm" href="boqs.html">Open register</a>
+              </div>
+              <div class="panel-body panel-body-compact-y">
+                <ul class="dashboard-record-list" data-recent-customer-pos></ul>
+                <div
+                  class="empty-state dashboard-compact-empty"
+                  data-recent-customer-pos-empty
+                >
+                  <div class="empty-state-content">
+                    <h3>No Customer POs Yet</h3>
+                    <p>Won BOQs will appear here.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="recent-activity-heading">
+              <div class="panel-header">
+                <div>
+                  <h2 id="recent-activity-heading">Recent Activity</h2>
+                  <p>Latest recorded workspace changes</p>
+                </div>
+              </div>
+              <div class="panel-body panel-body-compact-y">
+                <ol class="dashboard-activity-list" data-recent-activity></ol>
+                <div
+                  class="empty-state dashboard-compact-empty"
+                  data-recent-activity-empty
+                >
+                  <div class="empty-state-content">
+                    <h3>No Recent Activity</h3>
+                    <p>Saved workspace changes will appear here.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </main>
       </div>
     </div>
@@ -181,6 +237,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/auth.js"></script>
     <script src="js/calculations.js"></script>
+    <script src="js/dashboard-data.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/app.js"></script>
   </body>

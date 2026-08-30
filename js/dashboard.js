@@ -9,20 +9,27 @@
     greetingForHour,
     boqAttentionType,
     formatDate,
+    formatDateTime,
   } = window.BOQUtils;
   updateGreeting();
-  const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => ({
-    ...boq,
-    status: ["Draft", "Issued", "Won"].includes(boq.status)
-      ? boq.status
-      : "Draft",
-    ...window.BOQCalculations.calculateSummary(boq.items || [], {
+  const settings = window.BOQStore.getSettings();
+  const calculateSummary = window.BOQCalculations.calculateSummary;
+  const boqs = list("boqs").map(window.BOQStore.registerBoqView).map((boq) => {
+    const summary = calculateSummary(boq.items || [], {
       commission: boq.commission,
-    }),
-  }));
+    });
+    return {
+      ...boq,
+      status: ["Draft", "Issued", "Won"].includes(boq.status)
+        ? boq.status
+        : "Draft",
+      ...summary,
+      customerPoValue: customerPoValue(boq),
+    };
+  });
   const products = list("products");
   const customers = list("customers");
-  const currency = window.BOQStore.getSettings().defaultCurrency || "USD";
+  const currency = settings.defaultCurrency || "USD";
   const draftBoqs = boqs.filter((boq) => boq.status === "Draft");
   const issuedBoqs = boqs.filter((boq) => boq.status === "Issued");
   const wonBoqs = boqs.filter((boq) => boq.status === "Won");
@@ -149,6 +156,73 @@
     `<li class="insight-item"><span class="insight-icon insight-icon-${item.tone}" aria-hidden="true">!</span><div><a class="insight-title" href="boqs.html?attention=${encodeURIComponent(item.filter)}">${escapeHtml(item.title)}</a><p>${escapeHtml(item.detail)}</p></div></li>`
   ).join("");
   insightEmpty.hidden = attentionItems.length > 0;
+
+  const poPeriods = window.BOQDashboardData.customerPoPeriods(wonBoqs, {
+    referenceDate: attentionReference,
+    defaultCurrency: currency,
+  });
+  document.querySelector("[data-customer-po-periods]").innerHTML = poPeriods
+    .map((period) =>
+      `<div class="customer-po-period"><dt><span>${escapeHtml(period.label)}</span><small>${plural(period.count, "PO")}</small></dt><dd>${currencyTotalsMarkup(period.totals)}</dd></div>`
+    ).join("");
+
+  const recentCustomerPos = window.BOQDashboardData.recentCustomerPos(
+    wonBoqs,
+    4,
+  );
+  const recentPoHost = document.querySelector("[data-recent-customer-pos]");
+  const recentPoEmpty = document.querySelector(
+    "[data-recent-customer-pos-empty]",
+  );
+  recentPoHost.innerHTML = recentCustomerPos.map((boq) => {
+    const revision = visibleRevisionLabel(
+      window.BOQStore.revisionLabel(boq.displayRevisionNumber),
+    );
+    const detail = [
+      [boq.number, revision].filter(Boolean).join(" · "),
+      boq.customerPoNumber || "No PO number",
+      boq.customerName || "No customer",
+    ].filter(Boolean).join(" · ");
+    return `<li class="dashboard-record-item"><div class="dashboard-record-heading"><a href="boq-editor.html?id=${encodeURIComponent(boq.id)}">${escapeHtml(boq.projectName || boq.number || "Untitled BOQ")}</a><strong>${formatCurrencyMarkup(boq.customerPoValue || 0, boq.currency || currency)}</strong></div><div class="dashboard-record-meta"><span>${escapeHtml(detail)}</span><time datetime="${escapeHtml(boq.wonAt || "")}">${formatDate(boq.wonAt)}</time></div></li>`;
+  }).join("");
+  recentPoEmpty.hidden = recentCustomerPos.length > 0;
+
+  const activities = window.BOQDashboardData.recentActivity({
+    boqs,
+    products,
+    customers,
+  }, 4);
+  const activityHost = document.querySelector("[data-recent-activity]");
+  const activityEmpty = document.querySelector("[data-recent-activity-empty]");
+  activityHost.innerHTML = activities.map((activity) => {
+    const tone = activity.type === "boq-won"
+      ? "success"
+      : activity.type === "boq-issued"
+      ? "primary"
+      : "neutral";
+    return `<li class="dashboard-activity-item"><span class="dashboard-activity-marker dashboard-activity-marker-${tone}" aria-hidden="true"></span><div><a href="${escapeHtml(activity.href)}">${escapeHtml(activity.title)}</a><p>${escapeHtml(activity.detail)}</p></div><time datetime="${escapeHtml(activity.timestamp || "")}">${formatDateTime(activity.timestamp)}</time></li>`;
+  }).join("");
+  activityEmpty.hidden = activities.length > 0;
+
+  function customerPoValue(boq) {
+    const revision = window.BOQStore.latestIssuedRevision(boq);
+    const documentValue = revision?.document || boq;
+    const storedSettings = revision?.companySettings || {};
+    return calculateSummary(documentValue.items || [], {
+      commission: documentValue.commission,
+      rounding: revision?.calculation?.rounding || storedSettings.rounding ||
+        settings.rounding,
+      taxEnabled: storedSettings.taxEnabled === true,
+      taxRate: storedSettings.taxRate ?? 0,
+    }).grandTotal;
+  }
+
+  function currencyTotalsMarkup(totals) {
+    const values = totals.length ? totals : [{ currency, value: 0 }];
+    return values.map((total) =>
+      `<span>${formatCurrencyMarkup(total.value, total.currency)}</span>`
+    ).join("");
+  }
 
   function plural(count, singular) {
     return `${count} ${singular}${count === 1 ? "" : "s"}`;
