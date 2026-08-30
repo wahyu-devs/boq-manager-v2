@@ -8,12 +8,14 @@
   const workspaceReadyKey = "boq-manager-workspace-ready";
   const store = window.BOQStore;
   const syncPolicy = window.BOQSyncPolicy;
+  const workspaceDiagnostics = window.BOQWorkspaceDiagnostics;
   let client = null;
   let currentSession = null;
   let syncTimer = null;
   let syncPromise = null;
   let refreshInFlight = null;
   let lastRefreshAt = 0;
+  let lastWorkspaceDiagnostic = null;
   let signingOut = false;
 
   function renderAuthInterface() {
@@ -35,7 +37,9 @@
             <label class="field"><span class="field-label">Password</span><input class="input" name="password" type="password" autocomplete="current-password" required></label>
             <label class="checkbox-row"><input type="checkbox" name="remember" checked><span>Keep me signed in</span></label>
             <p class="form-error" data-login-error role="alert"></p>
+            <p class="auth-diagnostic" data-auth-diagnostic hidden></p>
             <button class="button button-primary auth-submit" type="submit">Sign in</button>
+            <button class="button button-secondary auth-retry" type="button" data-auth-retry hidden>Retry workspace</button>
           </form>
         </section>
       </div>
@@ -57,7 +61,7 @@
     window.BOQTheme?.updateControls();
   }
 
-  function authError(message) {
+  function authError(message, options = {}) {
     const screen = document.querySelector("[data-auth-screen]");
     const loading = document.querySelector("[data-auth-loading]");
     const form = document.querySelector("[data-login-form]");
@@ -72,6 +76,31 @@
     }
     const error = document.querySelector("[data-login-error]");
     if (error) error.textContent = message || "Unable to sign in.";
+    const diagnostic = document.querySelector("[data-auth-diagnostic]");
+    if (diagnostic) {
+      diagnostic.textContent = options.diagnostic || "";
+      diagnostic.hidden = !options.diagnostic;
+    }
+    const retry = document.querySelector("[data-auth-retry]");
+    if (retry) {
+      retry.hidden = !options.retry;
+      retry.disabled = false;
+      retry.textContent = "Retry workspace";
+    }
+  }
+
+  function clearAuthDiagnostic() {
+    const diagnostic = document.querySelector("[data-auth-diagnostic]");
+    if (diagnostic) {
+      diagnostic.hidden = true;
+      diagnostic.textContent = "";
+    }
+    const retry = document.querySelector("[data-auth-retry]");
+    if (retry) {
+      retry.hidden = true;
+      retry.disabled = false;
+      retry.textContent = "Retry workspace";
+    }
   }
 
   function showLogin() {
@@ -84,12 +113,40 @@
       form.hidden = false;
       form.elements.email.focus();
     }
+    clearAuthDiagnostic();
   }
 
   function showApplication() {
     const screen = document.querySelector("[data-auth-screen]");
     if (screen) screen.hidden = true;
     document.body.classList.remove("auth-pending");
+    clearAuthDiagnostic();
+  }
+
+  function safeSessionGet(key) {
+    try {
+      return sessionStorage.getItem(key);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function safeSessionSet(key, value) {
+    try {
+      sessionStorage.setItem(key, value);
+      return true;
+    } catch (error) {
+      console.warn("Session cache is unavailable:", error?.name || "Error");
+      return false;
+    }
+  }
+
+  function safeSessionRemove(key) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch (_error) {
+      // Session cache is optional; authentication remains server-backed.
+    }
   }
 
   function initials(value) {
@@ -103,7 +160,7 @@
 
   function cachedProfile(userId) {
     try {
-      return JSON.parse(sessionStorage.getItem(profileCacheKey(userId))) ||
+      return JSON.parse(safeSessionGet(profileCacheKey(userId))) ||
         null;
     } catch (_error) {
       return null;
@@ -138,7 +195,7 @@
       console.error("Unable to refresh user profile:", error);
     }
     const profile = { displayName, email: user.email || "" };
-    sessionStorage.setItem(profileCacheKey(user.id), JSON.stringify(profile));
+    safeSessionSet(profileCacheKey(user.id), JSON.stringify(profile));
     renderUserInterface(profile);
   }
 
@@ -147,6 +204,48 @@
     return ["boqs", "products", "customers", "settings", "meta"].some(
       (key) => localStorage.getItem(`${prefix}${key}`) !== null,
     );
+  }
+
+  function workspaceCachePrefix(userId) {
+    return `boq-manager-v2:${userId}:`;
+  }
+
+  function workspaceErrorMessage(report) {
+    if (report.code === "CLOUD_WORKSPACE_MISSING") {
+      return "Your cloud workspace was not returned. No empty workspace was uploaded. Check your connection and retry.";
+    }
+    if (report.code === "CACHE_WRITE_FAILED") {
+      return "Safari could not store the downloaded workspace. Check the diagnostic details and retry.";
+    }
+    if (report.code === "CACHE_ACCESS_FAILED") {
+      return "The browser blocked access to the local workspace cache. Check Safari storage settings and retry.";
+    }
+    if (report.code === "WORKSPACE_MIGRATION_FAILED") {
+      return "The downloaded workspace could not be prepared on this browser. Check the diagnostic details and retry.";
+    }
+    if (report.code === "WORKSPACE_APPLY_FAILED") {
+      return "The downloaded workspace could not be applied on this browser. Check the diagnostic details and retry.";
+    }
+    return "Unable to download your workspace. Check your connection and retry.";
+  }
+
+  async function reportWorkspaceFailure(error, options = {}) {
+    const failure = error?.name === "WorkspaceLoadError"
+      ? error
+      : workspaceDiagnostics.createFailure("unknown", error);
+    const report = await workspaceDiagnostics.report(failure);
+    lastWorkspaceDiagnostic = report;
+    console.error("Unable to refresh cloud data:", {
+      ...report,
+      cause: failure.cause?.name || failure.errorName,
+    });
+    if (options.showError) {
+      authError(workspaceErrorMessage(report), {
+        retry: true,
+        diagnostic: workspaceDiagnostics.describe(report),
+      });
+    }
+    return report;
   }
 
   function notifyWorkspaceUpdated(detail = {}) {
@@ -238,47 +337,101 @@
   async function reconcileCloud(session, options = {}) {
     if (refreshInFlight) return refreshInFlight;
     refreshInFlight = (async () => {
-      const cloud = await fetchCloudState(session.user.id);
-      const local = store.exportState();
-      const localTimestamp = Number(local.meta.clientUpdatedAt || 0);
-      const remoteTimestamp = cloudTimestamp(cloud);
+      let cloud = null;
+      try {
+        cloud = await fetchCloudState(session.user.id);
+      } catch (error) {
+        throw workspaceDiagnostics.createFailure("cloud-read", error);
+      }
+
+      const cachePrefix = workspaceCachePrefix(session.user.id);
+      const snapshotBytes = cloud?.state
+        ? workspaceDiagnostics.byteSize(cloud.state)
+        : null;
+      let checkpoint = null;
+      let stage = "cache-read";
       let changed = false;
-      let shouldPush = !cloud?.state || localTimestamp > remoteTimestamp;
-      if (cloud?.state && remoteTimestamp > localTimestamp) {
-        store.applyState(cloud.state, {
+      let shouldPush = false;
+      try {
+        checkpoint = workspaceDiagnostics.captureCache(
+          localStorage,
+          cachePrefix,
+        );
+        const local = store.exportState();
+        const localTimestamp = Number(local.meta.clientUpdatedAt || 0);
+        const remoteTimestamp = cloudTimestamp(cloud);
+        const hasLocalRecords = Object.values(local.collections || {}).some(
+          (records) => Array.isArray(records) && records.length,
+        );
+        if (workspaceDiagnostics.shouldBlockEmptyCloudPush({
+          preventEmptyPush: options.preventEmptyPush,
+          cloudState: cloud?.state,
+          localTimestamp,
+          hasLocalRecords,
+        })) {
+          stage = "cloud-missing";
+          throw new Error("Cloud workspace row was not returned");
+        }
+        shouldPush = !cloud?.state || localTimestamp > remoteTimestamp;
+        if (cloud?.state && remoteTimestamp > localTimestamp) {
+          stage = "cache-apply";
+          store.applyState(cloud.state, {
+            silent: true,
+            cloudCreatedAt: cloud.created_at,
+            cloudUpdatedAt: cloud.updated_at,
+          });
+          changed = true;
+        }
+
+        stage = "migration";
+        const migratedBoqs = store.migrateExistingBoqs({
           silent: true,
-          cloudCreatedAt: cloud.created_at,
-          cloudUpdatedAt: cloud.updated_at,
+          cloudCreatedAt: cloud?.created_at,
+          cloudUpdatedAt: cloud?.updated_at,
         });
-        changed = true;
+        const migratedIssuedStatuses = store.migrateIssuedStatuses({
+          silent: true,
+        });
+        const migratedPartNumbers = store.migrateLegacyPartNumbers({
+          silent: true,
+        });
+        const migratedProductMargins = store.migrateProductMargins({
+          silent: true,
+        });
+        const migratedBoqNumbers = store.migrateBoqNumbers({ silent: true });
+        const backfilledPartNumbers = store.backfillBoqPartNumbers({
+          silent: true,
+        });
+        const migratedBoqRevisions = store.migrateBoqRevisions({
+          silent: true,
+        });
+        if (
+          migratedBoqs || migratedIssuedStatuses || migratedPartNumbers ||
+          migratedProductMargins || migratedBoqNumbers ||
+          backfilledPartNumbers || migratedBoqRevisions
+        ) {
+          changed = true;
+          shouldPush = true;
+        }
+      } catch (error) {
+        let rollbackSucceeded = null;
+        if (checkpoint) {
+          try {
+            rollbackSucceeded = workspaceDiagnostics.restoreCache(
+              localStorage,
+              cachePrefix,
+              checkpoint,
+            );
+          } catch (_rollbackError) {
+            rollbackSucceeded = false;
+          }
+        }
+        throw workspaceDiagnostics.createFailure(stage, error, {
+          rollbackSucceeded,
+          snapshotBytes,
+        });
       }
-      const migratedBoqs = store.migrateExistingBoqs({
-        silent: true,
-        cloudCreatedAt: cloud?.created_at,
-        cloudUpdatedAt: cloud?.updated_at,
-      });
-      const migratedIssuedStatuses = store.migrateIssuedStatuses({
-        silent: true,
-      });
-      const migratedPartNumbers = store.migrateLegacyPartNumbers({
-        silent: true,
-      });
-      const migratedProductMargins = store.migrateProductMargins({
-        silent: true,
-      });
-      const migratedBoqNumbers = store.migrateBoqNumbers({ silent: true });
-      const backfilledPartNumbers = store.backfillBoqPartNumbers({
-        silent: true,
-      });
-      const migratedBoqRevisions = store.migrateBoqRevisions({ silent: true });
-      if (
-        migratedBoqs || migratedIssuedStatuses || migratedPartNumbers ||
-        migratedProductMargins || migratedBoqNumbers ||
-        backfilledPartNumbers || migratedBoqRevisions
-      ) {
-        changed = true;
-        shouldPush = true;
-      }
+
       if (shouldPush) await pushCloudState(true);
       if (changed && options.notify !== false) {
         notifyWorkspaceUpdated({ source: "cloud" });
@@ -308,15 +461,28 @@
     try {
       return await reconcileCloud(currentSession);
     } catch (error) {
-      console.error("Unable to refresh cloud data:", error);
+      await reportWorkspaceFailure(error);
       return false;
     }
   }
 
   async function enterApplication(session, options = {}) {
     currentSession = session;
-    const changedUser = store.setUser(session.user.id);
-    const cached = cachedProfile(session.user.id);
+    let changedUser = false;
+    let cached = null;
+    let hadCache = false;
+    try {
+      changedUser = store.setUser(session.user.id);
+      cached = cachedProfile(session.user.id);
+      hadCache = hasCachedWorkspace(session.user.id);
+    } catch (error) {
+      const failure = workspaceDiagnostics.createFailure(
+        "cache-read",
+        error,
+      );
+      await reportWorkspaceFailure(failure, { showError: true });
+      return false;
+    }
     if (cached) renderUserInterface(cached);
 
     if (options.background) {
@@ -324,26 +490,25 @@
       announceAuthReady(session);
       void updateUserInterface(session);
       void refreshInBackground({ force: true });
-      return;
+      return true;
     }
 
-    const hadCache = hasCachedWorkspace(session.user.id);
     let cloudChanged = false;
     try {
       [cloudChanged] = await Promise.all([
-        reconcileCloud(session, { notify: false }),
+        reconcileCloud(session, {
+          notify: false,
+          preventEmptyPush: Boolean(options.retry),
+        }),
         updateUserInterface(session),
       ]);
     } catch (error) {
-      console.error("Unable to refresh cloud data:", error);
+      await reportWorkspaceFailure(error, { showError: !hadCache });
       if (!hadCache) {
-        authError(
-          "Unable to load your workspace. Check your connection and sign in again.",
-        );
-        return;
+        return false;
       }
     }
-    sessionStorage.setItem(workspaceReadyKey, session.user.id);
+    safeSessionSet(workspaceReadyKey, session.user.id);
     if (changedUser || cloudChanged) {
       notifyWorkspaceUpdated({
         source: cloudChanged ? "cloud" : "local",
@@ -353,10 +518,17 @@
     }
     showApplication();
     announceAuthReady(session);
+    return true;
   }
 
   async function initialize() {
     renderAuthInterface();
+    if (!workspaceDiagnostics) {
+      authError(
+        "Workspace diagnostics could not be loaded. Check your connection and reload.",
+      );
+      return;
+    }
     if (!window.supabase?.createClient) {
       authError(
         "Authentication service could not be loaded. Check your connection and reload.",
@@ -373,7 +545,7 @@
     window.BOQAuth.client = client;
     client.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
-        sessionStorage.removeItem(workspaceReadyKey);
+        safeSessionRemove(workspaceReadyKey);
         currentSession = null;
         store.setUser(null);
         if (!signingOut) location.reload();
@@ -383,11 +555,11 @@
       const previousUserId = currentSession?.user?.id || store.getUserId();
       currentSession = session;
       if (previousUserId && previousUserId !== session.user.id) {
-        sessionStorage.removeItem(workspaceReadyKey);
+        safeSessionRemove(workspaceReadyKey);
         location.reload();
       }
     });
-    const readyUserId = sessionStorage.getItem(workspaceReadyKey);
+    const readyUserId = safeSessionGet(workspaceReadyKey);
     const cachedUserId = store.getUserId();
     const warmStart = syncPolicy.isWarmStart(readyUserId, cachedUserId);
     if (warmStart) {
@@ -396,13 +568,13 @@
     }
     const { data, error } = await client.auth.getSession();
     if (error) {
-      sessionStorage.removeItem(workspaceReadyKey);
+      safeSessionRemove(workspaceReadyKey);
       store.setUser(null);
       authError(error.message);
       return;
     }
     if (!data.session?.user) {
-      sessionStorage.removeItem(workspaceReadyKey);
+      safeSessionRemove(workspaceReadyKey);
       store.setUser(null);
       showLogin();
       return;
@@ -419,6 +591,7 @@
     const loginForm = event.target.closest("[data-login-form]");
     if (loginForm) {
       event.preventDefault();
+      clearAuthDiagnostic();
       const button = loginForm.querySelector('button[type="submit"]');
       const errorNode = loginForm.querySelector("[data-login-error]");
       errorNode.textContent = "";
@@ -471,13 +644,28 @@
   });
 
   document.addEventListener("click", async (event) => {
+    const retryButton = event.target.closest("[data-auth-retry]");
+    if (retryButton) {
+      if (!currentSession?.user) {
+        showLogin();
+        return;
+      }
+      const errorNode = document.querySelector("[data-login-error]");
+      const diagnosticNode = document.querySelector("[data-auth-diagnostic]");
+      if (errorNode) errorNode.textContent = "";
+      if (diagnosticNode) diagnosticNode.hidden = true;
+      retryButton.disabled = true;
+      retryButton.textContent = "Retrying…";
+      await enterApplication(currentSession);
+      return;
+    }
     if (event.target.closest("[data-change-password]")) {
       window.BOQModal.open("password-modal");
     }
     if (!event.target.closest("[data-logout]")) return;
     signingOut = true;
     await pushCloudState(true);
-    sessionStorage.removeItem(workspaceReadyKey);
+    safeSessionRemove(workspaceReadyKey);
     await client.auth.signOut();
     store.setUser(null);
     location.reload();
@@ -507,6 +695,7 @@
       if (!currentSession?.user) return false;
       return reconcileCloud(currentSession, { notify: true });
     },
+    getWorkspaceDiagnostic: () => lastWorkspaceDiagnostic,
     checkIssueConflict: async (boqId, knownUpdatedAt) => {
       if (!currentSession?.user || !boqId) return { ok: true };
       try {
