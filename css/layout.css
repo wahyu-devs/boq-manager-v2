@@ -264,8 +264,15 @@
 .dashboard-primary,
 .dashboard-attention {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: var(--dashboard-card-gap);
+}
+
+.dashboard-primary > *,
+.dashboard-attention > * {
+  min-width: 0;
 }
 
 .dashboard-recent > .panel,
