@@ -63,6 +63,11 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     script.includes("function viewportRowLimit"),
     "both dashboard lists share one viewport calculation",
   );
+  assert(
+    script.includes("syncDashboardPanelHeights();") &&
+      script.includes("const targetBottom = window.innerHeight - bottomInset"),
+    "both recent panels share one exact viewport bottom",
+  );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");
 });

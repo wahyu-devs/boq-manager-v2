@@ -176,6 +176,7 @@
     return `<li class="dashboard-record-item"><div class="dashboard-record-heading"><a href="boq-editor.html?id=${encodeURIComponent(boq.id)}">${escapeHtml(boq.projectName || boq.number || "Untitled BOQ")}</a><strong>${formatCurrencyMarkup(boq.customerPoValue || 0, boq.currency || currency)}</strong></div><div class="dashboard-record-meta"><span>${escapeHtml(detail)}</span><time datetime="${escapeHtml(boq.wonAt || "")}">${formatDate(boq.wonAt)}</time></div></li>`;
   }).join("");
   recentPoEmpty.hidden = recentCustomerPos.length > 0;
+  syncDashboardPanelHeights();
 
   function customerPoValue(boq) {
     const revision = window.BOQStore.latestIssuedRevision(boq);
@@ -265,6 +266,32 @@
       options.minimum,
       Math.floor(availableHeight / rowHeight),
     );
+  }
+
+  function syncDashboardPanelHeights() {
+    const panels = [
+      document.querySelector("[data-recent-boqs-panel]"),
+      document.querySelector("[data-recent-customer-pos-panel]"),
+    ].filter(Boolean);
+    if (!window.matchMedia("(min-width: 992px)").matches) {
+      panels.forEach((panel) => panel.style.removeProperty("height"));
+      return;
+    }
+
+    const main = document.querySelector(".main-content");
+    if (!main) return;
+    const mainStyles = window.getComputedStyle(main);
+    const bottomInset = Number.parseFloat(mainStyles.paddingBottom) || 48;
+    const targetBottom = window.innerHeight - bottomInset;
+    panels.forEach((panel) => {
+      const availableHeight = targetBottom -
+        panel.getBoundingClientRect().top;
+      if (availableHeight > 0) {
+        panel.style.height = `${availableHeight}px`;
+      } else {
+        panel.style.removeProperty("height");
+      }
+    });
   }
 
   function cssPixels(styles, property, fallback) {

@@ -268,8 +268,18 @@
   gap: var(--dashboard-card-gap);
 }
 
-.dashboard-recent > .panel {
+.dashboard-recent > .panel,
+[data-recent-customer-pos-panel] {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
   overflow: hidden;
+}
+
+[data-recent-customer-pos-panel] .panel-body,
+.dashboard-recent > .panel > .empty-state {
+  min-height: 0;
+  flex: 1;
 }
 
 .editor-layout {
