@@ -235,6 +235,27 @@
     padding-bottom: 40px;
   }
 
+  .dashboard-primary,
+  .dashboard-attention {
+    display: contents;
+  }
+
+  .dashboard-metrics {
+    order: 1;
+  }
+
+  .dashboard-attention > :first-child {
+    order: 2;
+  }
+
+  .dashboard-recent {
+    order: 3;
+  }
+
+  .dashboard-attention > [data-recent-customer-pos-panel] {
+    order: 4;
+  }
+
   .panel-header,
   .panel-body {
     padding-inline: 14px;

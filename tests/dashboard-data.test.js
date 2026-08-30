@@ -40,6 +40,9 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   const layout = await Deno.readTextFile(
     new URL("../css/layout.css", import.meta.url),
   );
+  const responsive = await Deno.readTextFile(
+    new URL("../css/responsive.css", import.meta.url),
+  );
   assert(html.includes("Recent Customer POs"), "recent PO panel exists");
   assert(!html.includes("Customer PO by Period"), "period panel is removed");
   assert(!html.includes("Recent Activity"), "activity panel is removed");
@@ -88,6 +91,11 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     layout.includes("grid-template-columns: minmax(0, 1fr);") &&
       layout.includes(".dashboard-primary > *"),
     "desktop dashboard columns contain wide table content",
+  );
+  assert(
+    responsive.includes(".dashboard-attention > :first-child") &&
+      responsive.includes(".dashboard-recent {\n    order: 3;"),
+    "mobile places Attention Needed between metrics and recent BOQs",
   );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");
