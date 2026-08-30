@@ -44,6 +44,10 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     new URL("../css/responsive.css", import.meta.url),
   );
   assert(html.includes("Recent Customer POs"), "recent PO panel exists");
+  assert(
+    html.includes("Recently received customer POs"),
+    "recent PO panel describes received customer orders",
+  );
   assert(!html.includes("Customer PO by Period"), "period panel is removed");
   assert(!html.includes("Recent Activity"), "activity panel is removed");
   assert(
