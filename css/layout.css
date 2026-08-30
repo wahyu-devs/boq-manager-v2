@@ -226,7 +226,7 @@
 }
 
 body[data-page="dashboard"] .main-content {
-  padding-bottom: var(--space-4);
+  padding-bottom: 28px;
 }
 
 .page-header {

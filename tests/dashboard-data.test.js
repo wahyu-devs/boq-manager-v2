@@ -94,8 +94,13 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   );
   assert(
     layout.includes('body[data-page="dashboard"] .main-content') &&
-      layout.includes("padding-bottom: var(--space-4);"),
-    "dashboard uses compact bottom spacing",
+      layout.includes("padding-bottom: 28px;"),
+    "desktop dashboard bottom spacing matches its top padding",
+  );
+  assert(
+    responsive.includes("padding-bottom: 24px;") &&
+      responsive.includes("padding-bottom: 20px;"),
+    "tablet and mobile dashboard spacing remains vertically balanced",
   );
   assert(
     responsive.includes(".dashboard-attention > :first-child") &&

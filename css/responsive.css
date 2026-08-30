@@ -3,6 +3,10 @@
     padding: 24px;
   }
 
+  body[data-page="dashboard"] .main-content {
+    padding-bottom: 24px;
+  }
+
   .editor-layout {
     grid-template-columns: minmax(0, 1fr) 250px;
   }
@@ -221,6 +225,10 @@
 
   .main-content {
     padding: 20px 14px 40px;
+  }
+
+  body[data-page="dashboard"] .main-content {
+    padding-bottom: 20px;
   }
 
   body[data-page="boq-editor"] .main-content {
