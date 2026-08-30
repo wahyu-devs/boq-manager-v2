@@ -225,10 +225,6 @@
   padding: 28px 30px 48px;
 }
 
-body[data-page="dashboard"] .main-content {
-  padding-bottom: 28px;
-}
-
 .page-header {
   display: flex;
   align-items: flex-start;

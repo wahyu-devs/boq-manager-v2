@@ -1,10 +1,12 @@
+@media (min-width: 1200px) {
+  body[data-page="dashboard"] .main-content {
+    padding-bottom: 28px;
+  }
+}
+
 @media (max-width: 1199px) {
   .main-content {
     padding: 24px;
-  }
-
-  body[data-page="dashboard"] .main-content {
-    padding-bottom: 24px;
   }
 
   .editor-layout {
@@ -225,10 +227,6 @@
 
   .main-content {
     padding: 20px 14px 40px;
-  }
-
-  body[data-page="dashboard"] .main-content {
-    padding-bottom: 20px;
   }
 
   body[data-page="boq-editor"] .main-content {
