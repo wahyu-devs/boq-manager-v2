@@ -94,8 +94,9 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   );
   assert(
     responsive.includes(".dashboard-attention > :first-child") &&
-      responsive.includes(".dashboard-recent {\n    order: 3;"),
-    "mobile places Attention Needed between metrics and recent BOQs",
+      responsive.indexOf(".dashboard-recent {\n    order: 3;") <
+        responsive.indexOf("@media (max-width: 767px)"),
+    "tablet and mobile place Attention Needed between metrics and recent BOQs",
   );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");
