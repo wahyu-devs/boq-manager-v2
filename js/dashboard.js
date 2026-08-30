@@ -158,7 +158,7 @@
 
   const recentCustomerPos = window.BOQDashboardData.recentCustomerPos(
     wonBoqs,
-    4,
+    recentCustomerPoRowLimit(),
   );
   const recentPoHost = document.querySelector("[data-recent-customer-pos]");
   const recentPoEmpty = document.querySelector(
@@ -202,32 +202,69 @@
   }
 
   function recentBoqRowLimit() {
-    if (!window.matchMedia("(min-width: 992px)").matches) return 6;
     const panel = document.querySelector("[data-recent-boqs-panel]");
+    return viewportRowLimit(panel, {
+      fallback: 6,
+      minimum: 3,
+      rowHeightProperty: "--dashboard-recent-row-height",
+      rowHeightFallback: 52,
+      fixedContentProperty: "--dashboard-recent-table-header-height",
+      fixedContentFallback: 40,
+    });
+  }
+
+  function recentCustomerPoRowLimit() {
+    const panel = document.querySelector("[data-recent-customer-pos-panel]");
+    return viewportRowLimit(panel, {
+      fallback: 4,
+      minimum: 2,
+      rowHeightProperty: "--dashboard-po-row-height",
+      rowHeightFallback: 60,
+      includeBodyPadding: true,
+    });
+  }
+
+  function viewportRowLimit(panel, options) {
+    if (!window.matchMedia("(min-width: 992px)").matches) {
+      return options.fallback;
+    }
     const main = document.querySelector(".main-content");
-    if (!panel || !main) return 6;
+    if (!panel || !main) return options.fallback;
 
     const panelStyles = window.getComputedStyle(panel);
     const mainStyles = window.getComputedStyle(main);
     const panelHeader = panel.querySelector(".panel-header");
+    const panelBody = panel.querySelector(".panel-body");
     const rowHeight = cssPixels(
       panelStyles,
-      "--dashboard-recent-row-height",
-      52,
+      options.rowHeightProperty,
+      options.rowHeightFallback,
     );
-    const tableHeaderHeight = cssPixels(
-      panelStyles,
-      "--dashboard-recent-table-header-height",
-      40,
-    );
+    const fixedContentHeight = options.fixedContentProperty
+      ? cssPixels(
+        panelStyles,
+        options.fixedContentProperty,
+        options.fixedContentFallback,
+      )
+      : 0;
+    const bodyStyles = options.includeBodyPadding && panelBody
+      ? window.getComputedStyle(panelBody)
+      : null;
+    const bodyPadding = bodyStyles
+      ? (Number.parseFloat(bodyStyles.paddingTop) || 0) +
+        (Number.parseFloat(bodyStyles.paddingBottom) || 0)
+      : 0;
     const bottomInset = Number.parseFloat(mainStyles.paddingBottom) || 48;
     const panelBorder = (Number.parseFloat(panelStyles.borderTopWidth) || 0) +
       (Number.parseFloat(panelStyles.borderBottomWidth) || 0);
     const panelHeaderHeight = panelHeader?.getBoundingClientRect().height || 54;
     const availableHeight = window.innerHeight -
       panel.getBoundingClientRect().top - bottomInset - panelBorder -
-      panelHeaderHeight - tableHeaderHeight;
-    return Math.max(3, Math.floor(availableHeight / rowHeight));
+      panelHeaderHeight - fixedContentHeight - bodyPadding;
+    return Math.max(
+      options.minimum,
+      Math.floor(availableHeight / rowHeight),
+    );
   }
 
   function cssPixels(styles, property, fallback) {

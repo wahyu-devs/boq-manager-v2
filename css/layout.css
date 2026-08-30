@@ -255,31 +255,21 @@
   --dashboard-card-gap: var(--space-4);
   --dashboard-recent-row-height: 52px;
   --dashboard-recent-table-header-height: 40px;
+  --dashboard-po-row-height: 60px;
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
-  grid-template-areas:
-    "metrics attention"
-    "recent attention";
   gap: var(--dashboard-card-gap);
   align-items: start;
 }
 
-.dashboard-metrics {
-  grid-area: metrics;
-}
-
-.dashboard-recent {
-  grid-area: recent;
+.dashboard-primary,
+.dashboard-attention {
+  display: grid;
+  align-items: start;
+  gap: var(--dashboard-card-gap);
 }
 
 .dashboard-recent > .panel {
   overflow: hidden;
-}
-
-.dashboard-attention {
-  grid-area: attention;
-  display: grid;
-  align-items: start;
-  gap: var(--space-4);
 }
 
 .editor-layout {

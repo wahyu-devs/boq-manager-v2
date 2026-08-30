@@ -51,97 +51,99 @@
           </header>
 
           <div class="content-grid dashboard-grid">
-            <section
-              class="panel dashboard-metrics"
-              aria-label="Workspace records"
-            >
-              <div class="record-metric-overview">
-                <a class="record-metric" href="boqs.html">
-                  <div class="record-metric-label">Total BOQs</div>
-                  <div class="record-metric-value" data-metric="boqCount">
-                    0
-                  </div>
-                  <div
-                    class="record-metric-detail"
-                    data-metric-detail="boqCount"
-                  >
-                    No documents yet
-                  </div>
-                </a>
-                <a class="record-metric" href="products.html">
-                  <div class="record-metric-label">Products</div>
-                  <div
-                    class="record-metric-value"
-                    data-metric="productCount"
-                  >
-                    0
-                  </div>
-                  <div
-                    class="record-metric-detail"
-                    data-metric-detail="productCount"
-                  >
-                    Catalog is empty
-                  </div>
-                </a>
-                <a class="record-metric" href="customers.html">
-                  <div class="record-metric-label">Customers</div>
-                  <div
-                    class="record-metric-value"
-                    data-metric="customerCount"
-                  >
-                    0
-                  </div>
-                  <div
-                    class="record-metric-detail"
-                    data-metric-detail="customerCount"
-                  >
-                    No customer records
-                  </div>
-                </a>
-              </div>
-            </section>
-
-            <div class="stack-lg dashboard-recent">
+            <div class="dashboard-primary">
               <section
-                class="panel"
-                aria-labelledby="recent-boqs-heading"
-                data-recent-boqs-panel
+                class="panel dashboard-metrics"
+                aria-label="Workspace records"
               >
-                <div class="panel-header">
-                  <div>
-                    <h2 id="recent-boqs-heading">Recently Updated BOQs</h2>
-                    <p>Your latest saved documents.</p>
-                  </div><a class="link text-sm" href="boqs.html"
-                  >Open register</a>
-                </div>
-                <div class="table-wrap" data-recent-boqs-table hidden>
-                  <table class="data-table table-dashboard">
-                    <thead>
-                      <tr>
-                        <th>BOQ</th>
-                        <th>Project</th>
-                        <th>Status</th>
-                        <th class="align-right dashboard-financial-column"
-                        >Value</th>
-                        <th class="align-right dashboard-financial-column"
-                        >Gross margin</th>
-                        <th class="dashboard-updated-column">Updated</th>
-                      </tr>
-                    </thead>
-                    <tbody data-recent-boqs></tbody>
-                  </table>
-                </div>
-                <div class="empty-state" data-recent-boqs-empty>
-                  <div class="empty-state-content">
-                    <div class="empty-state-icon" aria-hidden="true">＋</div>
-                    <h3>No BOQs Yet</h3>
-                    <p>Create your first BOQ to see document activity here.</p><a
-                      class="button button-primary"
-                      href="boq-editor.html"
-                    >Create BOQ</a>
-                  </div>
+                <div class="record-metric-overview">
+                  <a class="record-metric" href="boqs.html">
+                    <div class="record-metric-label">Total BOQs</div>
+                    <div class="record-metric-value" data-metric="boqCount">
+                      0
+                    </div>
+                    <div
+                      class="record-metric-detail"
+                      data-metric-detail="boqCount"
+                    >
+                      No documents yet
+                    </div>
+                  </a>
+                  <a class="record-metric" href="products.html">
+                    <div class="record-metric-label">Products</div>
+                    <div
+                      class="record-metric-value"
+                      data-metric="productCount"
+                    >
+                      0
+                    </div>
+                    <div
+                      class="record-metric-detail"
+                      data-metric-detail="productCount"
+                    >
+                      Catalog is empty
+                    </div>
+                  </a>
+                  <a class="record-metric" href="customers.html">
+                    <div class="record-metric-label">Customers</div>
+                    <div
+                      class="record-metric-value"
+                      data-metric="customerCount"
+                    >
+                      0
+                    </div>
+                    <div
+                      class="record-metric-detail"
+                      data-metric-detail="customerCount"
+                    >
+                      No customer records
+                    </div>
+                  </a>
                 </div>
               </section>
+
+              <div class="dashboard-recent">
+                <section
+                  class="panel"
+                  aria-labelledby="recent-boqs-heading"
+                  data-recent-boqs-panel
+                >
+                  <div class="panel-header">
+                    <div>
+                      <h2 id="recent-boqs-heading">Recently Updated BOQs</h2>
+                      <p>Your latest saved documents.</p>
+                    </div><a class="link text-sm" href="boqs.html"
+                    >Open register</a>
+                  </div>
+                  <div class="table-wrap" data-recent-boqs-table hidden>
+                    <table class="data-table table-dashboard">
+                      <thead>
+                        <tr>
+                          <th>BOQ</th>
+                          <th>Project</th>
+                          <th>Status</th>
+                          <th class="align-right dashboard-financial-column"
+                          >Value</th>
+                          <th class="align-right dashboard-financial-column"
+                          >Gross margin</th>
+                          <th class="dashboard-updated-column">Updated</th>
+                        </tr>
+                      </thead>
+                      <tbody data-recent-boqs></tbody>
+                    </table>
+                  </div>
+                  <div class="empty-state" data-recent-boqs-empty>
+                    <div class="empty-state-content">
+                      <div class="empty-state-icon" aria-hidden="true">＋</div>
+                      <h3>No BOQs Yet</h3>
+                      <p>Create your first BOQ to see document activity here.</p><a
+                        class="button button-primary"
+                        href="boq-editor.html"
+                      >Create BOQ</a>
+                    </div>
+                  </div>
+                </section>
+              </div>
             </div>
 
             <aside
@@ -166,7 +168,11 @@
                 </div>
               </section>
 
-              <section class="panel" aria-labelledby="recent-po-heading">
+              <section
+                class="panel"
+                aria-labelledby="recent-po-heading"
+                data-recent-customer-pos-panel
+              >
                 <div class="panel-header">
                   <div>
                     <h2 id="recent-po-heading">Recent Customer POs</h2>

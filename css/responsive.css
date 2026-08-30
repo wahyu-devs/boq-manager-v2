@@ -91,13 +91,6 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-grid {
-    grid-template-areas:
-      "metrics"
-      "attention"
-      "recent";
-  }
-
   .editor-page-header {
     flex-wrap: wrap;
   }

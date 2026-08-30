@@ -51,6 +51,18 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     html.indexOf("js/dashboard-data.js") < html.indexOf("js/dashboard.js"),
     "dashboard data helpers load first",
   );
+  assert(
+    html.includes("data-recent-customer-pos-panel"),
+    "recent PO panel exposes a viewport measurement hook",
+  );
+  assert(
+    script.includes("recentCustomerPoRowLimit()"),
+    "recent PO count follows the available viewport height",
+  );
+  assert(
+    script.includes("function viewportRowLimit"),
+    "both dashboard lists share one viewport calculation",
+  );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");
 });
