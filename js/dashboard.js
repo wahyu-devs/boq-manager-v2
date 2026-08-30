@@ -169,7 +169,7 @@
       window.BOQStore.revisionLabel(boq.displayRevisionNumber),
     );
     const detail = [
-      [boq.number, revision].filter(Boolean).join(" · "),
+      revision,
       boq.customerPoNumber || "No PO number",
       boq.customerName || "No customer",
     ].filter(Boolean).join(" · ");

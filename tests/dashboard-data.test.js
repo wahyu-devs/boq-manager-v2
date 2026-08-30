@@ -73,6 +73,10 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
       script.includes("item.getBoundingClientRect().bottom > visibleBottom"),
     "wrapped Customer PO rows are removed before they can be clipped",
   );
+  assert(
+    !script.includes('[boq.number, revision].filter(Boolean).join(" · ")'),
+    "recent Customer POs omit the BOQ number",
+  );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");
 });
