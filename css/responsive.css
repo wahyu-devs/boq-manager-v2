@@ -4,6 +4,23 @@
   }
 }
 
+@media (min-width: 992px) {
+  [data-recent-boqs-table],
+  [data-recent-customer-pos-panel] .panel-body {
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .dashboard-recent .table-dashboard th {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+  }
+}
+
 @media (max-width: 1199px) {
   .main-content {
     padding: 24px;

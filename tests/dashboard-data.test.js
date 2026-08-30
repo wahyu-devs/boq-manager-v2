@@ -62,22 +62,15 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     "recent PO panel exposes a viewport measurement hook",
   );
   assert(
-    script.includes("recentCustomerPoRowLimit()"),
-    "recent PO count follows the available viewport height",
-  );
-  assert(
-    script.includes("function viewportRowLimit"),
-    "both dashboard lists share one viewport calculation",
+    script.includes("dashboardEntryLimit(6)") &&
+      script.includes("dashboardEntryLimit(4)") &&
+      script.includes("? 10 : compactLimit"),
+    "desktop renders ten entries in both recent panels",
   );
   assert(
     script.includes("syncDashboardPanelHeights();") &&
       script.includes("const targetBottom = window.innerHeight - bottomInset"),
     "both recent panels share one exact viewport bottom",
-  );
-  assert(
-    script.includes("trimOverflowingRecentCustomerPos();") &&
-      script.includes("item.getBoundingClientRect().bottom > visibleBottom"),
-    "wrapped Customer PO rows are removed before they can be clipped",
   );
   assert(
     !script.includes('[boq.number, revision].filter(Boolean).join(" · ")'),
@@ -102,6 +95,12 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
       responsive.indexOf(".dashboard-recent {\n    order: 3;") <
         responsive.indexOf("@media (max-width: 767px)"),
     "tablet and mobile place Attention Needed between metrics and recent BOQs",
+  );
+  assert(
+    responsive.includes("[data-recent-boqs-table],") &&
+      responsive.includes("overscroll-behavior: contain;") &&
+      responsive.includes(".dashboard-recent .table-dashboard th"),
+    "desktop recent panels scroll internally with a sticky BOQ header",
   );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");

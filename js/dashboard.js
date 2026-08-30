@@ -81,7 +81,7 @@
 
   const recentBoqs = [...boqs].sort((a, b) =>
     new Date(b.updatedAt) - new Date(a.updatedAt)
-  ).slice(0, recentBoqRowLimit());
+  ).slice(0, dashboardEntryLimit(6));
   const boqTable = document.querySelector("[data-recent-boqs-table]");
   const boqEmpty = document.querySelector("[data-recent-boqs-empty]");
   if (recentBoqs.length) {
@@ -158,7 +158,7 @@
 
   const recentCustomerPos = window.BOQDashboardData.recentCustomerPos(
     wonBoqs,
-    recentCustomerPoRowLimit(),
+    dashboardEntryLimit(4),
   );
   const recentPoHost = document.querySelector("[data-recent-customer-pos]");
   const recentPoEmpty = document.querySelector(
@@ -173,7 +173,6 @@
   }).join("");
   recentPoEmpty.hidden = recentCustomerPos.length > 0;
   syncDashboardPanelHeights();
-  trimOverflowingRecentCustomerPos();
 
   function customerPoValue(boq) {
     const revision = window.BOQStore.latestIssuedRevision(boq);
@@ -199,70 +198,8 @@
     });
   }
 
-  function recentBoqRowLimit() {
-    const panel = document.querySelector("[data-recent-boqs-panel]");
-    return viewportRowLimit(panel, {
-      fallback: 6,
-      minimum: 3,
-      rowHeightProperty: "--dashboard-recent-row-height",
-      rowHeightFallback: 52,
-      fixedContentProperty: "--dashboard-recent-table-header-height",
-      fixedContentFallback: 40,
-    });
-  }
-
-  function recentCustomerPoRowLimit() {
-    const panel = document.querySelector("[data-recent-customer-pos-panel]");
-    return viewportRowLimit(panel, {
-      fallback: 4,
-      minimum: 2,
-      rowHeightProperty: "--dashboard-po-row-height",
-      rowHeightFallback: 60,
-      includeBodyPadding: true,
-    });
-  }
-
-  function viewportRowLimit(panel, options) {
-    if (!window.matchMedia("(min-width: 992px)").matches) {
-      return options.fallback;
-    }
-    const main = document.querySelector(".main-content");
-    if (!panel || !main) return options.fallback;
-
-    const panelStyles = window.getComputedStyle(panel);
-    const mainStyles = window.getComputedStyle(main);
-    const panelHeader = panel.querySelector(".panel-header");
-    const panelBody = panel.querySelector(".panel-body");
-    const rowHeight = cssPixels(
-      panelStyles,
-      options.rowHeightProperty,
-      options.rowHeightFallback,
-    );
-    const fixedContentHeight = options.fixedContentProperty
-      ? cssPixels(
-        panelStyles,
-        options.fixedContentProperty,
-        options.fixedContentFallback,
-      )
-      : 0;
-    const bodyStyles = options.includeBodyPadding && panelBody
-      ? window.getComputedStyle(panelBody)
-      : null;
-    const bodyPadding = bodyStyles
-      ? (Number.parseFloat(bodyStyles.paddingTop) || 0) +
-        (Number.parseFloat(bodyStyles.paddingBottom) || 0)
-      : 0;
-    const bottomInset = Number.parseFloat(mainStyles.paddingBottom) || 48;
-    const panelBorder = (Number.parseFloat(panelStyles.borderTopWidth) || 0) +
-      (Number.parseFloat(panelStyles.borderBottomWidth) || 0);
-    const panelHeaderHeight = panelHeader?.getBoundingClientRect().height || 54;
-    const availableHeight = window.innerHeight -
-      panel.getBoundingClientRect().top - bottomInset - panelBorder -
-      panelHeaderHeight - fixedContentHeight - bodyPadding;
-    return Math.max(
-      options.minimum,
-      Math.floor(availableHeight / rowHeight),
-    );
+  function dashboardEntryLimit(compactLimit) {
+    return window.matchMedia("(min-width: 992px)").matches ? 10 : compactLimit;
   }
 
   function syncDashboardPanelHeights() {
@@ -289,28 +226,6 @@
         panel.style.removeProperty("height");
       }
     });
-  }
-
-  function trimOverflowingRecentCustomerPos() {
-    if (!window.matchMedia("(min-width: 992px)").matches) return;
-    const panel = document.querySelector("[data-recent-customer-pos-panel]");
-    const body = panel?.querySelector(".panel-body");
-    const host = panel?.querySelector("[data-recent-customer-pos]");
-    if (!body || !host) return;
-
-    const bodyStyles = window.getComputedStyle(body);
-    const visibleBottom = body.getBoundingClientRect().bottom -
-      (Number.parseFloat(bodyStyles.paddingBottom) || 0);
-    const items = [...host.querySelectorAll(".dashboard-record-item")];
-    const firstOverflow = items.findIndex((item) =>
-      item.getBoundingClientRect().bottom > visibleBottom + 0.5
-    );
-    if (firstOverflow < 0) return;
-    items.slice(firstOverflow).forEach((item) => item.remove());
-  }
-
-  function cssPixels(styles, property, fallback) {
-    return Number.parseFloat(styles.getPropertyValue(property)) || fallback;
   }
 
   if (!event) {
