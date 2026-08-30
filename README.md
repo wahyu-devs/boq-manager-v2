@@ -6,7 +6,7 @@ It is designed as a practical internal workspace for sales, estimation, procurem
 
 ## Features
 
-- Operational dashboard with record counts, recently updated BOQs, time-sensitive follow-up, Customer PO period totals, recent POs, and workspace activity.
+- Operational dashboard with record counts, recently updated BOQs, time-sensitive follow-up, and recent Customer POs.
 - BOQ register with search, filtering, sorting, status, revision, customer, value, margin, and date information.
 - Fast BOQ editor with inline item editing and real-time financial calculations.
 - Product catalog lookup and support for custom items with optional part numbers.

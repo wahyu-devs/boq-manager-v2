@@ -98,14 +98,6 @@
       "recent";
   }
 
-  .dashboard-secondary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dashboard-secondary-grid > :last-child {
-    grid-column: 1 / -1;
-  }
-
   .editor-page-header {
     flex-wrap: wrap;
   }
@@ -238,14 +230,6 @@
 
   .page-actions .button-primary {
     flex: 1;
-  }
-
-  .dashboard-secondary-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-secondary-grid > :last-child {
-    grid-column: auto;
   }
 
   .editor-page-header .page-actions [data-save],
@@ -597,14 +581,6 @@
 }
 
 @media (max-width: 480px) {
-  .dashboard-activity-item {
-    grid-template-columns: 8px minmax(0, 1fr);
-  }
-
-  .dashboard-activity-item time {
-    grid-column: 2;
-  }
-
   .mobile-save-bar > div:first-child {
     display: none;
   }

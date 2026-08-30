@@ -9,7 +9,6 @@
     greetingForHour,
     boqAttentionType,
     formatDate,
-    formatDateTime,
   } = window.BOQUtils;
   updateGreeting();
   const settings = window.BOQStore.getSettings();
@@ -157,15 +156,6 @@
   ).join("");
   insightEmpty.hidden = attentionItems.length > 0;
 
-  const poPeriods = window.BOQDashboardData.customerPoPeriods(wonBoqs, {
-    referenceDate: attentionReference,
-    defaultCurrency: currency,
-  });
-  document.querySelector("[data-customer-po-periods]").innerHTML = poPeriods
-    .map((period) =>
-      `<div class="customer-po-period"><dt><span>${escapeHtml(period.label)}</span><small>${plural(period.count, "PO")}</small></dt><dd>${currencyTotalsMarkup(period.totals)}</dd></div>`
-    ).join("");
-
   const recentCustomerPos = window.BOQDashboardData.recentCustomerPos(
     wonBoqs,
     4,
@@ -187,23 +177,6 @@
   }).join("");
   recentPoEmpty.hidden = recentCustomerPos.length > 0;
 
-  const activities = window.BOQDashboardData.recentActivity({
-    boqs,
-    products,
-    customers,
-  }, 4);
-  const activityHost = document.querySelector("[data-recent-activity]");
-  const activityEmpty = document.querySelector("[data-recent-activity-empty]");
-  activityHost.innerHTML = activities.map((activity) => {
-    const tone = activity.type === "boq-won"
-      ? "success"
-      : activity.type === "boq-issued"
-      ? "primary"
-      : "neutral";
-    return `<li class="dashboard-activity-item"><span class="dashboard-activity-marker dashboard-activity-marker-${tone}" aria-hidden="true"></span><div><a href="${escapeHtml(activity.href)}">${escapeHtml(activity.title)}</a><p>${escapeHtml(activity.detail)}</p></div><time datetime="${escapeHtml(activity.timestamp || "")}">${formatDateTime(activity.timestamp)}</time></li>`;
-  }).join("");
-  activityEmpty.hidden = activities.length > 0;
-
   function customerPoValue(boq) {
     const revision = window.BOQStore.latestIssuedRevision(boq);
     const documentValue = revision?.document || boq;
@@ -215,13 +188,6 @@
       taxEnabled: storedSettings.taxEnabled === true,
       taxRate: storedSettings.taxRate ?? 0,
     }).grandTotal;
-  }
-
-  function currencyTotalsMarkup(totals) {
-    const values = totals.length ? totals : [{ currency, value: 0 }];
-    return values.map((total) =>
-      `<span>${formatCurrencyMarkup(total.value, total.currency)}</span>`
-    ).join("");
   }
 
   function plural(count, singular) {

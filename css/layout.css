@@ -277,14 +277,9 @@
 
 .dashboard-attention {
   grid-area: attention;
-}
-
-.dashboard-secondary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
   gap: var(--space-4);
-  margin-top: var(--space-4);
 }
 
 .editor-layout {

@@ -606,56 +606,8 @@
   color: var(--color-primary);
 }
 
-.customer-po-periods,
-.dashboard-record-list,
-.dashboard-activity-list {
+.dashboard-record-list {
   list-style: none;
-}
-
-.customer-po-period {
-  display: grid;
-  min-height: 58px;
-  grid-template-columns: minmax(0, 1fr) minmax(108px, auto);
-  align-items: center;
-  gap: 14px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.customer-po-period:last-child {
-  border-bottom: 0;
-}
-
-.customer-po-period dt span,
-.customer-po-period dt small {
-  display: block;
-}
-
-.customer-po-period dt span {
-  color: var(--color-text);
-  font-size: 12px;
-  font-weight: 620;
-}
-
-.customer-po-period dt small {
-  margin-top: 2px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-}
-
-.customer-po-period dd {
-  min-width: 108px;
-  color: var(--color-text);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.customer-po-period dd > span {
-  display: block;
-}
-
-.customer-po-period dd > span + span {
-  margin-top: 3px;
 }
 
 .dashboard-record-item {
@@ -674,15 +626,13 @@
   gap: 12px;
 }
 
-.dashboard-record-heading a,
-.dashboard-activity-item a {
+.dashboard-record-heading a {
   color: var(--color-text);
   font-size: 12px;
   font-weight: 620;
 }
 
-.dashboard-record-heading a:hover,
-.dashboard-activity-item a:hover {
+.dashboard-record-heading a:hover {
   color: var(--color-primary);
 }
 
@@ -707,48 +657,11 @@
   overflow-wrap: anywhere;
 }
 
-.dashboard-record-meta time,
-.dashboard-activity-item time {
+.dashboard-record-meta time {
   flex: 0 0 auto;
   color: var(--color-text-subtle);
   font-size: 11px;
   white-space: nowrap;
-}
-
-.dashboard-activity-item {
-  display: grid;
-  grid-template-columns: 8px minmax(0, 1fr) max-content;
-  align-items: start;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.dashboard-activity-item:last-child {
-  border-bottom: 0;
-}
-
-.dashboard-activity-marker {
-  width: 7px;
-  height: 7px;
-  margin-top: 5px;
-  border-radius: 50%;
-  background: var(--color-text-subtle);
-}
-
-.dashboard-activity-marker-primary {
-  background: var(--color-primary);
-}
-
-.dashboard-activity-marker-success {
-  background: var(--color-success);
-}
-
-.dashboard-activity-item p {
-  margin-top: 2px;
-  overflow-wrap: anywhere;
-  color: var(--color-text-muted);
-  font-size: 11px;
 }
 
 .empty-state.dashboard-compact-empty {
