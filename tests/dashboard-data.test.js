@@ -93,6 +93,11 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     "desktop dashboard columns contain wide table content",
   );
   assert(
+    layout.includes('body[data-page="dashboard"] .main-content') &&
+      layout.includes("padding-bottom: var(--space-4);"),
+    "dashboard uses compact bottom spacing",
+  );
+  assert(
     responsive.includes(".dashboard-attention > :first-child") &&
       responsive.indexOf(".dashboard-recent {\n    order: 3;") <
         responsive.indexOf("@media (max-width: 767px)"),
