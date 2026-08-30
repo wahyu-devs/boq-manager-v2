@@ -177,6 +177,7 @@
   }).join("");
   recentPoEmpty.hidden = recentCustomerPos.length > 0;
   syncDashboardPanelHeights();
+  trimOverflowingRecentCustomerPos();
 
   function customerPoValue(boq) {
     const revision = window.BOQStore.latestIssuedRevision(boq);
@@ -292,6 +293,24 @@
         panel.style.removeProperty("height");
       }
     });
+  }
+
+  function trimOverflowingRecentCustomerPos() {
+    if (!window.matchMedia("(min-width: 992px)").matches) return;
+    const panel = document.querySelector("[data-recent-customer-pos-panel]");
+    const body = panel?.querySelector(".panel-body");
+    const host = panel?.querySelector("[data-recent-customer-pos]");
+    if (!body || !host) return;
+
+    const bodyStyles = window.getComputedStyle(body);
+    const visibleBottom = body.getBoundingClientRect().bottom -
+      (Number.parseFloat(bodyStyles.paddingBottom) || 0);
+    const items = [...host.querySelectorAll(".dashboard-record-item")];
+    const firstOverflow = items.findIndex((item) =>
+      item.getBoundingClientRect().bottom > visibleBottom + 0.5
+    );
+    if (firstOverflow < 0) return;
+    items.slice(firstOverflow).forEach((item) => item.remove());
   }
 
   function cssPixels(styles, property, fallback) {
