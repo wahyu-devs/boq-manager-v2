@@ -719,9 +719,9 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   equal(store.list("boqs")[0].commission, 2000, "single-project restore commission");
 
   store.setUser("migration-user");
-  localStorage.setItem(
-    "boq-manager-v2:migration-user:boqs",
-    JSON.stringify([{
+  store.applyState({
+    collections: {
+      boqs: [{
       id: "existing-boq",
       number: "OLD-002",
       projectName: "Cloud Project",
@@ -730,8 +730,13 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       source: "imported",
       updatedAt: "2025-02-15T00:00:00.000Z",
       createdAt: "2025-02-15T00:00:00.000Z",
-    }]),
-  );
+      }],
+      products: [],
+      customers: [],
+    },
+    settings: store.getSettings(),
+    meta: { existingBoqMigrationVersion: 0 },
+  }, { silent: true });
   const migrated = store.migrateExistingBoqs({
     silent: true,
     cloudCreatedAt: "2024-12-01T08:30:00.000Z",
@@ -764,26 +769,31 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     ...store.getSettings(),
     numberingFormat: "BOQ-{YYYY}-{NNN}",
   });
-  localStorage.setItem(
-    "boq-manager-v2:migration-user:boqs",
-    JSON.stringify([{
-      id: "february-second",
-      number: "OLD-003",
-      projectName: "February Second",
-      status: "Issued",
-      items: [],
-      createdAt: "2025-02-20T08:00:00.000Z",
-      updatedAt: "2025-03-02T08:00:00.000Z",
-    }, migratedBoq, {
-      id: "february-first",
-      number: "OLD-001",
-      projectName: "February First",
-      status: "Issued",
-      items: [],
-      createdAt: "2025-02-01T08:00:00.000Z",
-      updatedAt: "2025-02-03T08:00:00.000Z",
-    }]),
-  );
+  store.applyState({
+    collections: {
+      boqs: [{
+        id: "february-second",
+        number: "OLD-003",
+        projectName: "February Second",
+        status: "Issued",
+        items: [],
+        createdAt: "2025-02-20T08:00:00.000Z",
+        updatedAt: "2025-03-02T08:00:00.000Z",
+      }, migratedBoq, {
+        id: "february-first",
+        number: "OLD-001",
+        projectName: "February First",
+        status: "Issued",
+        items: [],
+        createdAt: "2025-02-01T08:00:00.000Z",
+        updatedAt: "2025-02-03T08:00:00.000Z",
+      }],
+      products: [],
+      customers: [],
+    },
+    settings: store.getSettings(),
+    meta: { ...store.getMeta(), boqNumberingMigrationVersion: 0 },
+  }, { silent: true });
   equal(
     store.migrateBoqNumbers({ silent: true }),
     true,
@@ -825,32 +835,37 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
     false,
     "BOQ numbering migration only runs once",
   );
-  localStorage.setItem(
-    "boq-manager-v2:migration-user:products",
-    JSON.stringify([{
-      id: "imported-product",
-      sku: "SKU-001",
-      name: "Imported Product",
-      defaultMargin: 30.004093327875562,
-      description: "Legacy description",
-      source: "imported",
-    }, {
-      id: "manual-product",
-      sku: "PN-002",
-      name: "Manual Product",
-    }]),
-  );
-  localStorage.setItem(
-    "boq-manager-v2:migration-user:boqs",
-    JSON.stringify([{
-      ...migratedBoq,
-      items: [{
-        id: "legacy-item",
+  store.applyState({
+    collections: {
+      products: [{
+        id: "imported-product",
         sku: "SKU-001",
-        item: "Imported Product",
+        name: "Imported Product",
+        defaultMargin: 30.004093327875562,
+        description: "Legacy description",
+        source: "imported",
+      }, {
+        id: "manual-product",
+        sku: "PN-002",
+        name: "Manual Product",
       }],
-    }]),
-  );
+      boqs: [{
+        ...migratedBoq,
+        items: [{
+          id: "legacy-item",
+          sku: "SKU-001",
+          item: "Imported Product",
+        }],
+      }],
+      customers: [],
+    },
+    settings: store.getSettings(),
+    meta: {
+      ...store.getMeta(),
+      partNumberMigrationVersion: 0,
+      productMarginMigrationVersion: 0,
+    },
+  }, { silent: true });
   equal(
     store.migrateLegacyPartNumbers({ silent: true }),
     true,
@@ -864,10 +879,9 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   const migratedProducts = store.list("products");
   equal(migratedProducts[0].defaultMargin, 30, "product margin rounded");
   equal(
-    JSON.parse(localStorage.getItem("boq-manager-v2:migration-user:products"))[0]
-      .defaultMargin,
+    store.exportState().collections.products[0].defaultMargin,
     30,
-    "rounded product margin persisted",
+    "rounded product margin retained in memory state",
   );
   equal(
     store.getMeta().productMarginMigrationVersion,
@@ -947,9 +961,9 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   );
 
   store.setUser("revision-user");
-  localStorage.setItem(
-    "boq-manager-v2:revision-user:boqs",
-    JSON.stringify([{
+  store.applyState({
+    collections: {
+      boqs: [{
       id: "alpha-rev-2",
       number: "BOQ-250203",
       projectName: "Project Alpha - Revision 2",
@@ -985,8 +999,13 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
       items: [],
       createdAt: "2025-02-05T08:00:00.000Z",
       updatedAt: "2025-02-05T09:00:00.000Z",
-    }]),
-  );
+      }],
+      products: [],
+      customers: [],
+    },
+    settings: store.getSettings(),
+    meta: { boqRevisionMigrationVersion: 0 },
+  }, { silent: true });
   store.setCurrentBoqId("alpha-rev-2");
   equal(
     store.migrateBoqRevisions({ silent: true }),
@@ -1465,27 +1484,38 @@ Deno.test("marks an issued BOQ as won without changing its revision", () => {
 Deno.test("creates a revision draft for a legacy sent BOQ", () => {
   const store = window.BOQStore;
   const userId = "legacy-revision-draft-user";
-  const prefix = `boq-manager-v2:${userId}`;
   const createdAt = "2026-08-01T08:00:00.000Z";
   const updatedAt = "2026-08-02T09:00:00.000Z";
   store.setUser(userId);
-  localStorage.setItem(`${prefix}:boqs`, JSON.stringify([{
-    id: "legacy-sent-boq",
-    number: "BOQ-260801",
-    projectName: "Legacy Sent Project",
-    customerId: "",
-    customerName: "",
-    status: "Sent",
-    items: [{ id: "legacy-item", item: "Legacy item", qty: 1, unitCogs: 100 }],
-    createdAt,
-    updatedAt,
-    revisions: [],
-  }]));
-  localStorage.setItem(`${prefix}:meta`, JSON.stringify({
-    schemaVersion: 5,
-    boqRevisionMigrationVersion: 3,
-    clientUpdatedAt: Date.parse(updatedAt),
-  }));
+  store.applyState({
+    collections: {
+      boqs: [{
+        id: "legacy-sent-boq",
+        number: "BOQ-260801",
+        projectName: "Legacy Sent Project",
+        customerId: "",
+        customerName: "",
+        status: "Sent",
+        items: [{
+          id: "legacy-item",
+          item: "Legacy item",
+          qty: 1,
+          unitCogs: 100,
+        }],
+        createdAt,
+        updatedAt,
+        revisions: [],
+      }],
+      products: [],
+      customers: [],
+    },
+    settings: store.getSettings(),
+    meta: {
+      schemaVersion: 5,
+      boqRevisionMigrationVersion: 3,
+      clientUpdatedAt: Date.parse(updatedAt),
+    },
+  }, { silent: true });
 
   const draft = store.createRevisionDraft("legacy-sent-boq");
   equal(Boolean(draft), true, "legacy revision draft created");
@@ -1502,4 +1532,48 @@ Deno.test("creates a revision draft for a legacy sent BOQ", () => {
     "existing revision draft is not duplicated",
   );
   equal(store.list("boqs").length, 1, "legacy BOQ remains a single record");
+});
+
+Deno.test("keeps workspace edits in memory when localStorage rejects state writes", () => {
+  const originalStorage = globalThis.localStorage;
+  class QuotaStorage extends MemoryStorage {
+    setItem(key, value) {
+      if (/boq-manager-v2:quota-user:(boqs|products|customers|settings|meta)/.test(
+        String(key),
+      )) {
+        const error = new Error("Storage quota exceeded");
+        error.name = "QuotaExceededError";
+        throw error;
+      }
+      super.setItem(key, value);
+    }
+  }
+  const quotaStorage = new QuotaStorage();
+  Object.defineProperty(globalThis, "localStorage", {
+    value: quotaStorage,
+    configurable: true,
+  });
+  try {
+    const store = window.BOQStore;
+    store.setUser("quota-user");
+    store.save("products", {
+      id: "quota-product",
+      name: "Cached product",
+      unit: "Each",
+      defaultCogs: 125000,
+      defaultMargin: 20,
+      status: "Active",
+    });
+    equal(store.list("products").length, 1, "memory state remains writable");
+    equal(
+      quotaStorage.getItem("boq-manager-v2:quota-user:products"),
+      null,
+      "workspace collection is not written to localStorage",
+    );
+  } finally {
+    Object.defineProperty(globalThis, "localStorage", {
+      value: originalStorage,
+      configurable: true,
+    });
+  }
 });

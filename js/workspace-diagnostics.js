@@ -4,6 +4,9 @@
     "cloud-missing": "CLOUD_WORKSPACE_MISSING",
     "cache-read": "CACHE_ACCESS_FAILED",
     "cache-apply": "WORKSPACE_APPLY_FAILED",
+    "indexeddb-read": "INDEXEDDB_READ_FAILED",
+    "indexeddb-write": "INDEXEDDB_WRITE_FAILED",
+    "indexeddb-verify": "INDEXEDDB_VERIFY_FAILED",
     migration: "WORKSPACE_MIGRATION_FAILED",
   });
 
@@ -44,7 +47,9 @@
       : new Error(String(error || "Unknown workspace error"));
     const failure = new Error(original.message || "Workspace loading failed");
     failure.name = "WorkspaceLoadError";
-    failure.code = storageErrorCode(original) || stageCodes[stage] ||
+    failure.code = String(original.code || "").startsWith("INDEXEDDB_")
+      ? original.code
+      : storageErrorCode(original) || stageCodes[stage] ||
       "WORKSPACE_LOAD_FAILED";
     failure.stage = String(stage || "unknown");
     failure.errorName = String(original.name || "Error");

@@ -59,6 +59,7 @@ Selling prices can follow the rounding rule selected in Commercial Defaults. A u
 - Semantic HTML5
 - Vanilla CSS with shared design tokens and responsive styles
 - Vanilla JavaScript organized by application responsibility
+- IndexedDB for the disposable local workspace cache
 - Supabase for authentication and cloud workspace persistence
 - ExcelJS for Excel document generation
 - jsPDF and AutoTable for PDF generation
@@ -117,7 +118,9 @@ The tests cover core data migration, pricing behavior, revision issuance, synchr
 
 ## Data and Synchronization
 
-Application records are scoped to the authenticated user. Local browser storage provides immediate access and fast page transitions, while the cloud workspace is reconciled at application startup and refreshed in the background afterward.
+Application records are scoped to the authenticated user. Supabase remains the permanent workspace store. A full user snapshot is cached in IndexedDB for immediate access and fast page transitions, then reconciled with the cloud in the background. The synchronous `BOQStore` API works from memory during the active page session.
+
+Existing large `localStorage` workspace records are migrated transactionally to IndexedDB and removed only after the cached record has been verified. Small device preferences, the theme selection, and session markers remain in browser storage. Clearing the disposable cache causes the next authenticated session to download the workspace from Supabase instead of uploading an empty state.
 
 BOQ issuance performs a cloud conflict check before creating an official revision. If cloud confirmation is temporarily unavailable, the interface reports the pending synchronization state without discarding the local work.
 

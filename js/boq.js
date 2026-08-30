@@ -2017,7 +2017,25 @@
     currentRecordId = new URLSearchParams(location.search).get("id");
     initializeDocument();
     renderItems();
+    openRequestedView();
   });
+
+  let requestedViewOpened = false;
+  function openRequestedView() {
+    if (requestedViewOpened || !currentRecord) return;
+    const parameters = new URLSearchParams(location.search);
+    if (parameters.get("history") === "1" && currentRecord.revisions?.length) {
+      requestedViewOpened = true;
+      renderRevisionHistory();
+      window.setTimeout(() => window.BOQModal.open("revision-history-modal"), 0);
+      return;
+    }
+    if (parameters.get("preview") === "pdf") {
+      requestedViewOpened = true;
+      buildPdfPreview();
+      window.setTimeout(() => window.BOQModal.open("pdf-modal"), 0);
+    }
+  }
 
   window.BOQEditor = {
     getDocument: documentPayload,
@@ -2033,14 +2051,5 @@
   initializeDocument();
   renderItems();
   updateCatalogResults();
-  if (new URLSearchParams(location.search).get("history") === "1" &&
-      currentRecord?.revisions?.length) {
-    renderRevisionHistory();
-    window.setTimeout(() => window.BOQModal.open("revision-history-modal"), 0);
-  }
-  if (new URLSearchParams(location.search).get("preview") === "pdf" &&
-      currentRecord) {
-    buildPdfPreview();
-    window.setTimeout(() => window.BOQModal.open("pdf-modal"), 0);
-  }
+  openRequestedView();
 })();

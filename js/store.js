@@ -5,6 +5,8 @@
   const collections = ["boqs", "products", "customers"];
   const defaultBoqNumberingFormat = "BOQ-{YY}{MM}{NN}";
   const schemaVersion = 5;
+  const memoryState = new Map();
+  const removedStateKeys = new Set();
   let activeUserId = localStorage.getItem(sessionUserKey) || "guest";
 
   function namespace(userId = activeUserId) {
@@ -24,12 +26,28 @@
     }
   }
 
+  function stateGetItem(key) {
+    if (removedStateKeys.has(key)) return null;
+    if (memoryState.has(key)) return memoryState.get(key);
+    return localStorage.getItem(key);
+  }
+
+  function stateSetItem(key, value) {
+    memoryState.set(key, String(value));
+    removedStateKeys.delete(key);
+  }
+
+  function stateRemoveItem(key) {
+    memoryState.delete(key);
+    removedStateKeys.add(key);
+  }
+
   function read(key, fallback) {
-    return parseJson(localStorage.getItem(storageKey(key)), fallback);
+    return parseJson(stateGetItem(storageKey(key)), fallback);
   }
 
   function write(key, value, options = {}) {
-    localStorage.setItem(storageKey(key), JSON.stringify(value));
+    stateSetItem(storageKey(key), JSON.stringify(value));
     if (!options.silent) touch();
     return value;
   }
@@ -52,10 +70,17 @@
   function touch() {
     const meta = read("meta", {});
     const next = { ...meta, clientUpdatedAt: Date.now() };
-    localStorage.setItem(storageKey("meta"), JSON.stringify(next));
+    stateSetItem(storageKey("meta"), JSON.stringify(next));
     document.dispatchEvent(new CustomEvent("boq:data-changed", {
       detail: { clientUpdatedAt: next.clientUpdatedAt },
     }));
+  }
+
+  function updateMeta(value, options = {}) {
+    const next = { ...read("meta", {}), ...(value || {}), schemaVersion };
+    stateSetItem(storageKey("meta"), JSON.stringify(next));
+    if (!options.silent) touch();
+    return next;
   }
 
   function cloneValue(value) {
@@ -1114,26 +1139,26 @@
       const value = options.merge
         ? mergeRecords(list(collection), incoming)
         : incoming;
-      localStorage.setItem(storageKey(collection), JSON.stringify(value));
+      stateSetItem(storageKey(collection), JSON.stringify(value));
     });
-    localStorage.removeItem(storageKey("projects"));
+    stateRemoveItem(storageKey("projects"));
     if (converted.settings && typeof converted.settings === "object") {
       const settings = options.merge
         ? { ...getSettings(), ...converted.settings }
         : converted.settings;
-      localStorage.setItem(storageKey("settings"), JSON.stringify(settings));
+      stateSetItem(storageKey("settings"), JSON.stringify(settings));
     }
     if (converted.currentBoqId) {
-      localStorage.setItem(
+      stateSetItem(
         storageKey("currentBoqId"),
         JSON.stringify(converted.currentBoqId),
       );
     } else if (!options.merge) {
-      localStorage.removeItem(storageKey("currentBoqId"));
+      stateRemoveItem(storageKey("currentBoqId"));
     }
-    localStorage.removeItem(storageKey("workingDraft"));
+    stateRemoveItem(storageKey("workingDraft"));
     const incomingTs = Number(converted.meta?.clientUpdatedAt || Date.now());
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
       ...converted.meta,
       schemaVersion,
@@ -1164,10 +1189,17 @@
     );
     if (hasPreviousData) {
       if (activeUserId !== "guest" && !previousClaim) {
-        localStorage.setItem(previousClaimKey, activeUserId);
+        try {
+          localStorage.setItem(previousClaimKey, activeUserId);
+        } catch (error) {
+          console.warn(
+            "Legacy data claim could not be stored:",
+            error?.name || "Error",
+          );
+        }
       }
       collections.forEach((name) =>
-        localStorage.setItem(
+        stateSetItem(
           storageKey(name),
           JSON.stringify(name === "boqs"
             ? previousCollections[name].map((record) =>
@@ -1180,7 +1212,7 @@
         localStorage.getItem(`${previousPrefix}:settings`),
         {},
       );
-      localStorage.setItem(
+      stateSetItem(
         storageKey("settings"),
         JSON.stringify(previousSettings),
       );
@@ -1192,15 +1224,19 @@
       merge: true,
       silent: true,
     });
-    localStorage.setItem(storageKey("migrationComplete"), "true");
+    stateSetItem(storageKey("migrationComplete"), "true");
   }
 
   function setUser(userId) {
     const nextUserId = userId || "guest";
     const changed = nextUserId !== activeUserId;
     activeUserId = nextUserId;
-    if (nextUserId === "guest") localStorage.removeItem(sessionUserKey);
-    else localStorage.setItem(sessionUserKey, nextUserId);
+    try {
+      if (nextUserId === "guest") localStorage.removeItem(sessionUserKey);
+      else localStorage.setItem(sessionUserKey, nextUserId);
+    } catch (error) {
+      console.warn("Session marker could not be stored:", error?.name || "Error");
+    }
     migrateCurrentNamespace();
     removeProjectCollection();
     if (changed) document.dispatchEvent(new CustomEvent("boq:user-changed", {
@@ -1226,7 +1262,10 @@
   }
 
   function getLocalPreference(name, fallback = {}) {
-    return read(`preference-${name}`, fallback);
+    return parseJson(
+      localStorage.getItem(storageKey(`preference-${name}`)),
+      fallback,
+    );
   }
 
   function saveLocalPreference(name, value) {
@@ -1243,7 +1282,7 @@
     if (Number(meta.existingBoqMigrationVersion || 0) >= migrationVersion) {
       return false;
     }
-    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const raw = parseJson(stateGetItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return false;
     const timestampFallbacks = {
       createdAt: options.cloudCreatedAt,
@@ -1262,9 +1301,9 @@
         status: "Issued",
       };
     });
-    localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
+    stateSetItem(storageKey("boqs"), JSON.stringify(migrated));
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...meta,
       schemaVersion,
       existingBoqMigrationVersion: migrationVersion,
@@ -1284,12 +1323,12 @@
     if (Number(meta.issuedStatusMigrationVersion || 0) >= migrationVersion) {
       return false;
     }
-    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const raw = parseJson(stateGetItem(storageKey("boqs")), []);
     if (!Array.isArray(raw) || !raw.length) return false;
     const migrated = raw.map(normalizeBoq);
-    localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
+    stateSetItem(storageKey("boqs"), JSON.stringify(migrated));
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...meta,
       schemaVersion,
       issuedStatusMigrationVersion: migrationVersion,
@@ -1310,18 +1349,18 @@
       return false;
     }
     const products = parseJson(
-      localStorage.getItem(storageKey("products")),
+      stateGetItem(storageKey("products")),
       [],
     );
-    const boqs = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const boqs = parseJson(stateGetItem(storageKey("boqs")), []);
     if (Array.isArray(products)) {
-      localStorage.setItem(
+      stateSetItem(
         storageKey("products"),
         JSON.stringify(products.map((product) => ({ ...product, sku: "" }))),
       );
     }
     if (Array.isArray(boqs)) {
-      localStorage.setItem(
+      stateSetItem(
         storageKey("boqs"),
         JSON.stringify(boqs.map((boq) => ({
           ...boq,
@@ -1332,7 +1371,7 @@
       );
     }
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...meta,
       schemaVersion,
       partNumberMigrationVersion: migrationVersion,
@@ -1353,7 +1392,7 @@
       return false;
     }
     const products = parseJson(
-      localStorage.getItem(storageKey("products")),
+      stateGetItem(storageKey("products")),
       [],
     );
     if (!Array.isArray(products)) return false;
@@ -1361,9 +1400,9 @@
       ...product,
       defaultMargin: normalizeProductMargin(product?.defaultMargin),
     }));
-    localStorage.setItem(storageKey("products"), JSON.stringify(migrated));
+    stateSetItem(storageKey("products"), JSON.stringify(migrated));
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...meta,
       schemaVersion,
       productMarginMigrationVersion: migrationVersion,
@@ -1383,7 +1422,7 @@
     if (Number(meta.boqNumberingMigrationVersion || 0) >= migrationVersion) {
       return false;
     }
-    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const raw = parseJson(stateGetItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return false;
 
     const datedRecords = raw.map((record, index) => {
@@ -1417,19 +1456,19 @@
       );
     });
 
-    localStorage.setItem(
+    stateSetItem(
       storageKey("boqs"),
       JSON.stringify(raw.map((record, index) => ({
         ...record,
         number: numbersByIndex.get(index),
       }))),
     );
-    localStorage.setItem(storageKey("settings"), JSON.stringify({
+    stateSetItem(storageKey("settings"), JSON.stringify({
       ...getSettings(),
       numberingFormat: defaultBoqNumberingFormat,
     }));
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...meta,
       schemaVersion,
       boqNumberingMigrationVersion: migrationVersion,
@@ -1458,7 +1497,7 @@
     });
     if (![...partNumbersByName.values()].some(Boolean)) return false;
 
-    const boqs = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const boqs = parseJson(stateGetItem(storageKey("boqs")), []);
     if (!Array.isArray(boqs)) return false;
     let changed = false;
     const updatedBoqs = boqs.map((boq) => {
@@ -1480,9 +1519,9 @@
     });
     if (!changed) return false;
 
-    localStorage.setItem(storageKey("boqs"), JSON.stringify(updatedBoqs));
+    stateSetItem(storageKey("boqs"), JSON.stringify(updatedBoqs));
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...read("meta", {}),
       schemaVersion,
       clientUpdatedAt,
@@ -1604,7 +1643,7 @@
     if (Number(meta.boqRevisionMigrationVersion || 0) >= migrationVersion) {
       return false;
     }
-    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const raw = parseJson(stateGetItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return false;
     const entries = raw.map((record) => {
       const normalized = normalizeBoq(record);
@@ -1660,16 +1699,16 @@
       migrated.push(migratedRevisionRecord([entry], entry.record.projectName));
     });
 
-    localStorage.setItem(storageKey("boqs"), JSON.stringify(migrated));
+    stateSetItem(storageKey("boqs"), JSON.stringify(migrated));
     const currentBoqId = read("currentBoqId", "");
     if (revisionAliases[currentBoqId]) {
-      localStorage.setItem(
+      stateSetItem(
         storageKey("currentBoqId"),
         JSON.stringify(revisionAliases[currentBoqId]),
       );
     }
     const clientUpdatedAt = Date.now();
-    localStorage.setItem(storageKey("meta"), JSON.stringify({
+    stateSetItem(storageKey("meta"), JSON.stringify({
       ...meta,
       schemaVersion,
       boqRevisionMigrationVersion: migrationVersion,
@@ -1685,24 +1724,24 @@
   }
 
   function removeProjectCollection() {
-    const raw = parseJson(localStorage.getItem(storageKey("boqs")), []);
+    const raw = parseJson(stateGetItem(storageKey("boqs")), []);
     if (!Array.isArray(raw)) return;
     const legacyProjects = parseJson(
-      localStorage.getItem(storageKey("projects")),
+      stateGetItem(storageKey("projects")),
       [],
     );
     const normalized = raw.map((record) =>
       normalizeBoq(record, legacyProjects)
     );
     const changed = JSON.stringify(normalized) !== JSON.stringify(raw);
-    const hadProjectCollection = localStorage.getItem(storageKey("projects")) !==
+    const hadProjectCollection = stateGetItem(storageKey("projects")) !==
       null;
     if (changed) {
-      localStorage.setItem(storageKey("boqs"), JSON.stringify(normalized));
+      stateSetItem(storageKey("boqs"), JSON.stringify(normalized));
     }
-    localStorage.removeItem(storageKey("projects"));
+    stateRemoveItem(storageKey("projects"));
     if (changed || hadProjectCollection) {
-      localStorage.setItem(storageKey("meta"), JSON.stringify({
+      stateSetItem(storageKey("meta"), JSON.stringify({
         ...read("meta", {}),
         schemaVersion,
       }));
@@ -1711,7 +1750,7 @@
 
   migrateCurrentNamespace();
   removeProjectCollection();
-  localStorage.removeItem(storageKey("workingDraft"));
+  stateRemoveItem(storageKey("workingDraft"));
 
   window.BOQStore = {
     list,
@@ -1744,6 +1783,7 @@
     setUser,
     getUserId,
     getMeta,
+    updateMeta,
     getLocalPreference,
     saveLocalPreference,
     migrateExistingBoqs,

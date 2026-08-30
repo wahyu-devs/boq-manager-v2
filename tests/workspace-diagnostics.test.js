@@ -169,8 +169,12 @@ Deno.test("every application page loads diagnostics before authentication", asyn
   ];
   for (const page of pages) {
     const source = await Deno.readTextFile(new URL(`../${page}`, import.meta.url));
+    const indexedCacheIndex = source.indexOf("js/indexed-cache.js");
+    const storeIndex = source.indexOf("js/store.js");
     const diagnosticsIndex = source.indexOf("js/workspace-diagnostics.js");
     const authIndex = source.indexOf("js/auth.js");
+    assert(indexedCacheIndex >= 0, `${page} loads the IndexedDB cache`);
+    assert(indexedCacheIndex < storeIndex, `${page} loads IndexedDB before store`);
     assert(diagnosticsIndex >= 0, `${page} loads workspace diagnostics`);
     assert(diagnosticsIndex < authIndex, `${page} loads diagnostics before auth`);
   }
@@ -182,9 +186,10 @@ Deno.test("authentication exposes a safe retry for cold-start failures", async (
   );
   assert(source.includes("data-auth-retry"), "retry control exists");
   assert(source.includes("Retry workspace"), "retry label exists");
-  assert(source.includes("workspaceDiagnostics.captureCache"), "cache checkpoint");
-  assert(source.includes("workspaceDiagnostics.restoreCache"), "cache rollback");
+  assert(source.includes("const checkpoint = store.exportState()"), "memory checkpoint");
+  assert(source.includes("store.applyState(checkpoint"), "memory rollback");
   assert(source.includes("preventEmptyPush: Boolean(options.retry)"), "safe retry");
+  assert(source.includes("enterApplication(currentSession, { retry: true })"), "retry flag");
   assert(
     source.includes("workspaceDiagnostics.shouldBlockEmptyCloudPush"),
     "missing cloud guard",
