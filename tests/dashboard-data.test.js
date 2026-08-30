@@ -48,6 +48,10 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     html.includes("Recently received customer POs"),
     "recent PO panel describes received customer orders",
   );
+  assert(
+    html.includes('href="boqs.html?status=won"'),
+    "recent PO register link requests the Won filter",
+  );
   assert(!html.includes("Customer PO by Period"), "period panel is removed");
   assert(!html.includes("Recent Activity"), "activity panel is removed");
   assert(

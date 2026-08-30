@@ -120,13 +120,24 @@
       let rows = [...scope.querySelectorAll("[data-table-row]")];
       const cardList = scope.querySelector(".record-card-list");
       const attentionFilter = scope.querySelector("[data-attention-filter]");
+      const statusFilter = scope.hasAttribute("data-boq-attention-scope")
+        ? scope.querySelector('[data-table-filter="status"]')
+        : null;
       const requestedAttention = scope.hasAttribute("data-boq-attention-scope")
         ? new URLSearchParams(window.location.search).get("attention") || ""
+        : "";
+      const requestedStatus = scope.hasAttribute("data-boq-attention-scope")
+        ? new URLSearchParams(window.location.search).get("status") || ""
         : "";
       if (attentionFilter && [...attentionFilter.options].some((option) =>
         option.value === requestedAttention
       )) {
         attentionFilter.value = requestedAttention;
+      }
+      if (statusFilter && [...statusFilter.options].some((option) =>
+        option.value === requestedStatus
+      )) {
+        statusFilter.value = requestedStatus;
       }
 
       if (cardList) {
@@ -227,6 +238,15 @@
           url.searchParams.set("attention", attentionFilter.value);
         } else {
           url.searchParams.delete("attention");
+        }
+        window.history.replaceState(window.history.state, "", url);
+      });
+      statusFilter?.addEventListener("change", () => {
+        const url = new URL(window.location.href);
+        if (statusFilter.value) {
+          url.searchParams.set("status", statusFilter.value);
+        } else {
+          url.searchParams.delete("status");
         }
         window.history.replaceState(window.history.state, "", url);
       });

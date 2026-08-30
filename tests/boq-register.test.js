@@ -160,6 +160,16 @@ Deno.test("opens dashboard attention links as BOQ Register filters", () => {
     'url.searchParams.set("attention", attentionFilter.value)',
     "manually selected attention filters must remain in the page URL",
   );
+  assertIncludes(
+    appScript,
+    'new URLSearchParams(window.location.search).get("status")',
+    "BOQ Register must read status deep links",
+  );
+  assertIncludes(
+    appScript,
+    'url.searchParams.set("status", statusFilter.value)',
+    "manually selected BOQ statuses must remain in the page URL",
+  );
 });
 
 Deno.test("opens BOQ Register previews in Customer PDF Preview", () => {
