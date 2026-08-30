@@ -251,6 +251,7 @@
         window.history.replaceState(window.history.state, "", url);
       });
       document.addEventListener("records:changed", update);
+      document.addEventListener("boq:workspace-updated", update);
       update();
     });
   }
