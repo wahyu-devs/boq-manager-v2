@@ -165,11 +165,7 @@
     "[data-recent-customer-pos-empty]",
   );
   recentPoHost.innerHTML = recentCustomerPos.map((boq) => {
-    const revision = visibleRevisionLabel(
-      window.BOQStore.revisionLabel(boq.displayRevisionNumber),
-    );
     const detail = [
-      revision,
       boq.customerPoNumber || "No PO number",
       boq.customerName || "No customer",
     ].filter(Boolean).join(" · ");

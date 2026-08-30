@@ -77,6 +77,10 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     !script.includes('[boq.number, revision].filter(Boolean).join(" · ")'),
     "recent Customer POs omit the BOQ number",
   );
+  assert(
+    !script.includes("const revision = visibleRevisionLabel(\n      window.BOQStore.revisionLabel(boq.displayRevisionNumber),\n    );\n    const detail"),
+    "recent Customer POs omit the revision number",
+  );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");
 });
