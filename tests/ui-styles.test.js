@@ -96,6 +96,19 @@ Deno.test("keeps register search placeholders readable", () => {
   );
 });
 
+Deno.test("centers the company logo file picker", () => {
+  assertIncludes(
+    componentsCss,
+    '.settings-logo-upload input[type="file"] {\n  padding: 3px 8px;\n  line-height: 24px;',
+    "the logo file input must vertically center its content",
+  );
+  assertIncludes(
+    componentsCss,
+    '.settings-logo-upload input[type="file"]::file-selector-button {\n  box-sizing: border-box;\n  height: 24px;',
+    "the native Choose File button must fit the compact input height",
+  );
+});
+
 Deno.test("contains tablet layouts and balances mobile editor controls", () => {
   assertIncludes(
     responsiveCss,

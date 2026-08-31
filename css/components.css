@@ -1751,6 +1751,18 @@
   margin-bottom: 20px;
 }
 
+.settings-logo-upload input[type="file"] {
+  padding: 3px 8px;
+  line-height: 24px;
+}
+
+.settings-logo-upload input[type="file"]::file-selector-button {
+  box-sizing: border-box;
+  height: 24px;
+  margin: 0 8px 0 0;
+  vertical-align: top;
+}
+
 .logo-remove-button {
   justify-self: start;
 }
