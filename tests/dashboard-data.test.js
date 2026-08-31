@@ -45,6 +45,10 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   );
   assert(html.includes("Recent Customer POs"), "recent PO panel exists");
   assert(
+    (html.match(/>View all<\/a>/g) || []).length === 2,
+    "both recent dashboard panels use the concise View all action",
+  );
+  assert(
     html.includes("Recently received customer POs"),
     "recent PO panel describes received customer orders",
   );
