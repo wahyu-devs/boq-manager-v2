@@ -596,6 +596,10 @@
     padding-inline: 8px;
   }
 
+  [data-recent-boqs-panel] > .panel-header {
+    padding-inline: 8px;
+  }
+
   .dashboard-recent th:nth-child(1) {
     width: 31%;
   }
