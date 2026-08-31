@@ -81,7 +81,7 @@
 
   const recentBoqs = [...boqs].sort((a, b) =>
     new Date(b.updatedAt) - new Date(a.updatedAt)
-  ).slice(0, dashboardEntryLimit(6));
+  ).slice(0, dashboardEntryLimit(5));
   const boqTable = document.querySelector("[data-recent-boqs-table]");
   const boqEmpty = document.querySelector("[data-recent-boqs-empty]");
   if (recentBoqs.length) {
@@ -158,7 +158,7 @@
 
   const recentCustomerPos = window.BOQDashboardData.recentCustomerPos(
     wonBoqs,
-    dashboardEntryLimit(4),
+    dashboardEntryLimit(5),
   );
   const recentPoHost = document.querySelector("[data-recent-customer-pos]");
   const recentPoEmpty = document.querySelector(

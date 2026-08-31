@@ -84,10 +84,9 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     "recent PO panel exposes a viewport measurement hook",
   );
   assert(
-    script.includes("dashboardEntryLimit(6)") &&
-      script.includes("dashboardEntryLimit(4)") &&
+    (script.match(/dashboardEntryLimit\(5\)/g) || []).length === 2 &&
       script.includes("? 20 : compactLimit"),
-    "desktop renders twenty entries in both recent panels",
+    "dashboard renders twenty desktop entries and five compact entries per panel",
   );
   assert(
     script.includes("syncDashboardPanelHeights();") &&
