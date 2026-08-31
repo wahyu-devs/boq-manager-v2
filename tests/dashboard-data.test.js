@@ -86,8 +86,8 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   assert(
     script.includes("dashboardEntryLimit(6)") &&
       script.includes("dashboardEntryLimit(4)") &&
-      script.includes("? 10 : compactLimit"),
-    "desktop renders ten entries in both recent panels",
+      script.includes("? 20 : compactLimit"),
+    "desktop renders twenty entries in both recent panels",
   );
   assert(
     script.includes("syncDashboardPanelHeights();") &&

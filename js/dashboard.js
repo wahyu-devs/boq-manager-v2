@@ -199,7 +199,7 @@
   }
 
   function dashboardEntryLimit(compactLimit) {
-    return window.matchMedia("(min-width: 992px)").matches ? 10 : compactLimit;
+    return window.matchMedia("(min-width: 992px)").matches ? 20 : compactLimit;
   }
 
   function syncDashboardPanelHeights() {
