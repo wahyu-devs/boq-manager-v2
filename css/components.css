@@ -610,6 +610,26 @@
   list-style: none;
 }
 
+[data-recent-customer-pos-panel] .panel-header h2,
+[data-recent-customer-pos-panel] .panel-header p,
+[data-recent-customer-pos-panel] .panel-header .link {
+  white-space: nowrap;
+}
+
+.dashboard-po-copy-compact {
+  display: none;
+}
+
+@container recent-po-panel (max-width: 299px) {
+  .dashboard-po-copy-full {
+    display: none;
+  }
+
+  .dashboard-po-copy-compact {
+    display: inline;
+  }
+}
+
 .dashboard-record-item {
   min-height: var(--dashboard-po-row-height, 60px);
   padding: 12px 0;

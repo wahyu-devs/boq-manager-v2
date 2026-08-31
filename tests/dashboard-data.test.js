@@ -40,6 +40,9 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   const layout = await Deno.readTextFile(
     new URL("../css/layout.css", import.meta.url),
   );
+  const components = await Deno.readTextFile(
+    new URL("../css/components.css", import.meta.url),
+  );
   const responsive = await Deno.readTextFile(
     new URL("../css/responsive.css", import.meta.url),
   );
@@ -51,6 +54,13 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   assert(
     html.includes("Recently received customer POs"),
     "recent PO panel describes received customer orders",
+  );
+  assert(
+    /dashboard-po-copy-compact"[^>]*>\s*Recent POs<\/span\s*>/.test(html) &&
+      /dashboard-po-copy-compact"[^>]*>\s*Recent Customer POs<\/span\s*>/.test(
+        html,
+      ),
+    "recent PO panel provides compact non-wrapping copy",
   );
   assert(
     html.includes('href="boqs.html?status=won"'),
@@ -96,6 +106,12 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
     layout.includes("grid-template-columns: minmax(0, 1fr);") &&
       layout.includes(".dashboard-primary > *"),
     "desktop dashboard columns contain wide table content",
+  );
+  assert(
+    layout.includes("container-name: recent-po-panel;") &&
+      components.includes("@container recent-po-panel (max-width: 299px)") &&
+      components.includes("white-space: nowrap;"),
+    "recent PO header switches copy before it wraps",
   );
   assert(
     responsive.startsWith('@media (min-width: 1200px) {\n  body[data-page="dashboard"] .main-content') &&

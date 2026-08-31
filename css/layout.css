@@ -283,6 +283,11 @@
   overflow: hidden;
 }
 
+[data-recent-customer-pos-panel] {
+  container-name: recent-po-panel;
+  container-type: inline-size;
+}
+
 [data-recent-customer-pos-panel] .panel-body,
 .dashboard-recent > .panel > .empty-state {
   min-height: 0;
