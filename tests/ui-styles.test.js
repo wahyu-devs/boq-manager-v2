@@ -86,7 +86,7 @@ Deno.test("opens constrained row menus above their trigger", () => {
 Deno.test("keeps register search placeholders readable", () => {
   assertIncludes(
     componentsCss,
-    "width: min(420px, 100%);\n  min-width: min(420px, 100%);",
+    "width: min(360px, 100%);\n  min-width: min(360px, 100%);",
     "BOQ, product, and customer searches must be wide enough for their placeholders",
   );
   assertIncludes(

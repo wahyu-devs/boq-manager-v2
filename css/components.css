@@ -212,8 +212,8 @@
 
 .search-field {
   position: relative;
-  width: min(420px, 100%);
-  min-width: min(420px, 100%);
+  width: min(360px, 100%);
+  min-width: min(360px, 100%);
 }
 
 .search-field .icon {
