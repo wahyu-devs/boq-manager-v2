@@ -83,6 +83,19 @@ Deno.test("opens constrained row menus above their trigger", () => {
   );
 });
 
+Deno.test("keeps register search placeholders readable", () => {
+  assertIncludes(
+    componentsCss,
+    "width: min(420px, 100%);\n  min-width: min(420px, 100%);",
+    "BOQ, product, and customer searches must be wide enough for their placeholders",
+  );
+  assertIncludes(
+    responsiveCss,
+    ".toolbar-group,\n  .search-field {\n    width: 100%;",
+    "search fields must still fill the toolbar on tablet and mobile",
+  );
+});
+
 Deno.test("contains tablet layouts and balances mobile editor controls", () => {
   assertIncludes(
     responsiveCss,
