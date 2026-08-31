@@ -593,11 +593,7 @@
 
   .dashboard-recent th,
   .dashboard-recent td {
-    padding-inline: 8px;
-  }
-
-  [data-recent-boqs-panel] > .panel-header {
-    padding-inline: 8px;
+    padding-inline: 14px;
   }
 
   .dashboard-recent th:nth-child(1) {

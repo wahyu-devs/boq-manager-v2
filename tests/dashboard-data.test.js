@@ -131,12 +131,12 @@ Deno.test("places recent Customer POs below Attention Needed", async () => {
   );
   assert(
     components.includes(
-      "[data-recent-boqs-panel] > .panel-header {\n  padding-inline: 12px;",
+      ".table-dashboard th,\n.table-dashboard td {\n  padding-inline: 16px;",
     ) &&
       responsive.includes(
-        "[data-recent-boqs-panel] > .panel-header {\n    padding-inline: 8px;",
+        ".dashboard-recent th,\n  .dashboard-recent td {\n    padding-inline: 14px;",
       ),
-    "recent BOQ panel header aligns with desktop and mobile table cells",
+    "recent BOQ table cells align with the original panel header padding",
   );
   assert(script.includes("storedSettings.taxEnabled === true"), "PO value uses issued tax snapshot");
   assert(script.includes(").grandTotal"), "PO value uses the customer grand total");

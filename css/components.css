@@ -537,8 +537,9 @@
   min-width: 760px;
 }
 
-[data-recent-boqs-panel] > .panel-header {
-  padding-inline: 12px;
+.table-dashboard th,
+.table-dashboard td {
+  padding-inline: 16px;
 }
 
 .table-dashboard th {
