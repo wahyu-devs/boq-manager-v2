@@ -140,7 +140,8 @@
 
   document.addEventListener("boq:export-revision", (event) => {
     if (event.detail.type === "excel") {
-      void exportExcel("selling", event.detail.number);
+      setExcelRevisionTarget(event.detail.number);
+      window.BOQModal.open("excel-modal");
     } else if (event.detail.type === "pdf") {
       exportPdf(event.detail.number);
     } else if (event.detail.type === "word") {

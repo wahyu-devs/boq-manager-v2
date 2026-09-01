@@ -91,6 +91,11 @@ Deno.test("offers Word PDF and primary Excel in Document Preview", () => {
     "#pdf-modal [data-download-preview-excel]",
     "revision previews must target the matching Excel revision",
   );
+  assertIncludes(
+    exportScript,
+    'if (event.detail.type === "excel") {\n      setExcelRevisionTarget(event.detail.number);\n      window.BOQModal.open("excel-modal");',
+    "Revision History Excel must open workbook choices for the selected revision",
+  );
 });
 
 Deno.test("keeps the Word grand total inside the BOQ items table", () => {
