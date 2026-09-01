@@ -1269,7 +1269,7 @@
 
 .modal-backdrop {
   position: fixed;
-  z-index: 100;
+  z-index: calc(100 + var(--modal-stack-depth, 0));
   inset: 0;
   display: grid;
   place-items: center;

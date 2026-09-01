@@ -307,6 +307,16 @@ Deno.test("keeps Revision History open behind revision previews", () => {
     "const modalStack = [];",
     "nested previews require stacked modal state",
   );
+  assertIncludes(
+    modalSource,
+    'entry.backdrop.style.setProperty(\n        "--modal-stack-depth",',
+    "each nested modal must receive its stack depth",
+  );
+  assertIncludes(
+    componentsCss,
+    "z-index: calc(100 + var(--modal-stack-depth, 0));",
+    "nested modals must render above the modal that opened them",
+  );
 });
 
 Deno.test("shows a Grand Total for every revision history entry", () => {

@@ -5,6 +5,15 @@
     return modalStack.at(-1) || null;
   }
 
+  function syncModalLayers() {
+    modalStack.forEach((entry, index) => {
+      entry.backdrop.style.setProperty(
+        "--modal-stack-depth",
+        String(index),
+      );
+    });
+  }
+
   function getFocusable(modal) {
     return [
       ...modal.querySelectorAll(
@@ -24,6 +33,7 @@
       backdrop,
       previouslyFocused: document.activeElement,
     });
+    syncModalLayers();
     backdrop.hidden = false;
     document.body.style.overflow = "hidden";
     const focusable = getFocusable(backdrop);
@@ -37,6 +47,8 @@
     );
     const [entry] = index >= 0 ? modalStack.splice(index, 1) : [];
     backdrop.hidden = true;
+    backdrop.style.removeProperty("--modal-stack-depth");
+    syncModalLayers();
     document.body.style.overflow = modalStack.length ? "hidden" : "";
     if (entry?.previouslyFocused) entry.previouslyFocused.focus();
   }
