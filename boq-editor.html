@@ -757,14 +757,14 @@
       >
         <header class="modal-header">
           <div>
-            <h2 id="pdf-title">Customer PDF Preview</h2>
+            <h2 id="pdf-title">Document Preview</h2>
             <p class="muted text-sm">Review the document before download.</p>
           </div>
           <button
             class="icon-button"
             type="button"
             data-close-modal
-            aria-label="Close PDF preview"
+            aria-label="Close document preview"
           >
             ×
           </button>
@@ -788,8 +788,15 @@
             >
               Download Word
             </button>
-            <button class="button button-primary" type="button" data-download-pdf>
+            <button class="button button-secondary" type="button" data-download-pdf>
               Download PDF
+            </button>
+            <button
+              class="button button-primary"
+              type="button"
+              data-download-preview-excel
+            >
+              Download Excel
             </button>
           </div>
         </footer>

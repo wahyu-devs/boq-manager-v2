@@ -1607,7 +1607,7 @@
     if (event.target.closest("[data-preview-pdf]")) {
       buildPdfPreview();
       document.querySelectorAll(
-        "#pdf-modal [data-download-pdf], #pdf-modal [data-download-word]",
+        "#pdf-modal [data-download-pdf], #pdf-modal [data-download-word], #pdf-modal [data-download-preview-excel]",
       ).forEach((button) => button.removeAttribute("data-export-revision"));
     }
     if (event.target.closest("[data-create-revision]")) {
@@ -1677,7 +1677,7 @@
       if (!data) return;
       buildPdfPreview(data);
       document.querySelectorAll(
-        "#pdf-modal [data-download-pdf], #pdf-modal [data-download-word]",
+        "#pdf-modal [data-download-pdf], #pdf-modal [data-download-word], #pdf-modal [data-download-preview-excel]",
       ).forEach((button) =>
         button.setAttribute(
           "data-export-revision",

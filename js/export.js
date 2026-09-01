@@ -107,6 +107,15 @@
       window.BOQModal.close(document.getElementById("excel-modal"));
       void exportExcel(modeButton.dataset.excelMode);
     }
+    const previewExcelButton = event.target.closest(
+      "[data-download-preview-excel]",
+    );
+    if (previewExcelButton) {
+      void exportExcel(
+        "selling",
+        previewExcelButton.dataset.exportRevision,
+      );
+    }
     const pdfButton = event.target.closest("[data-download-pdf]");
     if (pdfButton) exportPdf(pdfButton.dataset.exportRevision);
     const wordButton = event.target.closest("[data-download-word]");

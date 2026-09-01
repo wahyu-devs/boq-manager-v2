@@ -254,20 +254,20 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   }
 });
 
-Deno.test("centers every Customer PDF Preview table header", () => {
+Deno.test("centers every Document Preview table header", () => {
   assertIncludes(
     componentsCss,
     ".pdf-preview-table thead th {\n  text-align: center;\n}",
-    "Customer PDF Preview headers from No through Total must be centered",
+    "Document Preview headers from No through Total must be centered",
   );
   assertIncludes(
     componentsCss,
     ".pdf-preview-table tbody .align-right {\n  text-align: right;\n}",
-    "right alignment must remain limited to Customer PDF Preview body values",
+    "right alignment must remain limited to Document Preview body values",
   );
 });
 
-Deno.test("aligns Customer PDF Preview summary currency with line totals", () => {
+Deno.test("aligns Document Preview summary currency with line totals", () => {
   assertIncludes(
     componentsCss,
     "--pdf-summary-amount-width: 39.6%;",

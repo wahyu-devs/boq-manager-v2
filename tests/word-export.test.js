@@ -56,6 +56,38 @@ Deno.test("wires Word export across BOQ workflows", () => {
   );
 });
 
+Deno.test("offers Word PDF and primary Excel in Document Preview", () => {
+  const modalStart = editorHtml.indexOf('id="pdf-modal"');
+  const modalEnd = editorHtml.indexOf("</section>", modalStart);
+  const previewModal = editorHtml.slice(modalStart, modalEnd);
+  assertIncludes(
+    previewModal,
+    "Document Preview",
+    "the customer document modal must use its format-neutral title",
+  );
+  const wordAction = previewModal.indexOf("data-download-word");
+  const pdfAction = previewModal.indexOf("data-download-pdf");
+  const excelAction = previewModal.indexOf("data-download-preview-excel");
+  if (wordAction < 0 || pdfAction <= wordAction || excelAction <= pdfAction) {
+    throw new Error("Document Preview actions must be ordered Word, PDF, Excel");
+  }
+  assertIncludes(
+    previewModal,
+    'class="button button-primary"\n              type="button"\n              data-download-preview-excel',
+    "Excel must be the primary Document Preview action",
+  );
+  assertIncludes(
+    exportScript,
+    'void exportExcel(\n        "selling",\n        previewExcelButton.dataset.exportRevision,',
+    "Document Preview must download the customer Excel workbook for the active revision",
+  );
+  assertIncludes(
+    editorScript,
+    "#pdf-modal [data-download-preview-excel]",
+    "revision previews must target the matching Excel revision",
+  );
+});
+
 Deno.test("keeps the Word grand total inside the BOQ items table", () => {
   assertIncludes(
     wordExportScript,

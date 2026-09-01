@@ -177,7 +177,7 @@ Deno.test("opens dashboard attention links as BOQ Register filters", () => {
   );
 });
 
-Deno.test("opens BOQ Register previews in Customer PDF Preview", () => {
+Deno.test("opens BOQ Register previews in Document Preview", () => {
   assertIncludes(
     recordsScript,
     '&preview=pdf">Preview</a>',
@@ -186,12 +186,12 @@ Deno.test("opens BOQ Register previews in Customer PDF Preview", () => {
   assertIncludes(
     editorScript,
     'get("preview") === "pdf"',
-    "BOQ Editor must recognize the Customer PDF Preview request",
+    "BOQ Editor must recognize the Document Preview request",
   );
   assertIncludes(
     editorScript,
     'window.BOQModal.open("pdf-modal")',
-    "BOQ Editor must automatically open Customer PDF Preview",
+    "BOQ Editor must automatically open Document Preview",
   );
   if (recordsScript.includes('data-record-action="preview"')) {
     throw new Error("BOQ Register must not open the legacy generic preview");

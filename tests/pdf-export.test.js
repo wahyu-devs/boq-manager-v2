@@ -9,6 +9,6 @@ Deno.test("spaces customer contact details above the preview divider", () => {
   assertIncludes(
     componentsCss,
     "min-height: 116px;\n  margin-bottom: 8px;",
-    "Customer PDF Preview keeps space above the divider",
+    "Document Preview keeps space above the divider",
   );
 });
