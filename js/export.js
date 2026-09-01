@@ -98,23 +98,39 @@
     }
   }
 
+  function setExcelRevisionTarget(revisionNumber) {
+    const hasRevision = revisionNumber !== undefined &&
+      revisionNumber !== null && revisionNumber !== "";
+    document.querySelectorAll("#excel-modal [data-excel-mode]").forEach(
+      (button) => {
+        if (hasRevision) {
+          button.dataset.exportRevision = revisionNumber;
+        } else {
+          button.removeAttribute("data-export-revision");
+        }
+      },
+    );
+  }
+
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-export-excel]")) {
+      setExcelRevisionTarget();
       window.BOQModal.open("excel-modal");
     }
     const modeButton = event.target.closest("[data-excel-mode]");
     if (modeButton) {
       window.BOQModal.close(document.getElementById("excel-modal"));
-      void exportExcel(modeButton.dataset.excelMode);
+      void exportExcel(
+        modeButton.dataset.excelMode,
+        modeButton.dataset.exportRevision,
+      );
     }
     const previewExcelButton = event.target.closest(
       "[data-download-preview-excel]",
     );
     if (previewExcelButton) {
-      void exportExcel(
-        "selling",
-        previewExcelButton.dataset.exportRevision,
-      );
+      setExcelRevisionTarget(previewExcelButton.dataset.exportRevision);
+      window.BOQModal.open("excel-modal");
     }
     const pdfButton = event.target.closest("[data-download-pdf]");
     if (pdfButton) exportPdf(pdfButton.dataset.exportRevision);

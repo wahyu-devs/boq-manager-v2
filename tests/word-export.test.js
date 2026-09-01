@@ -78,8 +78,13 @@ Deno.test("offers Word PDF and primary Excel in Document Preview", () => {
   );
   assertIncludes(
     exportScript,
-    'void exportExcel(\n        "selling",\n        previewExcelButton.dataset.exportRevision,',
-    "Document Preview must download the customer Excel workbook for the active revision",
+    "setExcelRevisionTarget(previewExcelButton.dataset.exportRevision);\n      window.BOQModal.open(\"excel-modal\");",
+    "Document Preview Excel must open the workbook choice modal",
+  );
+  assertIncludes(
+    exportScript,
+    "modeButton.dataset.excelMode,\n        modeButton.dataset.exportRevision,",
+    "the selected workbook must retain the previewed revision",
   );
   assertIncludes(
     editorScript,
