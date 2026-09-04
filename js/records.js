@@ -522,6 +522,8 @@
         entry.projectName,
         entry.customerName,
         entry.status,
+        entry.customerPoNumber,
+        entry.boqValue,
         entry.quantity,
         entry.unitCogs,
         entry.margin,
@@ -563,6 +565,10 @@
         escapeHtml(entry.projectName || "—")
       }</td><td>${escapeHtml(entry.customerName || "—")}</td><td>${
         statusHtml(entry.status)
+      }</td><td>${
+        escapeHtml(entry.customerPoNumber || "")
+      }</td><td class="align-right currency">${
+        formatCurrencyMarkup(entry.boqValue, entry.currency)
       }</td><td class="align-right number">${
         formatNumberInput(entry.quantity)
       }</td><td class="align-right currency">${
@@ -587,7 +593,11 @@
         escapeHtml(entry.projectName || "No project")
       }</strong><span>${escapeHtml(entry.customerName || "No customer")}</span></div><dl class="record-card-grid"><div><dt>Qty</dt><dd>${
         formatNumberInput(entry.quantity)
-      } ${escapeHtml(entry.unit)}</dd></div><div><dt>Unit COGS</dt><dd>${
+      } ${escapeHtml(entry.unit)}</dd></div><div><dt>Customer PO</dt><dd>${
+        escapeHtml(entry.customerPoNumber || "—")
+      }</dd></div><div><dt>BOQ Value</dt><dd>${
+        formatCurrencyMarkup(entry.boqValue, entry.currency)
+      }</dd></div><div><dt>Unit COGS</dt><dd>${
         formatCurrencyMarkup(entry.unitCogs, entry.currency)
       }</dd></div><div><dt>Margin</dt><dd>${
         formatPercent(entry.margin)

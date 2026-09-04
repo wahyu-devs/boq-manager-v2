@@ -48,6 +48,9 @@
       const rounding = revision?.calculation?.rounding || defaultRounding;
       const revisionNumber = record.displayRevisionNumber ??
         record.workingRevision ?? record.activeRevisionNumber ?? 0;
+      const boqValue = (Array.isArray(record.items) ? record.items : [])
+        .reduce((total, item) =>
+          total + calculateItem(item, { rounding }).totalSelling, 0);
 
       (Array.isArray(record.items) ? record.items : []).forEach(
         (item, itemIndex) => {
@@ -60,6 +63,8 @@
             projectName: String(record.projectName || ""),
             customerName: String(record.customerName || ""),
             status,
+            customerPoNumber: String(record.customerPoNumber || ""),
+            boqValue,
             currency: String(record.currency || "IDR"),
             quantity: calculation.quantity,
             unit: String(item?.unit || ""),

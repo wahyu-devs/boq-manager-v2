@@ -75,6 +75,7 @@ Deno.test("uses effective BOQ pricing, revision rounding, and manual selling", (
     projectName: "Won Project",
     customerName: "Won Customer",
     status: "Won",
+    customerPoNumber: "PO-2026-019",
     activeRevisionNumber: 1,
     updatedAt: "2026-09-04T10:00:00.000Z",
     revisions: [{
@@ -82,13 +83,16 @@ Deno.test("uses effective BOQ pricing, revision rounding, and manual selling", (
       state: "Issued",
       calculation: { rounding: "2" },
     }],
-    items: [{
-      item: "Router",
-      qty: 3,
-      unitCogs: 90,
-      margin: 20,
-      sellingOverride: 130,
-    }],
+    items: [
+      {
+        item: "Router",
+        qty: 3,
+        unitCogs: 90,
+        margin: 20,
+        sellingOverride: 130,
+      },
+      { item: "Installation", qty: 1, unitCogs: 50, margin: 50 },
+    ],
   }], {
     registerBoqView,
     latestIssuedRevision,
@@ -98,6 +102,16 @@ Deno.test("uses effective BOQ pricing, revision rounding, and manual selling", (
 
   equal(entries.length, 2, "both current BOQ usages must be returned");
   equal(entries[0].status, "Won", "newest usage must sort first");
+  equal(
+    entries[0].customerPoNumber,
+    "PO-2026-019",
+    "the Customer PO must come from the current BOQ",
+  );
+  equal(
+    entries[0].boqValue,
+    490,
+    "BOQ Value must total every item in the effective BOQ",
+  );
   equal(entries[0].unitSelling, 130, "manual selling must be preserved");
   assert(entries[0].manualSelling, "manual selling must be identified");
   equal(entries[1].unitSelling, 2000, "issued revision rounding must be used");
@@ -144,6 +158,16 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   assert(
     productsHtml.includes('src="js/product-usage.js"'),
     "Products must load the product usage module",
+  );
+  const statusHeader = productsHtml.indexOf("<th>Status</th>");
+  const poHeader = productsHtml.indexOf("<th>Customer PO</th>", statusHeader);
+  const valueHeader = productsHtml.indexOf(
+    '<th class="align-right">BOQ Value</th>',
+    poHeader,
+  );
+  assert(
+    statusHeader >= 0 && poHeader > statusHeader && valueHeader > poHeader,
+    "Customer PO and BOQ Value must follow Status",
   );
   assert(
     recordsSource.includes('data-record-action="usage"'),
