@@ -2183,6 +2183,16 @@
   top: 0;
 }
 
+.product-usage-table th:first-child,
+.product-usage-table td:first-child {
+  padding-left: 18px;
+}
+
+.product-usage-table th:last-child,
+.product-usage-table td:last-child {
+  padding-right: 18px;
+}
+
 .product-usage-table td:nth-child(2) {
   min-width: 190px;
 }

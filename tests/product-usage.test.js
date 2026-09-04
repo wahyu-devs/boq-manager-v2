@@ -183,6 +183,14 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   );
   assert(
     componentsCss.includes(
+      ".product-usage-table th:first-child,\n.product-usage-table td:first-child {\n  padding-left: 18px;",
+    ) && componentsCss.includes(
+      ".product-usage-table th:last-child,\n.product-usage-table td:last-child {\n  padding-right: 18px;",
+    ),
+    "usage table edges must align with the modal padding",
+  );
+  assert(
+    componentsCss.includes(
       ".product-usage-modal [data-product-usage-name]",
     ) && componentsCss.includes(
       ".product-usage-modal [data-product-usage-stats]",
