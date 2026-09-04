@@ -581,6 +581,33 @@
     overscroll-behavior-inline: contain;
   }
 
+  .product-usage-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 11px 14px;
+  }
+
+  .product-usage-toolbar .search-field,
+  .product-usage-toolbar > label {
+    width: 100%;
+  }
+
+  .product-usage-toolbar .search-field {
+    flex-basis: auto;
+  }
+
+  .product-usage-toolbar .select {
+    width: 100%;
+  }
+
+  .product-usage-table-wrap {
+    display: none;
+  }
+
+  .product-usage-cards {
+    display: block;
+  }
+
   .dashboard-recent .table-dashboard {
     min-width: 0;
     table-layout: fixed;
