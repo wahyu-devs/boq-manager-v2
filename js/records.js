@@ -32,6 +32,7 @@
   const empty = document.querySelector("[data-records-empty]");
   let activeUsageProductId = "";
   let productUsageEntries = [];
+  let productUsageSortKey = "updatedAt";
   let productUsageSortDirection = "descending";
 
   function displayBoqs() {
@@ -531,10 +532,36 @@
       return matchesSearchQuery(searchValue, query) &&
         (!status || entry.status.toLowerCase() === status);
     }).sort((left, right) => {
-      const leftTime = new Date(left.updatedAt || 0).getTime() || 0;
-      const rightTime = new Date(right.updatedAt || 0).getTime() || 0;
-      return (leftTime - rightTime) * direction ||
-        left.boqNumber.localeCompare(right.boqNumber) * direction;
+      const numericKeys = ["boqValue", "unitCogs", "margin", "unitSelling"];
+      let comparison;
+      if (productUsageSortKey === "updatedAt") {
+        comparison = (new Date(left.updatedAt || 0).getTime() || 0) -
+          (new Date(right.updatedAt || 0).getTime() || 0);
+      } else if (numericKeys.includes(productUsageSortKey)) {
+        comparison = Number(left[productUsageSortKey] || 0) -
+          Number(right[productUsageSortKey] || 0);
+      } else {
+        comparison = String(left[productUsageSortKey] || "").localeCompare(
+          String(right[productUsageSortKey] || ""),
+          undefined,
+          { numeric: true, sensitivity: "base" },
+        );
+      }
+      return comparison * direction || left.boqNumber.localeCompare(
+        right.boqNumber,
+        undefined,
+        { numeric: true, sensitivity: "base" },
+      );
+    });
+  }
+
+  function updateProductUsageSortState() {
+    document.querySelectorAll("[data-product-usage-sort]").forEach((button) => {
+      if (button.dataset.productUsageSort === productUsageSortKey) {
+        button.setAttribute("aria-sort", productUsageSortDirection);
+      } else {
+        button.removeAttribute("aria-sort");
+      }
     });
   }
 
@@ -619,6 +646,7 @@
     if (!record || collection !== "products") return;
     activeUsageProductId = record.id;
     productUsageEntries = usageForProduct(record);
+    productUsageSortKey = "updatedAt";
     productUsageSortDirection = "descending";
     const search = document.querySelector("[data-product-usage-search]");
     const status = document.querySelector("[data-product-usage-status]");
@@ -636,8 +664,7 @@
         } across ${boqCount} BOQ${boqCount === 1 ? "" : "s"}`
         : "· No saved BOQ usage";
     }
-    const sortButton = document.querySelector("[data-product-usage-sort]");
-    sortButton?.setAttribute("aria-sort", "descending");
+    updateProductUsageSortState();
     renderProductUsage();
   }
 
@@ -788,18 +815,23 @@
     "change",
     renderProductUsage,
   );
-  document.querySelector("[data-product-usage-sort]")?.addEventListener(
-    "click",
-    (event) => {
-      productUsageSortDirection = productUsageSortDirection === "descending"
-        ? "ascending"
-        : "descending";
-      event.currentTarget.setAttribute(
-        "aria-sort",
-        productUsageSortDirection,
-      );
+  document.querySelectorAll("[data-product-usage-sort]").forEach((button) =>
+    button.addEventListener("click", (event) => {
+      const nextKey = event.currentTarget.dataset.productUsageSort;
+      if (nextKey === productUsageSortKey) {
+        productUsageSortDirection =
+          productUsageSortDirection === "descending"
+            ? "ascending"
+            : "descending";
+      } else {
+        productUsageSortKey = nextKey;
+        productUsageSortDirection = nextKey === "updatedAt"
+          ? "descending"
+          : "ascending";
+      }
+      updateProductUsageSortState();
       renderProductUsage();
-    },
+    })
   );
   document.addEventListener("boq:workspace-updated", () => {
     defaultCurrency = window.BOQStore.getSettings().defaultCurrency || "USD";

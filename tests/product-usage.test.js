@@ -158,10 +158,15 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     productsHtml.includes('src="js/product-usage.js"'),
     "Products must load the product usage module",
   );
-  const statusHeader = productsHtml.indexOf("<th>Status</th>");
-  const poHeader = productsHtml.indexOf("<th>Customer PO</th>", statusHeader);
+  const statusHeader = productsHtml.indexOf(
+    'data-product-usage-sort="status"',
+  );
+  const poHeader = productsHtml.indexOf(
+    'data-product-usage-sort="customerPoNumber"',
+    statusHeader,
+  );
   const valueHeader = productsHtml.indexOf(
-    '<th class="align-right">BOQ Value</th>',
+    'data-product-usage-sort="boqValue"',
     poHeader,
   );
   assert(
@@ -171,6 +176,33 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   assert(
     !productsHtml.includes('<th class="align-right">Qty</th>'),
     "Product Usage History must not display a quantity column",
+  );
+  equal(
+    productsHtml.split("data-product-usage-sort=").length - 1,
+    10,
+    "every Product Usage data header must support sorting",
+  );
+  [
+    "boqNumber",
+    "projectName",
+    "customerName",
+    "status",
+    "customerPoNumber",
+    "boqValue",
+    "unitCogs",
+    "margin",
+    "unitSelling",
+    "updatedAt",
+  ].forEach((key) =>
+    assert(
+      productsHtml.includes(`data-product-usage-sort="${key}"`),
+      `${key} must be sortable in Product Usage History`,
+    )
+  );
+  assert(
+    recordsSource.includes("productUsageSortKey") &&
+      recordsSource.includes("updateProductUsageSortState"),
+    "Product Usage sorting must track its active key and direction",
   );
   assert(
     recordsSource.includes('data-record-action="usage"'),
