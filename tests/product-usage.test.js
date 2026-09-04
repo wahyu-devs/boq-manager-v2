@@ -182,6 +182,12 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     "desktop usage history must use a dedicated table layout",
   );
   assert(
+    componentsCss.includes(
+      ".product-usage-modal [data-product-usage-summary]",
+    ) && componentsCss.includes("text-overflow: ellipsis;"),
+    "long product names must stay on one truncated subtitle line",
+  );
+  assert(
     responsiveCss.includes(".product-usage-cards"),
     "mobile usage history must provide compact cards",
   );

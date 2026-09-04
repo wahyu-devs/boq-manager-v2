@@ -2126,6 +2126,17 @@
   padding: 0;
 }
 
+.product-usage-modal .modal-header > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.product-usage-modal [data-product-usage-summary] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .product-usage-toolbar {
   display: flex;
   align-items: center;
