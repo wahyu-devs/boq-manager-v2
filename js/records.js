@@ -630,15 +630,17 @@
     const status = document.querySelector("[data-product-usage-status]");
     if (search) search.value = "";
     if (status) status.value = "";
-    const summary = document.querySelector("[data-product-usage-summary]");
-    if (summary) {
+    const summaryName = document.querySelector("[data-product-usage-name]");
+    const summaryStats = document.querySelector("[data-product-usage-stats]");
+    if (summaryName && summaryStats) {
       const boqCount = new Set(productUsageEntries.map((entry) => entry.boqId))
         .size;
-      summary.textContent = productUsageEntries.length
-        ? `${record.name} · ${productUsageEntries.length} use${
+      summaryName.textContent = record.name;
+      summaryStats.textContent = productUsageEntries.length
+        ? `· ${productUsageEntries.length} use${
           productUsageEntries.length === 1 ? "" : "s"
         } across ${boqCount} BOQ${boqCount === 1 ? "" : "s"}`
-        : `${record.name} · No saved BOQ usage`;
+        : "· No saved BOQ usage";
     }
     const sortButton = document.querySelector("[data-product-usage-sort]");
     sortButton?.setAttribute("aria-sort", "descending");

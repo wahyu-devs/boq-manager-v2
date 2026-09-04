@@ -2132,8 +2132,22 @@
 }
 
 .product-usage-modal [data-product-usage-summary] {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.product-usage-modal [data-product-usage-name] {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-usage-modal [data-product-usage-stats] {
+  flex: 0 0 auto;
   white-space: nowrap;
 }
 

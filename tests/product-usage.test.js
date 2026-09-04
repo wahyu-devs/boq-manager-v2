@@ -183,9 +183,11 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   );
   assert(
     componentsCss.includes(
-      ".product-usage-modal [data-product-usage-summary]",
-    ) && componentsCss.includes("text-overflow: ellipsis;"),
-    "long product names must stay on one truncated subtitle line",
+      ".product-usage-modal [data-product-usage-name]",
+    ) && componentsCss.includes(
+      ".product-usage-modal [data-product-usage-stats]",
+    ) && recordsSource.includes("summaryStats.textContent"),
+    "long product names must truncate without hiding usage totals",
   );
   assert(
     responsiveCss.includes(".product-usage-cards"),
