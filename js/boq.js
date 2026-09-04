@@ -17,6 +17,7 @@
     collectUniqueTextValues,
     formatDate,
     formatDateTime,
+    matchesSearchQuery,
     reorderItemsWithinCategory,
     reorderValues,
   } = window.BOQUtils;
@@ -1140,13 +1141,15 @@
 
   function updateCatalogResults() {
     const query = (document.querySelector("[data-catalog-search]")?.value || "")
-      .toLowerCase();
+      .trim();
     const catalog = catalogRecords();
     const host = document.querySelector("[data-catalog-list]");
-    const filtered = catalog.filter((product) =>
-      `${product.sku} ${product.name} ${product.category}`
-        .toLowerCase().includes(query)
-    );
+    const filtered = catalog.filter((product) => matchesSearchQuery([
+      product.sku,
+      product.name,
+      product.category,
+      product.unit,
+    ].join(" "), query));
     host.innerHTML = filtered.length
       ? filtered.map((product) => {
         return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;

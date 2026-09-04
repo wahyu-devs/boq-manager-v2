@@ -96,6 +96,19 @@ Deno.test("keeps register search placeholders readable", () => {
   );
 });
 
+Deno.test("uses token matching in the BOQ product catalog", () => {
+  assertIncludes(
+    boqSource,
+    "const filtered = catalog.filter((product) => matchesSearchQuery([",
+    "the BOQ catalog must use the shared token-based search matcher",
+  );
+  assertIncludes(
+    boqSource,
+    "product.unit,",
+    "catalog token search must include the product unit",
+  );
+});
+
 Deno.test("centers the company logo file picker", () => {
   assertIncludes(
     componentsCss,
