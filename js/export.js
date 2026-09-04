@@ -119,7 +119,6 @@
     }
     const modeButton = event.target.closest("[data-excel-mode]");
     if (modeButton) {
-      window.BOQModal.close(document.getElementById("excel-modal"));
       void exportExcel(
         modeButton.dataset.excelMode,
         modeButton.dataset.exportRevision,

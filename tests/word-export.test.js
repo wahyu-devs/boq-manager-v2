@@ -86,6 +86,13 @@ Deno.test("offers Word PDF and primary Excel in Document Preview", () => {
     "modeButton.dataset.excelMode,\n        modeButton.dataset.exportRevision,",
     "the selected workbook must retain the previewed revision",
   );
+  if (
+    exportScript.includes(
+      'BOQModal.close(document.getElementById("excel-modal"))',
+    )
+  ) {
+    throw new Error("workbook downloads must keep the Excel modal open");
+  }
   assertIncludes(
     editorScript,
     "#pdf-modal [data-download-preview-excel]",
