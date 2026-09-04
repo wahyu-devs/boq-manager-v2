@@ -48,42 +48,36 @@
       const rounding = revision?.calculation?.rounding || defaultRounding;
       const revisionNumber = record.displayRevisionNumber ??
         record.workingRevision ?? record.activeRevisionNumber ?? 0;
-      const boqValue = (Array.isArray(record.items) ? record.items : [])
-        .reduce((total, item) =>
+      const recordItems = Array.isArray(record.items) ? record.items : [];
+      const boqValue = recordItems.reduce((total, item) =>
           total + calculateItem(item, { rounding }).totalSelling, 0);
-
-      (Array.isArray(record.items) ? record.items : []).forEach(
-        (item, itemIndex) => {
-          if (normalizeItemName(item?.item) !== targetName) return;
-          const calculation = calculateItem(item, { rounding });
-          entries.push({
-            boqId: String(record.id || ""),
-            boqNumber: String(record.number || ""),
-            revisionNumber: Math.max(0, Number(revisionNumber) || 0),
-            projectName: String(record.projectName || ""),
-            customerName: String(record.customerName || ""),
-            status,
-            customerPoNumber: String(record.customerPoNumber || ""),
-            boqValue,
-            currency: String(record.currency || "IDR"),
-            quantity: calculation.quantity,
-            unit: String(item?.unit || ""),
-            unitCogs: calculation.unitCogs,
-            margin: calculation.margin,
-            unitSelling: calculation.unitSelling,
-            totalSelling: calculation.totalSelling,
-            manualSelling: calculation.isManualSelling,
-            updatedAt: String(record.updatedAt || ""),
-            itemIndex,
-          });
-        },
+      const item = recordItems.find((entry) =>
+        normalizeItemName(entry?.item) === targetName
       );
+      if (!item) return;
+      const calculation = calculateItem(item, { rounding });
+      entries.push({
+        boqId: String(record.id || ""),
+        boqNumber: String(record.number || ""),
+        revisionNumber: Math.max(0, Number(revisionNumber) || 0),
+        projectName: String(record.projectName || ""),
+        customerName: String(record.customerName || ""),
+        status,
+        customerPoNumber: String(record.customerPoNumber || ""),
+        boqValue,
+        currency: String(record.currency || "IDR"),
+        unitCogs: calculation.unitCogs,
+        margin: calculation.margin,
+        unitSelling: calculation.unitSelling,
+        totalSelling: calculation.totalSelling,
+        manualSelling: calculation.isManualSelling,
+        updatedAt: String(record.updatedAt || ""),
+      });
     });
 
     return entries.sort((left, right) =>
       timestampValue(right.updatedAt) - timestampValue(left.updatedAt) ||
-      left.boqNumber.localeCompare(right.boqNumber) ||
-      left.itemIndex - right.itemIndex
+      left.boqNumber.localeCompare(right.boqNumber)
     );
   }
 

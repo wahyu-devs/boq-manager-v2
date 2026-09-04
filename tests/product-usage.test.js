@@ -117,7 +117,7 @@ Deno.test("uses effective BOQ pricing, revision rounding, and manual selling", (
   equal(entries[1].unitSelling, 2000, "issued revision rounding must be used");
 });
 
-Deno.test("keeps repeated matching BOQ items as separate usage rows", () => {
+Deno.test("deduplicates repeated item names within the same BOQ", () => {
   const entries = window.BOQProductUsage.build("Access Point", [{
     id: "boq-repeat",
     number: "BOQ-260904",
@@ -132,9 +132,8 @@ Deno.test("keeps repeated matching BOQ items as separate usage rows", () => {
     calculateItem: window.BOQCalculations.calculateItem,
   });
 
-  equal(entries.length, 2, "each matching line item must remain visible");
-  equal(entries[0].quantity, 2, "original item order must be retained");
-  equal(entries[1].quantity, 5, "the second item must remain separate");
+  equal(entries.length, 1, "the same product must appear once per BOQ");
+  equal(entries[0].unitCogs, 100, "the first matching item must be used");
 });
 
 Deno.test("wires Product Usage History into the catalog UI", async () => {
@@ -168,6 +167,10 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   assert(
     statusHeader >= 0 && poHeader > statusHeader && valueHeader > poHeader,
     "Customer PO and BOQ Value must follow Status",
+  );
+  assert(
+    !productsHtml.includes('<th class="align-right">Qty</th>'),
+    "Product Usage History must not display a quantity column",
   );
   assert(
     recordsSource.includes('data-record-action="usage"'),
