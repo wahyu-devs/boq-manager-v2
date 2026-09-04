@@ -109,6 +109,24 @@ Deno.test("uses token matching in the BOQ product catalog", () => {
   );
 });
 
+Deno.test("shows selling prices in the BOQ product catalog", () => {
+  assertIncludes(
+    boqSource,
+    "const selling = calculations.calculateProductPricing(product)",
+    "catalog results must calculate the product selling price",
+  );
+  assertIncludes(
+    boqSource,
+    "formatCurrencyMarkup(selling, currentCurrency())",
+    "catalog results must render selling rather than COGS",
+  );
+  if (boqSource.includes(
+    "formatCurrencyMarkup(product.defaultCogs || 0, currentCurrency())",
+  )) {
+    throw new Error("catalog results must not expose product COGS");
+  }
+});
+
 Deno.test("centers the company logo file picker", () => {
   assertIncludes(
     componentsCss,

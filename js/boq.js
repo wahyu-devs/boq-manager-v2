@@ -1152,7 +1152,9 @@
     ].join(" "), query));
     host.innerHTML = filtered.length
       ? filtered.map((product) => {
-        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(product.defaultCogs || 0, currentCurrency())}</strong><span>${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
+        const selling = calculations.calculateProductPricing(product)
+          .unitSelling;
+        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(selling, currentCurrency())}</strong><span>Selling price · ${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
       : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No Products Found</h3><p>Try searching by product name, part number, or category.</p></div></div>';
     host.querySelectorAll("[data-add-product]")
