@@ -36,6 +36,7 @@ function searchIndex() {
       category: "Network Equipment",
       unit: "pcs",
       status: "Active",
+      updatedAt: "2026-09-01T08:00:00.000Z",
     }, {
       id: "product-2",
       sku: "PN-RTR-02",
@@ -43,6 +44,7 @@ function searchIndex() {
       category: "Network Equipment",
       unit: "pcs",
       status: "Active",
+      updatedAt: "2026-09-02T08:00:00.000Z",
     }],
     customers: [{
       id: "customer-1",
@@ -94,8 +96,8 @@ Deno.test("groups universal search results across all record types", () => {
   );
   equal(
     product.products.items[0].primary,
-    "Router",
-    "exact product must rank first",
+    "Router Pro",
+    "search must preserve the register's newest-first order without relevance ranking",
   );
 
   const po = window.BOQUniversalSearch.search(index, "7788", 5);

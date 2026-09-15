@@ -16,15 +16,10 @@
       .trim();
   }
 
-  function recordRank(record, query) {
-    const normalizedQuery = normalize(query);
-    const primary = normalize(record.primary);
-    const words = primary.split(/\s+/).filter(Boolean);
-    if (primary === normalizedQuery) return 0;
-    if (primary.startsWith(normalizedQuery)) return 1;
-    if (words.some((word) => word.startsWith(normalizedQuery))) return 2;
-    if (primary.includes(normalizedQuery)) return 3;
-    return 4;
+  function newestFirst(records) {
+    return [...records].sort((left, right) =>
+      new Date(right.updatedAt) - new Date(left.updatedAt)
+    );
   }
 
   function buildIndex(collections = {}, options = {}) {
@@ -37,7 +32,7 @@
     const visibleRevisionLabel = options.visibleRevisionLabel ||
       ((value) => value);
 
-    const boqs = (collections.boqs || []).map((source) => {
+    const boqs = newestFirst(collections.boqs || []).map((source) => {
       const record = registerBoqView(source);
       const summary = calculateSummary(record.items || [], {
         commission: record.commission,
@@ -71,7 +66,7 @@
       };
     });
 
-    const products = (collections.products || []).map((record) => ({
+    const products = newestFirst(collections.products || []).map((record) => ({
       id: record.id,
       type: "products",
       primary: record.name || "Untitled product",
@@ -88,7 +83,9 @@
       ].filter(Boolean).join(" "),
     }));
 
-    const customers = (collections.customers || []).map((record) => ({
+    const customers = newestFirst(collections.customers || []).map((
+      record,
+    ) => ({
       id: record.id,
       type: "customers",
       primary: record.companyName || "Untitled customer",
@@ -116,12 +113,6 @@
     groupOrder.forEach((group) => {
       const matching = (hasSearchTerm ? index[group] || [] : []).filter(
         (record) => root.BOQUtils.matchesSearchQuery(record.searchText, query),
-      ).sort((left, right) =>
-        recordRank(left, query) - recordRank(right, query) ||
-        left.primary.localeCompare(right.primary, undefined, {
-          numeric: true,
-          sensitivity: "base",
-        })
       );
       result[group] = {
         items: matching.slice(0, limit),
