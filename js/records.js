@@ -525,6 +525,7 @@
         entry.status,
         entry.customerPoNumber,
         entry.boqValue,
+        entry.quantity,
         entry.unitCogs,
         entry.margin,
         entry.unitSelling,
@@ -532,7 +533,13 @@
       return matchesSearchQuery(searchValue, query) &&
         (!status || entry.status.toLowerCase() === status);
     }).sort((left, right) => {
-      const numericKeys = ["boqValue", "unitCogs", "margin", "unitSelling"];
+      const numericKeys = [
+        "boqValue",
+        "quantity",
+        "unitCogs",
+        "margin",
+        "unitSelling",
+      ];
       let comparison;
       if (productUsageSortKey === "updatedAt") {
         comparison = (new Date(left.updatedAt || 0).getTime() || 0) -
@@ -594,6 +601,8 @@
         escapeHtml(entry.customerPoNumber || "")
       }</td><td class="align-right currency">${
         formatCurrencyMarkup(entry.boqValue, entry.currency)
+      }</td><td class="align-right number">${
+        formatNumberInput(entry.quantity)
       }</td><td class="align-right currency">${
         formatCurrencyMarkup(entry.unitCogs, entry.currency)
       }</td><td class="align-right number">${
@@ -618,6 +627,8 @@
         escapeHtml(entry.customerPoNumber || "—")
       }</dd></div><div><dt>BOQ Value</dt><dd>${
         formatCurrencyMarkup(entry.boqValue, entry.currency)
+      }</dd></div><div><dt>Qty</dt><dd class="number">${
+        formatNumberInput(entry.quantity)
       }</dd></div><div><dt>Unit COGS</dt><dd>${
         formatCurrencyMarkup(entry.unitCogs, entry.currency)
       }</dd></div><div><dt>Margin</dt><dd>${

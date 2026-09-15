@@ -52,6 +52,7 @@ Deno.test("matches product usage by normalized exact item name", () => {
   equal(entries[0].boqId, "boq-draft", "the matching BOQ must be retained");
   equal(entries[0].revisionNumber, 1, "the working revision must be shown");
   equal(entries[0].status, "Draft", "the current draft status must be shown");
+  equal(entries[0].quantity, 2, "the matching item quantity must be shown");
 });
 
 Deno.test("uses effective BOQ pricing, revision rounding, and manual selling", () => {
@@ -133,6 +134,11 @@ Deno.test("deduplicates repeated item names within the same BOQ", () => {
   });
 
   equal(entries.length, 1, "the same product must appear once per BOQ");
+  equal(
+    entries[0].quantity,
+    7,
+    "repeated matching item quantities must be combined",
+  );
   equal(entries[0].unitCogs, 100, "the first matching item must be used");
 });
 
@@ -169,17 +175,18 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     'data-product-usage-sort="boqValue"',
     poHeader,
   );
-  assert(
-    statusHeader >= 0 && poHeader > statusHeader && valueHeader > poHeader,
-    "Customer PO and BOQ Value must follow Status",
+  const quantityHeader = productsHtml.indexOf(
+    'data-product-usage-sort="quantity"',
+    valueHeader,
   );
   assert(
-    !productsHtml.includes('<th class="align-right">Qty</th>'),
-    "Product Usage History must not display a quantity column",
+    statusHeader >= 0 && poHeader > statusHeader && valueHeader > poHeader &&
+      quantityHeader > valueHeader,
+    "Customer PO, BOQ Value, and Qty must follow Status in order",
   );
   equal(
     productsHtml.split("data-product-usage-sort=").length - 1,
-    10,
+    11,
     "every Product Usage data header must support sorting",
   );
   [
@@ -189,6 +196,7 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     "status",
     "customerPoNumber",
     "boqValue",
+    "quantity",
     "unitCogs",
     "margin",
     "unitSelling",
@@ -203,6 +211,11 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     recordsSource.includes("productUsageSortKey") &&
       recordsSource.includes("updateProductUsageSortState"),
     "Product Usage sorting must track its active key and direction",
+  );
+  assert(
+    recordsSource.includes("<dt>Qty</dt>") &&
+      recordsSource.includes("formatNumberInput(entry.quantity)"),
+    "Qty must be rendered in desktop rows and mobile usage cards",
   );
   assert(
     recordsSource.includes('data-record-action="usage"'),

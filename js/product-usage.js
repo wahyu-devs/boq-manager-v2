@@ -51,11 +51,16 @@
       const recordItems = Array.isArray(record.items) ? record.items : [];
       const boqValue = recordItems.reduce((total, item) =>
           total + calculateItem(item, { rounding }).totalSelling, 0);
-      const item = recordItems.find((entry) =>
+      const matchingItems = recordItems.filter((entry) =>
         normalizeItemName(entry?.item) === targetName
       );
-      if (!item) return;
-      const calculation = calculateItem(item, { rounding });
+      if (!matchingItems.length) return;
+      const calculations = matchingItems.map((item) =>
+        calculateItem(item, { rounding })
+      );
+      const calculation = calculations[0];
+      const quantity = calculations.reduce((total, itemCalculation) =>
+        total + itemCalculation.quantity, 0);
       entries.push({
         boqId: String(record.id || ""),
         boqNumber: String(record.number || ""),
@@ -65,6 +70,7 @@
         status,
         customerPoNumber: String(record.customerPoNumber || ""),
         boqValue,
+        quantity,
         currency: String(record.currency || "IDR"),
         unitCogs: calculation.unitCogs,
         margin: calculation.margin,
