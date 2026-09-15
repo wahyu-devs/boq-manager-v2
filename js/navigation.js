@@ -21,6 +21,7 @@
       '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.55V21h-4v-.08A1.7 1.7 0 0 0 9 19.37a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-1.55-1H3v-4h.08A1.7 1.7 0 0 0 4.63 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1-1.55V3h4v.08A1.7 1.7 0 0 0 15 4.63a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.37 9a1.7 1.7 0 0 0 1.55 1H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"/>',
     menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
   };
 
   const icon = (name) =>
@@ -79,7 +80,18 @@
       titles[page]
     }</strong></div>
         </div>
+        <div class="universal-search" data-universal-search>
+          <div class="universal-search-field">
+            ${icon("search")}
+            <label class="sr-only" for="universal-search-input">Search BOQs, products, or customers</label>
+            <input id="universal-search-input" type="search" autocomplete="off" placeholder="Search BOQs, products, or customers" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="universal-search-results" aria-label="Search BOQs, products, or customers" data-universal-search-input>
+            <span class="universal-search-shortcut" aria-hidden="true">⌘K</span>
+            <button class="icon-button universal-search-close" type="button" data-universal-search-close aria-label="Close search">×</button>
+          </div>
+          <div class="universal-search-results" id="universal-search-results" role="listbox" data-universal-search-results hidden></div>
+        </div>
         <div class="topbar-actions">
+          <button class="icon-button universal-search-trigger" type="button" data-universal-search-open aria-label="Search BOQs, products, or customers">${icon("search")}</button>
           <button class="icon-button" type="button" data-theme-toggle aria-label="Switch theme"></button>
           <a class="button button-secondary" href="boq-editor.html" aria-label="Create new BOQ">${
       icon("plus")

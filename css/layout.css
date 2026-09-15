@@ -144,10 +144,11 @@
   position: sticky;
   z-index: 40;
   top: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(240px, 30vw, 480px) auto;
   height: var(--header-height);
   align-items: center;
-  justify-content: space-between;
+  gap: 14px;
   padding: 0 26px;
   border-bottom: 1px solid var(--color-border);
   background: color-mix(in srgb, var(--color-bg) 92%, transparent);
@@ -159,6 +160,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.topbar-left {
+  min-width: 0;
+}
+
+.topbar-actions {
+  justify-self: end;
 }
 
 .user-menu-trigger {
@@ -204,8 +213,11 @@
 }
 
 .breadcrumb {
+  overflow: hidden;
   color: var(--color-text-muted);
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .breadcrumb strong {

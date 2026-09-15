@@ -22,6 +22,20 @@
 }
 
 @media (max-width: 1199px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) clamp(220px, 28vw, 340px) auto;
+    gap: 10px;
+  }
+
+  .topbar .user-menu-trigger .desktop-only,
+  .universal-search-shortcut {
+    display: none;
+  }
+
+  .universal-search-field input {
+    padding-right: 32px;
+  }
+
   .main-content {
     padding: 24px;
   }
@@ -58,6 +72,10 @@
   }
 
   body.nav-open {
+    overflow: hidden;
+  }
+
+  body.universal-search-open {
     overflow: hidden;
   }
 
@@ -102,11 +120,62 @@
   }
 
   .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 0 18px;
   }
 
   .topbar-left {
     min-width: 0;
+  }
+
+  .universal-search {
+    position: fixed;
+    z-index: 60;
+    top: var(--header-height);
+    right: 0;
+    left: 0;
+    display: none;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-popover);
+  }
+
+  body.universal-search-open .universal-search {
+    display: block;
+  }
+
+  .universal-search-field {
+    height: 40px;
+  }
+
+  .universal-search-field input {
+    padding-right: 42px;
+  }
+
+  .universal-search-field input::-webkit-search-cancel-button {
+    display: none;
+    -webkit-appearance: none;
+  }
+
+  .universal-search-trigger,
+  .universal-search-close {
+    display: inline-grid;
+  }
+
+  .universal-search-close {
+    position: absolute;
+    right: 3px;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+  }
+
+  .universal-search-results {
+    top: 100%;
+    right: 18px;
+    left: 18px;
+    max-height: calc(100vh - var(--header-height) - 76px);
   }
 
   .dashboard-grid,
@@ -226,6 +295,16 @@
 
   .topbar {
     padding: 0 12px;
+  }
+
+  .universal-search {
+    padding: 10px 12px;
+  }
+
+  .universal-search-results {
+    right: 12px;
+    left: 12px;
+    max-height: calc(100vh - var(--header-height) - 68px);
   }
 
   .topbar-actions {

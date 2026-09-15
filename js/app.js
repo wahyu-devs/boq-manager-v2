@@ -147,6 +147,10 @@
       const requestedStatus = scope.hasAttribute("data-boq-attention-scope")
         ? new URLSearchParams(window.location.search).get("status") || ""
         : "";
+      const requestedQuery = new URLSearchParams(window.location.search).get(
+        "q",
+      ) || "";
+      if (search && requestedQuery) search.value = requestedQuery;
       if (attentionFilter && [...attentionFilter.options].some((option) =>
         option.value === requestedAttention
       )) {
@@ -248,7 +252,17 @@
         );
       };
 
-      search?.addEventListener("input", window.BOQUtils.debounce(update, 100));
+      search?.addEventListener("input", window.BOQUtils.debounce(() => {
+        update();
+        const url = new URL(window.location.href);
+        const query = search.value.trim();
+        if (query) {
+          url.searchParams.set("q", query);
+        } else {
+          url.searchParams.delete("q");
+        }
+        window.history.replaceState(window.history.state, "", url);
+      }, 100));
       filters.forEach((filter) => filter.addEventListener("change", update));
       attentionFilter?.addEventListener("change", () => {
         const url = new URL(window.location.href);

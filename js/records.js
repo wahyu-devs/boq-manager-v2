@@ -7,6 +7,12 @@
   };
   const collection = collectionByPage[page];
   if (!collection) return;
+  const requestedRecordId = collection === "products"
+    ? new URLSearchParams(window.location.search).get("product")
+    : collection === "customers"
+    ? new URLSearchParams(window.location.search).get("customer")
+    : "";
+  let requestedRecordHandled = !requestedRecordId;
 
   const { list, get, save, remove, nextNumber, backfillBoqPartNumbers } =
     window.BOQStore;
@@ -229,6 +235,7 @@
       record.contactPerson,
       record.email,
       record.phone,
+      record.address,
     ].filter(Boolean).join(" ");
     const customerBoqs = displayBoqs().filter((boq) =>
       boq.customerId === record.id
@@ -511,6 +518,26 @@
     })
     : null;
 
+  function openRequestedRecord() {
+    if (
+      requestedRecordHandled ||
+      document.body.classList.contains("auth-pending")
+    ) {
+      return;
+    }
+    const record = get(collection, requestedRecordId);
+    if (!record) return;
+    requestedRecordHandled = true;
+    if (collection === "products") {
+      productUsageView?.show(record);
+      return;
+    }
+    if (collection === "customers") {
+      showDetail(record);
+      window.BOQModal.open("record-detail-modal");
+    }
+  }
+
   function updateCalculatedProductPrice() {
     if (collection !== "products") return;
     const form = document.querySelector("[data-record-form]");
@@ -653,6 +680,9 @@
   document.addEventListener("boq:workspace-updated", () => {
     defaultCurrency = window.BOQStore.getSettings().defaultCurrency || "USD";
     render();
+    openRequestedRecord();
   });
+  document.addEventListener("boq:auth-ready", openRequestedRecord);
   render();
+  openRequestedRecord();
 })();
