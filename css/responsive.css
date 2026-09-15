@@ -23,8 +23,11 @@
 
 @media (max-width: 1199px) {
   .topbar {
-    grid-template-columns: minmax(0, 1fr) clamp(220px, 28vw, 340px) auto;
     gap: 10px;
+  }
+
+  .universal-search {
+    width: clamp(220px, 28vw, 340px);
   }
 
   .topbar .user-menu-trigger .desktop-only,
@@ -120,7 +123,6 @@
   }
 
   .topbar {
-    grid-template-columns: minmax(0, 1fr) auto;
     padding: 0 18px;
   }
 
@@ -135,10 +137,12 @@
     right: 0;
     left: 0;
     display: none;
+    width: auto;
     padding: 12px 18px;
     border-bottom: 1px solid var(--color-border);
     background: var(--color-surface);
     box-shadow: var(--shadow-popover);
+    transform: none;
   }
 
   body.universal-search-open .universal-search {

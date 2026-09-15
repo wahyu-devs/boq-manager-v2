@@ -153,6 +153,9 @@ Deno.test("wires universal search into every application page", async () => {
   const layout = await Deno.readTextFile(
     new URL("../css/layout.css", import.meta.url),
   );
+  const components = await Deno.readTextFile(
+    new URL("../css/components.css", import.meta.url),
+  );
   const responsive = await Deno.readTextFile(
     new URL("../css/responsive.css", import.meta.url),
   );
@@ -160,7 +163,8 @@ Deno.test("wires universal search into every application page", async () => {
   assert(
     navigation.includes("data-universal-search-input") &&
       navigation.includes("data-universal-search-results") &&
-      navigation.includes("data-universal-search-open"),
+      navigation.includes("data-universal-search-open") &&
+      navigation.includes('placeholder="Search"'),
     "the shared top bar must expose desktop and mobile search controls",
   );
   assert(
@@ -178,8 +182,12 @@ Deno.test("wires universal search into every application page", async () => {
     "register search changes must remain synchronized with the query string",
   );
   assert(
-    layout.includes("clamp(240px, 30vw, 480px)") &&
+    layout.includes("justify-content: space-between") &&
+      components.includes("left: 50%") &&
+      components.includes("clamp(240px, 30vw, 480px)") &&
+      components.includes("transform: translateX(-50%)") &&
+      components.includes(".universal-search-field > .nav-icon") &&
       responsive.includes("body.universal-search-open .universal-search"),
-    "universal search must use deliberate desktop and mobile layouts",
+    "universal search must be geometrically centered on desktop and remain responsive",
   );
 });

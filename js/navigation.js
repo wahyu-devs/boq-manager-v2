@@ -84,14 +84,16 @@
           <div class="universal-search-field">
             ${icon("search")}
             <label class="sr-only" for="universal-search-input">Search BOQs, products, or customers</label>
-            <input id="universal-search-input" type="search" autocomplete="off" placeholder="Search BOQs, products, or customers" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="universal-search-results" aria-label="Search BOQs, products, or customers" data-universal-search-input>
+            <input id="universal-search-input" type="search" autocomplete="off" placeholder="Search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="universal-search-results" aria-label="Search BOQs, products, or customers" data-universal-search-input>
             <span class="universal-search-shortcut" aria-hidden="true">⌘K</span>
             <button class="icon-button universal-search-close" type="button" data-universal-search-close aria-label="Close search">×</button>
           </div>
           <div class="universal-search-results" id="universal-search-results" role="listbox" data-universal-search-results hidden></div>
         </div>
         <div class="topbar-actions">
-          <button class="icon-button universal-search-trigger" type="button" data-universal-search-open aria-label="Search BOQs, products, or customers">${icon("search")}</button>
+          <button class="icon-button universal-search-trigger" type="button" data-universal-search-open aria-label="Search BOQs, products, or customers">${
+      icon("search")
+    }</button>
           <button class="icon-button" type="button" data-theme-toggle aria-label="Switch theme"></button>
           <a class="button button-secondary" href="boq-editor.html" aria-label="Create new BOQ">${
       icon("plus")

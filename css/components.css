@@ -230,9 +230,11 @@
 }
 
 .universal-search {
-  position: relative;
-  width: 100%;
+  position: absolute;
+  left: 50%;
+  width: clamp(240px, 30vw, 480px);
   min-width: 0;
+  transform: translateX(-50%);
 }
 
 .universal-search-field {
@@ -251,9 +253,9 @@
   box-shadow: 0 0 0 3px var(--color-focus);
 }
 
-.universal-search-field > .icon {
+.universal-search-field > .nav-icon {
   position: absolute;
-  left: 10px;
+  left: 12px;
   color: var(--color-text-subtle);
   pointer-events: none;
 }
@@ -262,7 +264,7 @@
   width: 100%;
   min-width: 0;
   height: 100%;
-  padding: 0 76px 0 34px;
+  padding: 0 76px 0 38px;
   border: 0;
   outline: 0;
   background: transparent;
