@@ -197,6 +197,9 @@ Deno.test("wires universal search into every application page", async () => {
       components.includes("clamp(240px, 30vw, 480px)") &&
       components.includes("transform: translateX(-50%)") &&
       components.includes(".universal-search-field > .nav-icon") &&
+      components.includes("--universal-search-edge-inset: 12px") &&
+      components.includes("left: var(--universal-search-edge-inset)") &&
+      components.includes("right: var(--universal-search-edge-inset)") &&
       responsive.includes("body.universal-search-open .universal-search"),
     "universal search must be geometrically centered on desktop and remain responsive",
   );
