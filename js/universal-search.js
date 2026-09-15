@@ -51,9 +51,9 @@
       return {
         id: record.id,
         type: "boqs",
-        primary: revision ? `${number} · ${revision}` : number,
+        primary: record.projectName || "No project",
         secondary: [
-          record.projectName || "No project",
+          revision ? `${number} · ${revision}` : number,
           record.customerName || "No customer",
         ].join(" · "),
         meta: record.status || "Draft",

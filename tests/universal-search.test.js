@@ -75,6 +75,16 @@ Deno.test("groups universal search results across all record types", () => {
   );
   equal(ayana.customers.total, 1, "customer company must be searchable");
   equal(ayana.products.total, 0, "unrelated products must be excluded");
+  equal(
+    ayana.boqs.items[0].primary,
+    "Ayana Ballroom Network",
+    "BOQ results must use the project name as the title",
+  );
+  equal(
+    ayana.boqs.items[0].secondary,
+    "BOQ-260901 · R01 · Ayana Resort",
+    "BOQ results must show the BOQ reference and customer below the project",
+  );
 
   const product = window.BOQUniversalSearch.search(index, "RTR network", 5);
   equal(
