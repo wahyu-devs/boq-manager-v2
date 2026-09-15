@@ -207,7 +207,7 @@ Deno.test("labels the compact New BOQ action", () => {
   );
 });
 
-Deno.test("uses the application icon as favicon on every page", async () => {
+Deno.test("uses the application icon for browsers and iOS home screens", async () => {
   const pages = [
     "index.html",
     "boqs.html",
@@ -222,6 +222,16 @@ Deno.test("uses the application icon as favicon on every page", async () => {
       source,
       '<link rel="icon" type="image/png" sizes="512x512" href="assets/icon.png">',
       `${page} must use assets/icon.png as its favicon`,
+    );
+    assertIncludes(
+      source,
+      '<link rel="apple-touch-icon" href="assets/icon.png">',
+      `${page} must expose assets/icon.png to Safari Add to Home Screen`,
+    );
+    assertIncludes(
+      source,
+      '<meta name="apple-mobile-web-app-title" content="BOQ Manager">',
+      `${page} must use the BOQ Manager iOS home-screen title`,
     );
   }
 });
