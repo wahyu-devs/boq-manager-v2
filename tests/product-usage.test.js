@@ -149,6 +149,15 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   const recordsSource = await Deno.readTextFile(
     new URL("../js/records.js", import.meta.url),
   );
+  const usageViewSource = await Deno.readTextFile(
+    new URL("../js/product-usage-view.js", import.meta.url),
+  );
+  const boqEditorHtml = await Deno.readTextFile(
+    new URL("../boq-editor.html", import.meta.url),
+  );
+  const boqSource = await Deno.readTextFile(
+    new URL("../js/boq.js", import.meta.url),
+  );
   const componentsCss = await Deno.readTextFile(
     new URL("../css/components.css", import.meta.url),
   );
@@ -161,8 +170,9 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     "Products must provide the usage history modal",
   );
   assert(
-    productsHtml.includes('src="js/product-usage.js"'),
-    "Products must load the product usage module",
+    productsHtml.includes('src="js/product-usage.js"') &&
+      productsHtml.includes('src="js/product-usage-view.js"'),
+    "Products must load the product usage data and view modules",
   );
   const statusHeader = productsHtml.indexOf(
     'data-product-usage-sort="status"',
@@ -208,18 +218,31 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     )
   );
   assert(
-    recordsSource.includes("productUsageSortKey") &&
-      recordsSource.includes("updateProductUsageSortState"),
+    usageViewSource.includes('let sortKey = "updatedAt";') &&
+      usageViewSource.includes("function updateSortState()"),
     "Product Usage sorting must track its active key and direction",
   );
   assert(
-    recordsSource.includes("<dt>Qty</dt>") &&
-      recordsSource.includes("formatNumberInput(entry.quantity)"),
+    usageViewSource.includes("<dt>Qty</dt>") &&
+      usageViewSource.includes("formatNumberInput(entry.quantity)"),
     "Qty must be rendered in desktop rows and mobile usage cards",
   );
   assert(
-    recordsSource.includes('data-record-action="usage"'),
+    recordsSource.includes('data-record-action="usage"') &&
+      recordsSource.includes("productUsageView?.show(record)"),
     "product names must open their usage history",
+  );
+  assert(
+    boqEditorHtml.includes('src="js/product-usage.js"') &&
+      boqEditorHtml.includes('src="js/product-usage-view.js"') &&
+      boqSource.includes('data-show-product-usage="') &&
+      boqSource.includes("productUsageView.show(product)"),
+    "catalog product names in the BOQ Editor must open Product Usage History",
+  );
+  assert(
+    usageViewSource.includes("function ensureModal()") &&
+      usageViewSource.includes('window.BOQModal.open("product-usage-modal")'),
+    "the shared usage view must support nested modal presentation",
   );
   assert(
     recordsSource.includes("Set it to Inactive instead"),
@@ -242,8 +265,13 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
       ".product-usage-modal [data-product-usage-name]",
     ) && componentsCss.includes(
       ".product-usage-modal [data-product-usage-stats]",
-    ) && recordsSource.includes("summaryStats.textContent"),
+    ) && usageViewSource.includes("summaryStats.textContent"),
     "long product names must truncate without hiding usage totals",
+  );
+  assert(
+    componentsCss.includes(".catalog-product-name {") &&
+      componentsCss.includes("text-overflow: ellipsis;"),
+    "clickable catalog product names must remain compact",
   );
   assert(
     responsiveCss.includes(".product-usage-cards"),

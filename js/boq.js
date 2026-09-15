@@ -56,6 +56,11 @@
     );
   }
 
+  const productUsageView = window.BOQProductUsageView.create({
+    getProduct: (id) => store.get("products", id),
+    listBoqs: () => store.list("boqs"),
+  });
+
   function catalogItem(product) {
     const productPricing = calculations.calculateProductPricing(product);
     return {
@@ -1154,7 +1159,7 @@
       ? filtered.map((product) => {
         const selling = calculations.calculateProductPricing(product)
           .unitSelling;
-        return `<div class="catalog-row"><div><strong>${escapeHtml(product.name)}</strong><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(selling, currentCurrency())}</strong><span>Selling price · ${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
+        return `<div class="catalog-row"><div><button class="link catalog-product-name" type="button" data-show-product-usage="${escapeHtml(product.id)}">${escapeHtml(product.name)}</button><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(selling, currentCurrency())}</strong><span>Selling price · ${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
       : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No Products Found</h3><p>Try searching by product name, part number, or category.</p></div></div>';
     host.querySelectorAll("[data-add-product]")
@@ -1603,6 +1608,11 @@
 
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-add-custom]") && canEditItems()) addItem();
+    const usageButton = event.target.closest("[data-show-product-usage]");
+    if (usageButton) {
+      const product = store.get("products", usageButton.dataset.showProductUsage);
+      productUsageView.show(product);
+    }
     const productButton = event.target.closest("[data-add-product]");
     if (productButton && canEditItems()) {
       const product = store.get("products", productButton.dataset.addProduct);

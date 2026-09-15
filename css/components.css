@@ -1987,6 +1987,16 @@
   font-size: 11px;
 }
 
+.catalog-product-name {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .catalog-empty {
   min-height: 180px;
 }

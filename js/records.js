@@ -22,7 +22,6 @@
     visibleRevisionLabel,
     boqAttentionType,
     formatDate,
-    matchesSearchQuery,
   } = window.BOQUtils;
   let defaultCurrency = window.BOQStore.getSettings().defaultCurrency ||
     "USD";
@@ -30,11 +29,6 @@
   const cards = document.querySelector("[data-records-cards]");
   const table = document.querySelector("[data-records-table]");
   const empty = document.querySelector("[data-records-empty]");
-  let activeUsageProductId = "";
-  let productUsageEntries = [];
-  let productUsageSortKey = "updatedAt";
-  let productUsageSortDirection = "descending";
-
   function displayBoqs() {
     return list("boqs").map(window.BOQStore.registerBoqView);
   }
@@ -193,7 +187,7 @@
         Number(record.defaultMargin || 0)
       }"><td>${
         escapeHtml(record.sku || "")
-      }</td><td><button class="link cell-primary product-name-link" type="button" data-record-action="usage" data-record-id="${record.id}" data-open-modal="product-usage-modal">${
+      }</td><td><button class="link cell-primary product-name-link" type="button" data-record-action="usage" data-record-id="${record.id}">${
         escapeHtml(record.name || "Untitled product")
       }</button></td><td>${escapeHtml(record.category || "—")}</td><td>${
         escapeHtml(record.unit || "Each")
@@ -213,7 +207,7 @@
           escapeHtml((record.category || "").toLowerCase())
         }" data-status="${
           escapeHtml((record.status || "Active").toLowerCase())
-        }"><div class="record-card-header"><div><button class="link cell-primary product-name-link" type="button" data-record-action="usage" data-record-id="${record.id}" data-open-modal="product-usage-modal">${
+        }"><div class="record-card-header"><div><button class="link cell-primary product-name-link" type="button" data-record-action="usage" data-record-id="${record.id}">${
           escapeHtml(record.name || "Untitled product")
         }</button>${record.sku ? `<div class="muted text-sm">${escapeHtml(record.sku)}</div>` : ""}</div>${
           statusHtml(record.status || "Active")
@@ -510,174 +504,12 @@
     });
   }
 
-  function filteredProductUsage() {
-    const query = document.querySelector("[data-product-usage-search]")
-      ?.value || "";
-    const status = document.querySelector("[data-product-usage-status]")
-      ?.value || "";
-    const direction = productUsageSortDirection === "ascending" ? 1 : -1;
-    return productUsageEntries.filter((entry) => {
-      const searchValue = [
-        entry.boqNumber,
-        window.BOQStore.revisionLabel(entry.revisionNumber),
-        entry.projectName,
-        entry.customerName,
-        entry.status,
-        entry.customerPoNumber,
-        entry.boqValue,
-        entry.quantity,
-        entry.unitCogs,
-        entry.margin,
-        entry.unitSelling,
-      ].join(" ");
-      return matchesSearchQuery(searchValue, query) &&
-        (!status || entry.status.toLowerCase() === status);
-    }).sort((left, right) => {
-      const numericKeys = [
-        "boqValue",
-        "quantity",
-        "unitCogs",
-        "margin",
-        "unitSelling",
-      ];
-      let comparison;
-      if (productUsageSortKey === "updatedAt") {
-        comparison = (new Date(left.updatedAt || 0).getTime() || 0) -
-          (new Date(right.updatedAt || 0).getTime() || 0);
-      } else if (numericKeys.includes(productUsageSortKey)) {
-        comparison = Number(left[productUsageSortKey] || 0) -
-          Number(right[productUsageSortKey] || 0);
-      } else {
-        comparison = String(left[productUsageSortKey] || "").localeCompare(
-          String(right[productUsageSortKey] || ""),
-          undefined,
-          { numeric: true, sensitivity: "base" },
-        );
-      }
-      return comparison * direction || left.boqNumber.localeCompare(
-        right.boqNumber,
-        undefined,
-        { numeric: true, sensitivity: "base" },
-      );
-    });
-  }
-
-  function updateProductUsageSortState() {
-    document.querySelectorAll("[data-product-usage-sort]").forEach((button) => {
-      if (button.dataset.productUsageSort === productUsageSortKey) {
-        button.setAttribute("aria-sort", productUsageSortDirection);
-      } else {
-        button.removeAttribute("aria-sort");
-      }
-    });
-  }
-
-  function renderProductUsage() {
-    if (collection !== "products") return;
-    const tableWrap = document.querySelector(".product-usage-table-wrap");
-    const tableBody = document.querySelector("[data-product-usage-body]");
-    const cardList = document.querySelector("[data-product-usage-cards]");
-    const emptyState = document.querySelector("[data-product-usage-empty]");
-    const noResults = document.querySelector(
-      "[data-product-usage-no-results]",
-    );
-    const resultCount = document.querySelector("[data-product-usage-count]");
-    if (!tableWrap || !tableBody || !cardList || !emptyState || !noResults) {
-      return;
-    }
-
-    const entries = filteredProductUsage();
-    tableBody.innerHTML = entries.map((entry) => {
-      const revision = visibleRevisionLabel(
-        window.BOQStore.revisionLabel(entry.revisionNumber),
-      );
-      return `<tr><td class="boq-number-cell"><a class="cell-primary" href="boq-editor.html?id=${encodeURIComponent(entry.boqId)}">${
-        escapeHtml(entry.boqNumber || "Untitled")
-      }</a>${revision ? `<span class="cell-secondary">${escapeHtml(revision)}</span>` : ""}</td><td>${
-        escapeHtml(entry.projectName || "—")
-      }</td><td>${escapeHtml(entry.customerName || "—")}</td><td>${
-        statusHtml(entry.status)
-      }</td><td>${
-        escapeHtml(entry.customerPoNumber || "")
-      }</td><td class="align-right currency">${
-        formatCurrencyMarkup(entry.boqValue, entry.currency)
-      }</td><td class="align-right number">${
-        formatNumberInput(entry.quantity)
-      }</td><td class="align-right currency">${
-        formatCurrencyMarkup(entry.unitCogs, entry.currency)
-      }</td><td class="align-right number">${
-        formatPercent(entry.margin)
-      }</td><td class="align-right currency">${
-        formatCurrencyMarkup(entry.unitSelling, entry.currency)
-      }${entry.manualSelling ? '<span class="cell-secondary">Manual</span>' : ""}</td><td>${
-        dateText(entry.updatedAt)
-      }</td><td><a class="button button-ghost button-sm" href="boq-editor.html?id=${encodeURIComponent(entry.boqId)}">Open</a></td></tr>`;
-    }).join("");
-    cardList.innerHTML = entries.map((entry) => {
-      const revision = visibleRevisionLabel(
-        window.BOQStore.revisionLabel(entry.revisionNumber),
-      );
-      return `<article class="record-card product-usage-card"><div class="record-card-header"><div><a class="cell-primary" href="boq-editor.html?id=${encodeURIComponent(entry.boqId)}">${
-        escapeHtml(entry.boqNumber || "Untitled")
-      }</a>${revision ? `<div class="muted text-sm">${escapeHtml(revision)}</div>` : ""}</div>${
-        statusHtml(entry.status)
-      }</div><div class="product-usage-card-context"><strong>${
-        escapeHtml(entry.projectName || "No project")
-      }</strong><span>${escapeHtml(entry.customerName || "No customer")}</span></div><dl class="record-card-grid"><div><dt>Customer PO</dt><dd>${
-        escapeHtml(entry.customerPoNumber || "—")
-      }</dd></div><div><dt>BOQ Value</dt><dd>${
-        formatCurrencyMarkup(entry.boqValue, entry.currency)
-      }</dd></div><div><dt>Qty</dt><dd class="number">${
-        formatNumberInput(entry.quantity)
-      }</dd></div><div><dt>Unit COGS</dt><dd>${
-        formatCurrencyMarkup(entry.unitCogs, entry.currency)
-      }</dd></div><div><dt>Margin</dt><dd>${
-        formatPercent(entry.margin)
-      }</dd></div><div><dt>Unit Selling</dt><dd>${
-        formatCurrencyMarkup(entry.unitSelling, entry.currency)
-      }${entry.manualSelling ? '<span class="cell-secondary">Manual</span>' : ""}</dd></div></dl><div class="cluster space-between card-actions"><span class="muted text-sm">Updated ${
-        dateText(entry.updatedAt)
-      }</span><a class="button button-secondary button-sm" href="boq-editor.html?id=${encodeURIComponent(entry.boqId)}">Open BOQ</a></div></article>`;
-    }).join("");
-
-    const hasUsage = productUsageEntries.length > 0;
-    const hasResults = entries.length > 0;
-    tableWrap.hidden = !hasResults;
-    cardList.hidden = !hasResults;
-    emptyState.hidden = hasUsage;
-    noResults.hidden = !hasUsage || hasResults;
-    if (resultCount) {
-      resultCount.textContent = `${entries.length} result${
-        entries.length === 1 ? "" : "s"
-      }`;
-    }
-  }
-
-  function showProductUsage(record) {
-    if (!record || collection !== "products") return;
-    activeUsageProductId = record.id;
-    productUsageEntries = usageForProduct(record);
-    productUsageSortKey = "updatedAt";
-    productUsageSortDirection = "descending";
-    const search = document.querySelector("[data-product-usage-search]");
-    const status = document.querySelector("[data-product-usage-status]");
-    if (search) search.value = "";
-    if (status) status.value = "";
-    const summaryName = document.querySelector("[data-product-usage-name]");
-    const summaryStats = document.querySelector("[data-product-usage-stats]");
-    if (summaryName && summaryStats) {
-      const boqCount = new Set(productUsageEntries.map((entry) => entry.boqId))
-        .size;
-      summaryName.textContent = record.name;
-      summaryStats.textContent = productUsageEntries.length
-        ? `· ${productUsageEntries.length} use${
-          productUsageEntries.length === 1 ? "" : "s"
-        } across ${boqCount} BOQ${boqCount === 1 ? "" : "s"}`
-        : "· No saved BOQ usage";
-    }
-    updateProductUsageSortState();
-    renderProductUsage();
-  }
+  const productUsageView = collection === "products"
+    ? window.BOQProductUsageView.create({
+      getProduct: (id) => get("products", id),
+      listBoqs: () => list("boqs"),
+    })
+    : null;
 
   function updateCalculatedProductPrice() {
     if (collection !== "products") return;
@@ -712,7 +544,7 @@
       showDetail(record);
     }
     if (action.dataset.recordAction === "usage") {
-      showProductUsage(record);
+      productUsageView?.show(record);
     }
     if (action.dataset.recordAction === "duplicate" && record) {
       const duplicate = {
@@ -818,40 +650,9 @@
       );
     },
   );
-  document.querySelector("[data-product-usage-search]")?.addEventListener(
-    "input",
-    window.BOQUtils.debounce(renderProductUsage, 100),
-  );
-  document.querySelector("[data-product-usage-status]")?.addEventListener(
-    "change",
-    renderProductUsage,
-  );
-  document.querySelectorAll("[data-product-usage-sort]").forEach((button) =>
-    button.addEventListener("click", (event) => {
-      const nextKey = event.currentTarget.dataset.productUsageSort;
-      if (nextKey === productUsageSortKey) {
-        productUsageSortDirection =
-          productUsageSortDirection === "descending"
-            ? "ascending"
-            : "descending";
-      } else {
-        productUsageSortKey = nextKey;
-        productUsageSortDirection = nextKey === "updatedAt"
-          ? "descending"
-          : "ascending";
-      }
-      updateProductUsageSortState();
-      renderProductUsage();
-    })
-  );
   document.addEventListener("boq:workspace-updated", () => {
     defaultCurrency = window.BOQStore.getSettings().defaultCurrency || "USD";
     render();
-    const modal = document.getElementById("product-usage-modal");
-    if (activeUsageProductId && modal && !modal.hidden) {
-      const activeProduct = get("products", activeUsageProductId);
-      if (activeProduct) showProductUsage(activeProduct);
-    }
   });
   render();
 })();
