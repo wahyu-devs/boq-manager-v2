@@ -39,6 +39,7 @@
             <div class="product-usage-toolbar">
               <label class="search-field"><span class="sr-only">Search product usage</span><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input class="input input-sm" type="search" placeholder="Search BOQ, project, or customer" data-product-usage-search></label>
               <label><span class="sr-only">Filter usage status</span><select class="select select-sm" data-product-usage-status><option value="">All statuses</option><option value="draft">Draft</option><option value="issued">Issued</option><option value="won">Won</option></select></label>
+              <label><span class="sr-only">Filter usage customer</span><select class="select select-sm" data-product-usage-customer><option value="">All customers</option></select></label>
             </div>
             <div class="detail-table-wrap product-usage-table-wrap" hidden>
               <table class="data-table product-usage-table">
@@ -61,7 +62,7 @@
             </div>
             <div class="product-usage-cards" data-product-usage-cards hidden></div>
             <div class="empty-state product-usage-empty" data-product-usage-empty><div class="empty-state-content"><div class="empty-state-icon" aria-hidden="true">⌕</div><h3>Not Used Yet</h3><p>This product has not been used in a saved BOQ.</p></div></div>
-            <div class="empty-state product-usage-empty" data-product-usage-no-results hidden><div class="empty-state-content"><div class="empty-state-icon" aria-hidden="true">⌕</div><h3>No Matching Usage</h3><p>Try changing the search or status filter.</p></div></div>
+            <div class="empty-state product-usage-empty" data-product-usage-no-results hidden><div class="empty-state-content"><div class="empty-state-icon" aria-hidden="true">⌕</div><h3>No Matching Usage</h3><p>Try changing the search, status, or customer filter.</p></div></div>
           </div>
           <footer class="modal-footer"><span class="muted text-sm" data-product-usage-count>0 results</span><button class="button button-secondary" type="button" data-close-modal>Close</button></footer>
         </section>
@@ -95,6 +96,9 @@
       const status =
         modal.querySelector("[data-product-usage-status]")?.value ||
         "";
+      const customer =
+        modal.querySelector("[data-product-usage-customer]")?.value ||
+        "";
       const direction = sortDirection === "ascending" ? 1 : -1;
       return entries.filter((entry) => {
         const searchValue = [
@@ -111,7 +115,9 @@
           entry.unitSelling,
         ].join(" ");
         return matchesSearchQuery(searchValue, query) &&
-          (!status || entry.status.toLowerCase() === status);
+          (!status || entry.status.toLowerCase() === status) &&
+          (!customer ||
+            String(entry.customerName || "").trim().toLowerCase() === customer);
       }).sort((left, right) => {
         const numericKeys = [
           "boqValue",
@@ -256,6 +262,25 @@
         : "· No saved BOQ usage";
     }
 
+    function updateCustomerOptions() {
+      const select = modal.querySelector("[data-product-usage-customer]");
+      const customers = new Map();
+      entries.forEach((entry) => {
+        const name = String(entry.customerName || "").trim();
+        if (name) customers.set(name.toLowerCase(), name);
+      });
+      const options = [...customers.entries()].sort((left, right) =>
+        left[1].localeCompare(right[1], undefined, {
+          numeric: true,
+          sensitivity: "base",
+        })
+      );
+      select.innerHTML = '<option value="">All customers</option>' +
+        options.map(([value, label]) =>
+          `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`
+        ).join("");
+    }
+
     function show(record) {
       if (!record) return;
       activeProductId = record.id;
@@ -264,6 +289,8 @@
       sortDirection = "descending";
       modal.querySelector("[data-product-usage-search]").value = "";
       modal.querySelector("[data-product-usage-status]").value = "";
+      updateCustomerOptions();
+      modal.querySelector("[data-product-usage-customer]").value = "";
       updateSummary(record);
       updateSortState();
       render();
@@ -275,6 +302,17 @@
       const record = getProduct(activeProductId);
       if (!record) return;
       entries = entriesFor(record);
+      const selectedCustomer =
+        modal.querySelector("[data-product-usage-customer]").value;
+      updateCustomerOptions();
+      if (
+        [...modal.querySelector("[data-product-usage-customer]").options].some(
+          (option) => option.value === selectedCustomer,
+        )
+      ) {
+        modal.querySelector("[data-product-usage-customer]").value =
+          selectedCustomer;
+      }
       updateSummary(record);
       render();
     }
@@ -284,6 +322,10 @@
       window.BOQUtils.debounce(render, 100),
     );
     modal.querySelector("[data-product-usage-status]").addEventListener(
+      "change",
+      render,
+    );
+    modal.querySelector("[data-product-usage-customer]").addEventListener(
       "change",
       render,
     );

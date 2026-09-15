@@ -245,6 +245,15 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     "the shared usage view must support nested modal presentation",
   );
   assert(
+    productsHtml.indexOf("data-product-usage-customer") >
+        productsHtml.indexOf("data-product-usage-status") &&
+      usageViewSource.includes("function updateCustomerOptions()") &&
+      usageViewSource.includes(
+        'modal.querySelector("[data-product-usage-customer]")',
+      ),
+    "usage history must provide a dynamic customer filter after status",
+  );
+  assert(
     recordsSource.includes("Set it to Inactive instead"),
     "used products must be protected from permanent deletion",
   );
