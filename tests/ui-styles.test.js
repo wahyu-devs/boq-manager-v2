@@ -50,7 +50,7 @@ Deno.test("keeps desktop badges vertically centered", () => {
   );
 });
 
-Deno.test("opens constrained row menus above their trigger", () => {
+Deno.test("floats table row menus outside constrained table wrappers", () => {
   assertIncludes(
     appSource,
     "function positionDropdownMenu(trigger, menu) {",
@@ -58,18 +58,18 @@ Deno.test("opens constrained row menus above their trigger", () => {
   );
   assertIncludes(
     appSource,
-    'menu.closest(".table-wrap")?.getBoundingClientRect()',
-    "row menus must use the internal table viewport as their clipping boundary",
+    'if (menu.closest(".table-wrap")) {',
+    "table row menus must receive floating placement",
   );
   assertIncludes(
     appSource,
-    "if (menuHeight > spaceBelow && spaceAbove > spaceBelow) {",
-    "menus must flip only when they do not fit below and have more room above",
+    'menu.classList.add("dropdown-menu-floating");',
+    "table row menus must escape overflow clipping",
   );
   assertIncludes(
     appSource,
-    'menu.classList.add("dropdown-menu-up");',
-    "the upward placement class must be applied after measurement",
+    "window.BOQUtils.calculateFloatingMenuPlacement(",
+    "floating placement must use the shared tested geometry helper",
   );
   assertIncludes(
     appSource,
@@ -78,8 +78,23 @@ Deno.test("opens constrained row menus above their trigger", () => {
   );
   assertIncludes(
     componentsCss,
-    ".dropdown-menu.dropdown-menu-up {\n  top: auto;\n  bottom: calc(100% + 6px);\n}",
-    "upward menus must anchor above their trigger",
+    ".dropdown-menu.dropdown-menu-floating {\n  position: fixed;",
+    "floating row menus must be positioned against the viewport",
+  );
+  assertIncludes(
+    componentsCss,
+    "overflow-y: auto;\n  overscroll-behavior: contain;",
+    "constrained floating menus must remain internally scrollable",
+  );
+  assertIncludes(
+    appSource,
+    'document.addEventListener("scroll", (event) => {',
+    "open menus must react when their anchor scrolls",
+  );
+  assertIncludes(
+    appSource,
+    "window.addEventListener(\"resize\", () => {\n    closeMenus();",
+    "open menus must close when viewport geometry changes",
   );
 });
 

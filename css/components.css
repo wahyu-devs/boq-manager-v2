@@ -1250,6 +1250,15 @@
   bottom: calc(100% + 6px);
 }
 
+.dropdown-menu.dropdown-menu-floating {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  min-width: min(184px, calc(100vw - 16px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .menu-item {
   display: flex;
   width: 100%;

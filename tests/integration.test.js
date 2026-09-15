@@ -73,6 +73,38 @@ function equal(actual, expected, message) {
   }
 }
 
+Deno.test("positions row dropdowns outside short table containers", () => {
+  const calculate = window.BOQUtils.calculateFloatingMenuPlacement;
+  const oneRowTable = calculate(
+    { top: 120, right: 760, bottom: 154 },
+    { width: 184, height: 238 },
+    { width: 800, height: 700 },
+  );
+  equal(oneRowTable.opensUp, false, "one-row table menu opens into viewport");
+  equal(oneRowTable.top, 160, "one-row table menu is anchored below trigger");
+  equal(oneRowTable.left, 576, "menu remains aligned to trigger right edge");
+  equal(oneRowTable.maxHeight, 532, "menu can use space beyond table height");
+
+  const lastRow = calculate(
+    { top: 650, right: 792, bottom: 684 },
+    { width: 184, height: 238 },
+    { width: 800, height: 700 },
+  );
+  equal(lastRow.opensUp, true, "last-row menu opens above its trigger");
+  equal(lastRow.top, 406, "last-row menu remains fully visible");
+  equal(lastRow.left, 608, "last-row menu stays inside right viewport edge");
+
+  const shortViewport = calculate(
+    { top: 80, right: 100, bottom: 114 },
+    { width: 184, height: 238 },
+    { width: 320, height: 180 },
+  );
+  equal(shortViewport.opensUp, true, "short viewport uses its larger side");
+  equal(shortViewport.top, 8, "short viewport menu respects top inset");
+  equal(shortViewport.left, 8, "menu stays inside left viewport edge");
+  equal(shortViewport.maxHeight, 66, "short viewport menu receives a scroll limit");
+});
+
 Deno.test("migrates previous data and preserves pricing behavior", () => {
   const store = window.BOQStore;
   const calculations = window.BOQCalculations;

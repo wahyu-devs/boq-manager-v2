@@ -84,30 +84,48 @@
     );
   }
 
+  function resetDropdownMenuPlacement(menu) {
+    menu.classList.remove("dropdown-menu-up", "dropdown-menu-floating");
+    menu.style.removeProperty("top");
+    menu.style.removeProperty("left");
+    menu.style.removeProperty("max-height");
+    menu.style.removeProperty("max-width");
+  }
+
   function closeMenus(exception) {
     document.querySelectorAll(".dropdown-menu:not([hidden])").forEach(
       (menu) => {
         if (menu === exception) return;
         menu.hidden = true;
-        menu.classList.remove("dropdown-menu-up");
+        resetDropdownMenuPlacement(menu);
         menu.previousElementSibling?.setAttribute("aria-expanded", "false");
       },
     );
   }
 
   function positionDropdownMenu(trigger, menu) {
-    menu.classList.remove("dropdown-menu-up");
+    resetDropdownMenuPlacement(menu);
     const triggerRect = trigger.getBoundingClientRect();
+    if (menu.closest(".table-wrap")) {
+      menu.classList.add("dropdown-menu-floating");
+      const menuRect = menu.getBoundingClientRect();
+      const placement = window.BOQUtils.calculateFloatingMenuPlacement(
+        triggerRect,
+        { width: menuRect.width, height: menuRect.height },
+        { width: window.innerWidth, height: window.innerHeight },
+      );
+      menu.classList.toggle("dropdown-menu-up", placement.opensUp);
+      menu.style.top = `${placement.top}px`;
+      menu.style.left = `${placement.left}px`;
+      menu.style.maxHeight = `${placement.maxHeight}px`;
+      menu.style.maxWidth = `${placement.maxWidth}px`;
+      return;
+    }
+
     const menuHeight = menu.getBoundingClientRect().height;
-    const scrollBoundary = menu.closest(".table-wrap")?.getBoundingClientRect();
-    const boundaryTop = Math.max(0, scrollBoundary?.top || 0);
-    const boundaryBottom = Math.min(
-      window.innerHeight,
-      scrollBoundary?.bottom || window.innerHeight,
-    );
     const gap = 6;
-    const spaceBelow = Math.max(0, boundaryBottom - triggerRect.bottom - gap);
-    const spaceAbove = Math.max(0, triggerRect.top - boundaryTop - gap);
+    const spaceBelow = Math.max(0, window.innerHeight - triggerRect.bottom - gap);
+    const spaceAbove = Math.max(0, triggerRect.top - gap);
     if (menuHeight > spaceBelow && spaceAbove > spaceBelow) {
       menu.classList.add("dropdown-menu-up");
     }
@@ -396,7 +414,7 @@
       if (willOpen) {
         positionDropdownMenu(menuTrigger, menu);
       } else {
-        menu.classList.remove("dropdown-menu-up");
+        resetDropdownMenuPlacement(menu);
       }
       return;
     }
@@ -441,7 +459,13 @@
     if (target) target.disabled = !control.checked;
   });
 
+  document.addEventListener("scroll", (event) => {
+    if (event.target?.closest?.(".dropdown-menu:not([hidden])")) return;
+    closeMenus();
+  }, true);
+
   window.addEventListener("resize", () => {
+    closeMenus();
     if (window.innerWidth > 991) setNavigation(false);
   });
 

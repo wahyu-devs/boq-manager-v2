@@ -348,6 +348,49 @@
     return tokens.every((token) => searchable.includes(token));
   }
 
+  function calculateFloatingMenuPlacement(
+    triggerRect,
+    menuSize,
+    viewport,
+    options = {},
+  ) {
+    const gap = Math.max(0, Number(options.gap ?? 6));
+    const inset = Math.max(0, Number(options.inset ?? 8));
+    const viewportWidth = Math.max(0, Number(viewport?.width || 0));
+    const viewportHeight = Math.max(0, Number(viewport?.height || 0));
+    const menuWidth = Math.min(
+      Math.max(0, Number(menuSize?.width || 0)),
+      Math.max(0, viewportWidth - inset * 2),
+    );
+    const menuHeight = Math.max(0, Number(menuSize?.height || 0));
+    const spaceBelow = Math.max(
+      0,
+      viewportHeight - inset - Number(triggerRect?.bottom || 0) - gap,
+    );
+    const spaceAbove = Math.max(
+      0,
+      Number(triggerRect?.top || 0) - inset - gap,
+    );
+    const opensUp = menuHeight > spaceBelow && spaceAbove > spaceBelow;
+    const maxHeight = opensUp ? spaceAbove : spaceBelow;
+    const renderedHeight = Math.min(menuHeight, maxHeight);
+    const desiredLeft = Number(triggerRect?.right || 0) - menuWidth;
+    const maximumLeft = Math.max(inset, viewportWidth - inset - menuWidth);
+
+    return {
+      left: Math.min(Math.max(inset, desiredLeft), maximumLeft),
+      top: opensUp
+        ? Math.max(
+          inset,
+          Number(triggerRect?.top || 0) - gap - renderedHeight,
+        )
+        : Number(triggerRect?.bottom || 0) + gap,
+      maxHeight,
+      maxWidth: Math.max(0, viewportWidth - inset * 2),
+      opensUp,
+    };
+  }
+
   function reorderItemsWithinCategory(records, itemId, targetId, position) {
     const items = Array.isArray(records) ? records.slice() : [];
     if (!itemId || !targetId || itemId === targetId) {
@@ -408,6 +451,7 @@
     boqAttentionType,
     collectUniqueTextValues,
     matchesSearchQuery,
+    calculateFloatingMenuPlacement,
     reorderItemsWithinCategory,
     reorderValues,
   };
