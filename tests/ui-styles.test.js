@@ -42,6 +42,37 @@ function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
 }
 
+Deno.test("hides only BOQ quantity and margin number spinners on desktop and mobile", () => {
+  assertIncludes(
+    componentsCss,
+    '[data-item-input][data-field="qty"],\n[data-item-input][data-field="margin"] {\n  appearance: textfield;',
+    "numeric appearance must be scoped to BOQ quantity and gross margin",
+  );
+  const spinnerRule = componentsCss.match(
+    /\[data-item-input\]\[data-field="qty"\]::-webkit-inner-spin-button,[\s\S]*?\{([^}]+)\}/,
+  )?.[0] || "";
+  for (const field of ["qty", "margin"]) {
+    for (const spinner of ["inner", "outer"]) {
+      assertIncludes(
+        spinnerRule,
+        `[data-item-input][data-field="${field}"]::-webkit-${spinner}-spin-button`,
+        `WebKit ${field} ${spinner} spinner must be hidden`,
+      );
+    }
+    const inputs = [...boqSource.matchAll(/<input\b[^>]+>/g)]
+      .filter(([input]) => input.includes(`data-field="${field}"`));
+    if (inputs.length !== 2) throw new Error(`${field} must cover desktop and mobile inputs`);
+    for (const [input] of inputs) {
+      assertIncludes(input, 'type="number"', "native numeric input behavior must remain");
+      assertIncludes(input, 'min="0"', "numeric minimum must remain");
+      assertIncludes(input, field === "qty" ? 'step="0.01"' : 'step="0.1"', "numeric precision must remain");
+      if (field === "margin") assertIncludes(input, 'max="99.99"', "gross margin maximum must remain");
+    }
+  }
+  assertIncludes(spinnerRule, "-webkit-appearance: none;", "Chromium and Safari spinners must be hidden");
+  assertIncludes(spinnerRule, "margin: 0;", "hidden spinners must not leave spacing");
+});
+
 Deno.test("keeps desktop badges vertically centered", () => {
   assertIncludes(
     utilitiesCss,

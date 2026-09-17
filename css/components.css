@@ -1066,6 +1066,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+[data-item-input][data-field="qty"],
+[data-item-input][data-field="margin"] {
+  appearance: textfield;
+}
+
+[data-item-input][data-field="qty"]::-webkit-inner-spin-button,
+[data-item-input][data-field="qty"]::-webkit-outer-spin-button,
+[data-item-input][data-field="margin"]::-webkit-inner-spin-button,
+[data-item-input][data-field="margin"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .calculated-cell {
   color: var(--color-text);
   font-variant-numeric: tabular-nums;
