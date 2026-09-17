@@ -2098,6 +2098,40 @@
   margin-bottom: 7px;
 }
 
+.editor-page-header .page-header-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.editor-header-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.editor-header-customer,
+.editor-header-meta [data-save-state] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-header-customer {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.editor-header-meta [data-save-state] {
+  flex: 0 0 auto;
+  max-width: calc(100% - var(--space-2) * 2 - 1ch);
+}
+
+.editor-header-meta [data-editor-customer-separator] {
+  flex: 0 0 auto;
+}
+
 .item-col-index {
   width: var(--editor-sticky-index-width, 36px);
 }

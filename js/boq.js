@@ -229,7 +229,28 @@
     applyEditorMode();
   }
 
+  function updateEditorCustomer() {
+    const customerSelect = document.querySelector("#boq-customer");
+    const selectedCustomerName = customerSelect.value
+      ? customerSelect.selectedOptions[0]?.text || ""
+      : "";
+    const customerName = String(
+      isIssuedLocked()
+        ? currentRecord?.customerName || selectedCustomerName
+        : selectedCustomerName,
+    ).trim();
+    const customerNode = document.querySelector("[data-editor-customer]");
+    const separatorNode = document.querySelector(
+      "[data-editor-customer-separator]",
+    );
+    customerNode.textContent = customerName;
+    customerNode.title = customerName;
+    customerNode.hidden = !customerName;
+    separatorNode.hidden = !customerName;
+  }
+
   function updateEditorHeader() {
+    updateEditorCustomer();
     const projectName = document.querySelector("#boq-project").value.trim();
     const number = document.querySelector("#boq-number").value.trim();
     const selectedStatus = document.querySelector("#boq-status").value;
