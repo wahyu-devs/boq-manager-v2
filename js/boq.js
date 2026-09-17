@@ -44,6 +44,7 @@
   const desktopBody = editor.querySelector("[data-items-body]");
   const mobileList = editor.querySelector("[data-mobile-items]");
   const desktopTableWrap = editor.querySelector("[data-editor-table]");
+  const desktopTableViewport = editor.querySelector("[data-editor-viewport]");
   const currencySelect = document.querySelector("#boq-currency");
   const commissionInput = document.querySelector("[data-commission]");
   const commissionCurrency = document.querySelector(
@@ -776,6 +777,9 @@
         desktopTableWrap.offsetParent === null) {
       table?.classList.remove("sticky-columns-active");
       table?.style.removeProperty("--editor-sticky-boundary-width");
+      desktopTableViewport?.classList.remove("sticky-columns-active");
+      desktopTableViewport?.style.removeProperty("--editor-sticky-boundary-width");
+      desktopTableViewport?.style.removeProperty("--editor-table-viewport-height");
       return;
     }
     const precedingHeaders = [...unitHeader.parentElement.cells].slice(
@@ -794,6 +798,7 @@
     const isActive = desktopTableWrap.scrollLeft > 0 &&
       desktopTableWrap.scrollLeft >= activationPoint - 1;
     table.classList.toggle("sticky-columns-active", isActive);
+    desktopTableViewport?.classList.toggle("sticky-columns-active", isActive);
     if (isActive) {
       const boundaryWidth = unitHeader.getBoundingClientRect().right -
         desktopTableWrap.getBoundingClientRect().left;
@@ -801,8 +806,18 @@
         "--editor-sticky-boundary-width",
         `${boundaryWidth}px`,
       );
+      desktopTableViewport?.style.setProperty(
+        "--editor-sticky-boundary-width",
+        `${boundaryWidth}px`,
+      );
+      desktopTableViewport?.style.setProperty(
+        "--editor-table-viewport-height",
+        `${desktopTableWrap.clientHeight}px`,
+      );
     } else {
       table.style.removeProperty("--editor-sticky-boundary-width");
+      desktopTableViewport?.style.removeProperty("--editor-sticky-boundary-width");
+      desktopTableViewport?.style.removeProperty("--editor-table-viewport-height");
     }
   }
 
@@ -1986,9 +2001,14 @@
     passive: true,
   });
   globalThis.addEventListener("resize", updateStickyColumnsState);
+  if (desktopTableWrap && globalThis.ResizeObserver) {
+    const observer = new globalThis.ResizeObserver(updateStickyColumnsState);
+    observer.observe(desktopTableWrap);
+  }
   document.querySelector("[data-editor-view]")?.addEventListener("change", (event) => {
     currentView = event.target.value;
     applyViewState();
+    updateStickyColumnsState();
   });
   commissionInput?.addEventListener("input", () => {
     formatNumberInputElementLive(commissionInput);

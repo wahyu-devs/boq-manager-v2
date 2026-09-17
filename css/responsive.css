@@ -433,6 +433,10 @@
     display: none;
   }
 
+  .editor-table-viewport {
+    display: none;
+  }
+
   .mobile-item-list {
     display: block;
   }

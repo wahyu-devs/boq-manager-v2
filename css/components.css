@@ -929,6 +929,23 @@
   max-height: var(--editor-table-max-height, none);
 }
 
+.editor-table-viewport {
+  position: relative;
+  overflow: hidden;
+}
+
+.editor-table-viewport.sticky-columns-active::after {
+  position: absolute;
+  z-index: 7;
+  top: 0;
+  left: 0;
+  width: var(--editor-sticky-boundary-width);
+  height: var(--editor-table-viewport-height);
+  box-shadow: var(--shadow-sticky-column);
+  content: "";
+  pointer-events: none;
+}
+
 .editor-table {
   --editor-sticky-index-width: 36px;
   --editor-sticky-item-width: 300px;
@@ -989,20 +1006,6 @@
       var(--editor-sticky-qty-width)
   );
   background: var(--color-surface);
-}
-
-.editor-table.sticky-columns-active .editor-sticky-unit::after,
-.editor-table.sticky-columns-active .editor-category-sticky::after,
-.editor-table.sticky-columns-active .category-subtotal-sticky::after {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  box-shadow: var(--shadow-sticky-column);
-  content: "";
-  pointer-events: none;
 }
 
 .editor-table thead .editor-sticky-column {

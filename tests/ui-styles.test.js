@@ -474,14 +474,20 @@ Deno.test("keeps the original dark canvas with a darker sidebar", () => {
   }
 });
 
-Deno.test("uses subtle theme shadows at the horizontal sticky boundary", () => {
+Deno.test("uses one continuous theme shadow at the horizontal sticky boundary", () => {
   const boundaryRule = componentsCss.match(
-    /\.editor-table\.sticky-columns-active \.editor-sticky-unit::after,[\s\S]*?\{([^}]+)\}/,
+    /\.editor-table-viewport\.sticky-columns-active::after\s*\{([^}]+)\}/,
   )?.[1] || "";
   assertIncludes(boundaryRule, "left: 0;", "shadow surface follows the sticky region width");
-  assertIncludes(boundaryRule, "right: 0;", "shadow stays at the measured sticky edge");
+  assertIncludes(boundaryRule, "width: var(--editor-sticky-boundary-width);", "shadow stays at the measured sticky edge");
+  assertIncludes(boundaryRule, "height: var(--editor-table-viewport-height);", "one shadow covers the visible table height");
+  assertIncludes(boundaryRule, "z-index: 7;", "shadow spans both sticky header and body surfaces");
   assertIncludes(boundaryRule, "box-shadow: var(--shadow-sticky-column);", "uses a directional theme shadow");
   assertIncludes(boundaryRule, "pointer-events: none;", "shadow never blocks editing or drag handles");
+  assertIncludes(editorHtml, 'class="editor-table-viewport" data-editor-viewport', "table has a stationary overlay host");
+  if (/\.(?:editor-sticky-unit|editor-category-sticky|category-subtotal-sticky)::after/.test(componentsCss)) {
+    throw new Error("Per-row shadows must not remain alongside the continuous overlay");
+  }
   if (/background:|width:\s*1px|border(?:-right)?:/.test(boundaryRule)) {
     throw new Error("Sticky boundary must not retain the old solid divider");
   }
@@ -564,8 +570,8 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    ".editor-table.sticky-columns-active .category-subtotal-sticky::after",
-    "sticky subtotal boundaries must align with the final sticky column",
+    ".editor-table-viewport.sticky-columns-active::after",
+    "one measured shadow must span subtotal and item boundaries",
   );
   assertIncludes(
     componentsCss,
@@ -622,7 +628,7 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   );
   assertIncludes(
     componentsCss,
-    ".editor-table.sticky-columns-active .editor-sticky-unit::after",
+    ".editor-table-viewport.sticky-columns-active::after",
     "the final sticky column shadow must depend on the active sticky state",
   );
   assertIncludes(
