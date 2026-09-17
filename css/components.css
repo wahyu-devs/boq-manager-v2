@@ -999,8 +999,8 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 1px;
-  background: var(--color-border);
+  left: 0;
+  box-shadow: var(--shadow-sticky-column);
   content: "";
   pointer-events: none;
 }

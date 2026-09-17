@@ -474,6 +474,28 @@ Deno.test("keeps the original dark canvas with a darker sidebar", () => {
   }
 });
 
+Deno.test("uses subtle theme shadows at the horizontal sticky boundary", () => {
+  const boundaryRule = componentsCss.match(
+    /\.editor-table\.sticky-columns-active \.editor-sticky-unit::after,[\s\S]*?\{([^}]+)\}/,
+  )?.[1] || "";
+  assertIncludes(boundaryRule, "left: 0;", "shadow surface follows the sticky region width");
+  assertIncludes(boundaryRule, "right: 0;", "shadow stays at the measured sticky edge");
+  assertIncludes(boundaryRule, "box-shadow: var(--shadow-sticky-column);", "uses a directional theme shadow");
+  assertIncludes(boundaryRule, "pointer-events: none;", "shadow never blocks editing or drag handles");
+  if (/background:|width:\s*1px|border(?:-right)?:/.test(boundaryRule)) {
+    throw new Error("Sticky boundary must not retain the old solid divider");
+  }
+  const headerColors = [...variablesCss.matchAll(
+    /--shadow-sticky-header:\s*0 3px 6px -3px ([^;]+);/g,
+  )].map((match) => match[1]);
+  const columnColors = [...variablesCss.matchAll(
+    /--shadow-sticky-column:\s*3px 0 6px -3px ([^;]+);/g,
+  )].map((match) => match[1]);
+  if (columnColors.length !== 2 || JSON.stringify(columnColors) !== JSON.stringify(headerColors)) {
+    throw new Error("Column shadow must match the header shadow strength in both themes");
+  }
+});
+
 Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () => {
   assertIncludes(
     editorHtml,
@@ -601,12 +623,12 @@ Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () =
   assertIncludes(
     componentsCss,
     ".editor-table.sticky-columns-active .editor-sticky-unit::after",
-    "the final sticky column border must depend on the active sticky state",
+    "the final sticky column shadow must depend on the active sticky state",
   );
   assertIncludes(
     componentsCss,
-    "background: var(--color-border);",
-    "the active sticky boundary must match the table border color",
+    "box-shadow: var(--shadow-sticky-column);",
+    "the active sticky boundary must use the theme-aware column shadow",
   );
   assertIncludes(
     boqSource,
