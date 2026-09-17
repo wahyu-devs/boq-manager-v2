@@ -10,6 +10,23 @@
   if (!topbar || !header || !itemsHeader || !toolbar) return;
 
   let layoutFrame = null;
+  let stickyFrame = null;
+
+  function updateHeaderStickyState() {
+    const headerRect = header.getBoundingClientRect();
+    const topbarRect = topbar.getBoundingClientRect();
+    const isStuck = window.scrollY > 0 && headerRect.height > 0 &&
+      topbarRect.height > 0 && Math.abs(headerRect.top - topbarRect.bottom) <= 0.5;
+    header.classList.toggle("is-stuck", isStuck);
+  }
+
+  function scheduleHeaderStickyState() {
+    if (stickyFrame !== null) return;
+    stickyFrame = window.requestAnimationFrame(() => {
+      stickyFrame = null;
+      updateHeaderStickyState();
+    });
+  }
 
   function setLayoutProperty(name, value) {
     const formatted = `${value}px`;
@@ -23,10 +40,14 @@
     const topbarHeight = topbar.getBoundingClientRect().height;
     const headerHeight = header.getBoundingClientRect().height;
     // Hidden startup surfaces are measured again when they become visible.
-    if (!topbarHeight || !headerHeight) return;
+    if (!topbarHeight || !headerHeight) {
+      updateHeaderStickyState();
+      return;
+    }
 
     setLayoutProperty("--editor-topbar-height", topbarHeight);
     setLayoutProperty("--editor-header-height", headerHeight);
+    updateHeaderStickyState();
 
     if (window.innerWidth < 992) {
       editor.style.removeProperty("--editor-summary-max-height");
@@ -73,6 +94,8 @@
     );
   }
   window.addEventListener("resize", scheduleEditorLayout, { passive: true });
+  window.addEventListener("scroll", scheduleHeaderStickyState, { passive: true });
+  window.addEventListener("pageshow", scheduleEditorLayout);
   window.visualViewport?.addEventListener("resize", scheduleEditorLayout, {
     passive: true,
   });

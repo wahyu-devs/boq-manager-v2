@@ -320,6 +320,10 @@
   background: var(--color-bg);
 }
 
+.editor-page-header.is-stuck {
+  box-shadow: var(--shadow-sticky-header);
+}
+
 .editor-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;

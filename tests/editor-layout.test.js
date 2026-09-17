@@ -4,6 +4,9 @@ const source = await Deno.readTextFile(
 const layoutCss = await Deno.readTextFile(
   new URL("../css/layout.css", import.meta.url),
 );
+const variablesCss = await Deno.readTextFile(
+  new URL("../css/variables.css", import.meta.url),
+);
 const componentsCss = await Deno.readTextFile(
   new URL("../css/components.css", import.meta.url),
 );
@@ -28,12 +31,20 @@ function createLayout({ width = 1440, height = 900, viewportHeight } = {}) {
   const viewportEvents = new Map();
   const observed = [];
   let resizeObserverCallback;
-  const topbar = { height: 56 };
-  const header = { height: 104 };
+  const topbar = { height: 56, top: 0 };
+  const header = { height: 104, top: 84 };
+  const headerClasses = new Set();
+  header.classList = {
+    toggle: (name, enabled) => enabled ? headerClasses.add(name) : headerClasses.delete(name),
+    contains: (name) => headerClasses.has(name),
+  };
   const itemsHeader = { height: 64 };
   const toolbar = { height: 96 };
   for (const element of [topbar, header, itemsHeader, toolbar]) {
-    element.getBoundingClientRect = () => ({ height: element.height });
+    element.getBoundingClientRect = () => ({
+      height: element.height, top: element.top || 0,
+      bottom: (element.top || 0) + element.height,
+    });
   }
   const itemsPanel = {
     querySelector: (selector) => selector === ".panel-header" ? itemsHeader : toolbar,
@@ -60,6 +71,7 @@ function createLayout({ width = 1440, height = 900, viewportHeight } = {}) {
   const window = {
     innerWidth: width,
     innerHeight: height,
+    scrollY: 0,
     requestAnimationFrame: (callback) => { frames.push(callback); return frames.length; },
     addEventListener: (name, callback) => windowEvents.set(name, callback),
     visualViewport: {
@@ -147,6 +159,53 @@ Deno.test("handles changing visual viewport and hidden startup surfaces safely",
   equal(layout.properties.get("--editor-table-max-height"), "0px", "short viewports never produce negative height");
 });
 
+Deno.test("shows a header shadow only when the page reaches its sticky boundary", () => {
+  const layout = createLayout();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), false, "initial header has no shadow");
+  layout.window.scrollY = 14;
+  layout.header.top = 70;
+  layout.windowEvents.get("scroll")();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), false, "scrolling before sticky boundary has no shadow");
+  layout.window.scrollY = 28;
+  layout.header.top = 56;
+  layout.windowEvents.get("scroll")();
+  layout.windowEvents.get("scroll")();
+  equal(layout.frames.length, 1, "scroll checks are batched");
+  const before = JSON.stringify([...layout.properties]);
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), true, "shadow appears at the actual sticky boundary");
+  equal(JSON.stringify([...layout.properties]), before, "scrolling does not recalculate table layout");
+  layout.header.top = 50;
+  layout.windowEvents.get("scroll")();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), false, "released header does not retain shadow");
+  layout.window.scrollY = 0;
+  layout.header.top = 84;
+  layout.windowEvents.get("scroll")();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), false, "returning to top removes shadow");
+});
+
+Deno.test("refreshes the sticky indicator for restored pages and responsive topbars", () => {
+  const layout = createLayout({ width: 390 });
+  layout.window.scrollY = 200;
+  layout.topbar.height = 54;
+  layout.header.top = 54;
+  layout.windowEvents.get("pageshow")();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), true, "restored mobile scroll activates shadow");
+  layout.header.height = 0;
+  layout.resize();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), false, "hidden header clears indicator");
+  layout.header.height = 104;
+  layout.documentEvents.get("boq:auth-ready")();
+  layout.flush();
+  equal(layout.header.classList.contains("is-stuck"), true, "revealed header restores indicator");
+});
+
 Deno.test("editor layout is page-scoped and preserves existing sticky/mobile layers", () => {
   new Function("window", "document", source)({}, { querySelector: () => null });
   for (const expected of [
@@ -158,7 +217,9 @@ Deno.test("editor layout is page-scoped and preserves existing sticky/mobile lay
   }
   const headerRule = layoutCss.match(/\.editor-page-header\s*\{([^}]+)\}/)?.[1] || "";
   equal(/border(?:-bottom)?:/.test(headerRule), false, "header has no divider");
-  equal(/box-shadow:/.test(headerRule), false, "header has no decorative shadow");
+  equal(/box-shadow:/.test(headerRule), false, "initial header has no shadow");
+  equal(layoutCss.includes(".editor-page-header.is-stuck {\n  box-shadow: var(--shadow-sticky-header);"), true, "shadow is scoped to the stuck header");
+  equal((variablesCss.match(/--shadow-sticky-header:/g) || []).length, 2, "both themes define a subtle sticky shadow");
   equal(headerRule.includes("padding-block: var(--space-2) var(--space-3);"), true, "header spacing is preserved");
   equal(componentsCss.includes("max-height: calc(100vh - 238px)"), false, "removes fixed table budget");
   equal(componentsCss.includes("max-height: var(--editor-table-max-height, none);"), true, "uses measured maximum height");
