@@ -926,7 +926,7 @@
 }
 
 .editor-table-wrap {
-  max-height: calc(100vh - 238px);
+  max-height: var(--editor-table-max-height, none);
 }
 
 .editor-table {

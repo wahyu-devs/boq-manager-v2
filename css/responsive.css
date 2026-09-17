@@ -221,6 +221,8 @@
   .editor-summary {
     position: static;
     grid-row: 1;
+    max-height: none;
+    overflow: visible;
   }
 
   .summary-card {

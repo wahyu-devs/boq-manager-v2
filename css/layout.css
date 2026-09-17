@@ -306,6 +306,21 @@
   flex: 1;
 }
 
+[data-boq-editor] {
+  --editor-topbar-height: var(--header-height);
+  --editor-header-height: 0px;
+  --editor-sticky-gap: 18px;
+}
+
+.editor-page-header {
+  position: sticky;
+  z-index: 30;
+  top: var(--editor-topbar-height);
+  padding-block: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
 .editor-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
@@ -319,7 +334,13 @@
 
 .editor-summary {
   position: sticky;
-  top: calc(var(--header-height) + 18px);
+  top: calc(
+    var(--editor-topbar-height) + var(--editor-header-height) +
+      var(--editor-sticky-gap)
+  );
+  max-height: var(--editor-summary-max-height, none);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .settings-layout {
