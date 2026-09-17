@@ -156,6 +156,10 @@ Deno.test("editor layout is page-scoped and preserves existing sticky/mobile lay
   ]) {
     if (!layoutCss.includes(expected)) throw new Error(`Missing sticky layout rule: ${expected}`);
   }
+  const headerRule = layoutCss.match(/\.editor-page-header\s*\{([^}]+)\}/)?.[1] || "";
+  equal(/border(?:-bottom)?:/.test(headerRule), false, "header has no divider");
+  equal(/box-shadow:/.test(headerRule), false, "header has no decorative shadow");
+  equal(headerRule.includes("padding-block: var(--space-2) var(--space-3);"), true, "header spacing is preserved");
   equal(componentsCss.includes("max-height: calc(100vh - 238px)"), false, "removes fixed table budget");
   equal(componentsCss.includes("max-height: var(--editor-table-max-height, none);"), true, "uses measured maximum height");
   equal(componentsCss.includes(".editor-table thead {\n  position: sticky;"), true, "keeps internal table header");
