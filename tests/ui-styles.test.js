@@ -533,6 +533,32 @@ Deno.test("uses one continuous theme shadow at the horizontal sticky boundary", 
   }
 });
 
+Deno.test("draws one continuous category reorder indicator above sticky surfaces", () => {
+  const categoryIndicator = componentsCss.match(
+    /\.editor-table \.editor-category-row\.drop-before td::after,[\s\S]*?\{([^}]+)\}/,
+  )?.[1] || "";
+  assertIncludes(categoryIndicator, "position: absolute;", "category indicator must use one overlay");
+  assertIncludes(categoryIndicator, "z-index: 7;", "category indicator must remain above its sticky label");
+  assertIncludes(categoryIndicator, "right: 0;\n  left: 0;", "category indicator must span the full colspan cell");
+  assertIncludes(categoryIndicator, "height: 2px;", "category indicator must retain the existing thickness");
+  assertIncludes(categoryIndicator, "background: var(--color-primary);", "category indicator must retain the primary color");
+  assertIncludes(
+    componentsCss,
+    ".editor-table .editor-category-row.drop-before td,\n.editor-table .editor-category-row.drop-after td {\n  position: relative;\n  box-shadow: none;",
+    "segmented cell shadows must be removed from category targets",
+  );
+  assertIncludes(
+    componentsCss,
+    ".editor-table .editor-category-row.drop-before td::after {\n  top: 0;",
+    "before indicator must align with the category top edge",
+  );
+  assertIncludes(
+    componentsCss,
+    ".editor-table .editor-category-row.drop-after td::after {\n  bottom: 0;",
+    "after indicator must align with the category bottom edge",
+  );
+});
+
 Deno.test("keeps key BOQ item columns visible during horizontal scrolling", () => {
   assertIncludes(
     editorHtml,
