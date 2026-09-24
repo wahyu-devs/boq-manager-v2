@@ -947,6 +947,18 @@
     return material;
   }
 
+  function focusDesktopSupportingField(id, field = "item") {
+    requestAnimationFrame(() => {
+      const input = supportingPanel.querySelector(
+        `.supporting-materials-table [data-supporting-input]` +
+          `[data-supporting-id="${CSS.escape(id)}"]` +
+          `[data-field="${CSS.escape(field)}"]`,
+      );
+      input?.focus();
+      input?.select?.();
+    });
+  }
+
   function duplicateSupportingMaterial(id) {
     if (!canEditSupportingMaterials()) return;
     const index = supportingMaterials.findIndex((material) =>
@@ -1963,13 +1975,30 @@
 
   editor.addEventListener("keydown", (event) => {
     const handle = event.target.closest("[data-supporting-drag-handle]");
-    if (!handle || !supportingReorderMode ||
-        !["ArrowUp", "ArrowDown"].includes(event.key)) return;
-    event.preventDefault();
-    moveSupportingMaterial(
-      handle.dataset.supportingId,
-      event.key === "ArrowUp" ? -1 : 1,
+    if (handle && supportingReorderMode &&
+        ["ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      moveSupportingMaterial(
+        handle.dataset.supportingId,
+        event.key === "ArrowUp" ? -1 : 1,
+      );
+      return;
+    }
+    const input = event.target.closest(
+      ".supporting-materials-table input[data-supporting-input]",
     );
+    if (!input || event.key !== "Enter" || !canEditSupportingMaterials() ||
+        event.repeat || event.isComposing || event.ctrlKey || event.metaKey ||
+        event.altKey || event.shiftKey) return;
+    event.preventDefault();
+    const currentMaterial = supportingMaterials.find((material) =>
+      material.id === input.dataset.supportingId
+    );
+    if (currentMaterial && input.dataset.field === "item") {
+      applySupportingCatalogMatch(currentMaterial);
+    }
+    const addedMaterial = addSupportingMaterial();
+    if (addedMaterial) focusDesktopSupportingField(addedMaterial.id);
   });
 
   editor.addEventListener("wheel", redirectItemInputHorizontalScroll, {

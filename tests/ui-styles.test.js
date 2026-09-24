@@ -830,6 +830,24 @@ Deno.test("adds a custom BOQ item with Enter while editing", () => {
   );
 });
 
+Deno.test("adds a custom Supporting Material with Enter while editing", () => {
+  assertIncludes(
+    boqSource,
+    '".supporting-materials-table input[data-supporting-input]",',
+    "Supporting Materials must limit the Enter shortcut to desktop text inputs",
+  );
+  assertIncludes(
+    boqSource,
+    "const addedMaterial = addSupportingMaterial();",
+    "Enter must create a new custom Supporting Material",
+  );
+  assertIncludes(
+    boqSource,
+    "if (addedMaterial) focusDesktopSupportingField(addedMaterial.id);",
+    "focus must move to the new Supporting Material's Item field",
+  );
+});
+
 Deno.test("collapses hidden BOQ pricing columns without an empty scroll area", () => {
   assertIncludes(
     editorHtml,
