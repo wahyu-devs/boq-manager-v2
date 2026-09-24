@@ -1368,6 +1368,160 @@ Deno.test("marks valid drafts as issued exactly once", () => {
   );
 });
 
+Deno.test("keeps supporting materials separate and revision-specific", () => {
+  const store = window.BOQStore;
+  store.setUser("supporting-material-user");
+  const initialMaterials = [{
+    id: "support-cable-tie",
+    sku: "CT-200",
+    item: "Cable tie 200 mm",
+    qty: 20,
+    unit: "pcs",
+    notes: "Black",
+  }];
+  const draft = store.saveBoqDraft({
+    id: "supporting-boq",
+    number: "BOQ-260901",
+    projectName: "Supporting Materials Project",
+    status: "Draft",
+    date: "2026-09-24",
+    items: [{
+      id: "main-item",
+      item: "Network outlet",
+      qty: 1,
+      unit: "Each",
+      unitCogs: 100,
+      margin: 20,
+    }],
+    purchasing: store.purchasingWithDraft(null, initialMaterials, 0),
+  });
+  equal(
+    store.purchasingItemsFor(draft)[0].item,
+    "Cable tie 200 mm",
+    "the initial BOQ draft must retain supporting materials",
+  );
+
+  const issuedR00 = store.issueBoq(draft);
+  equal(issuedR00.purchasing.draft, null, "issuing must clear purchasing draft");
+  equal(
+    store.purchasingItemsFor(issuedR00, 0)[0].qty,
+    20,
+    "R00 must receive the draft purchasing list",
+  );
+  equal(
+    "purchasing" in issuedR00.revisions[0].document,
+    false,
+    "customer revision document must exclude internal purchasing data",
+  );
+
+  const originalUpdatedAt = issuedR00.updatedAt;
+  const adjustedR00 = store.savePurchasingMaterials("supporting-boq", [{
+    ...initialMaterials[0],
+    qty: 25,
+  }]);
+  equal(
+    adjustedR00.updatedAt,
+    originalUpdatedAt,
+    "internal purchasing edits must preserve BOQ Updated date",
+  );
+  equal(
+    store.purchasingItemsFor(adjustedR00, 0)[0].qty,
+    25,
+    "issued purchasing list must remain independently editable",
+  );
+
+  const preparedR01 = store.prepareRevisionDraft("supporting-boq", 0);
+  equal(preparedR01.workingRevision, 1, "next revision draft must be R01");
+  equal(
+    store.purchasingItemsFor(preparedR01)[0].qty,
+    25,
+    "new revision must copy the selected revision purchasing list",
+  );
+  const savedR01 = store.saveBoqDraft({
+    ...preparedR01,
+    purchasing: store.purchasingWithDraft(preparedR01, [
+      { ...initialMaterials[0], qty: 30 },
+      {
+        id: "support-label",
+        sku: "",
+        item: "Cable label",
+        qty: 10,
+        unit: "pcs",
+        notes: "Numbered",
+      },
+    ], 1),
+  });
+  const issuedR01 = store.issueBoq(savedR01);
+  equal(
+    store.purchasingItemsFor(issuedR01, 1).length,
+    2,
+    "R01 must retain its own purchasing list",
+  );
+  equal(
+    store.purchasingItemsFor(issuedR01, 0)[0].qty,
+    25,
+    "R00 purchasing history must remain unchanged",
+  );
+
+  const voidedR01 = store.voidLatestRevision(
+    "supporting-boq",
+    "Customer withdrew the revision",
+  );
+  equal(voidedR01.activeRevisionNumber, 0, "void must reactivate R00");
+  equal(
+    store.purchasingItemsFor(voidedR01)[0].qty,
+    25,
+    "active purchasing data must follow the reactivated revision",
+  );
+  equal(
+    store.purchasingItemsFor(voidedR01, 1).length,
+    2,
+    "voided revision purchasing history must be retained",
+  );
+  equal(
+    store.savePurchasingMaterials("supporting-boq", [{
+      item: "Invalid material",
+      qty: 0,
+      unit: "",
+    }]),
+    null,
+    "invalid supporting materials must not be persisted",
+  );
+
+  const invalidDraft = store.saveBoqDraft({
+    id: "invalid-supporting-issue",
+    number: "BOQ-260902",
+    projectName: "Invalid Supporting Material",
+    status: "Draft",
+    date: "2026-09-24",
+    items: [{
+      id: "valid-main-item",
+      item: "Main item",
+      qty: 1,
+      unit: "Each",
+      unitCogs: 100,
+      margin: 20,
+    }],
+    purchasing: store.purchasingWithDraft(null, [{
+      id: "invalid-support-item",
+      item: "",
+      qty: 0,
+      unit: "",
+    }], 0),
+  });
+  let invalidIssueRejected = false;
+  try {
+    store.issueBoq(invalidDraft);
+  } catch (error) {
+    invalidIssueRejected = error.message.includes("supporting material");
+  }
+  equal(
+    invalidIssueRejected,
+    true,
+    "issuing must reject an invalid internal purchasing list",
+  );
+});
+
 Deno.test("marks an issued BOQ as won without changing its revision", () => {
   const store = window.BOQStore;
   store.setUser("mark-won-user");

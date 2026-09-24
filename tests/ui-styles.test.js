@@ -60,7 +60,10 @@ Deno.test("hides only BOQ quantity and margin number spinners on desktop and mob
       );
     }
     const inputs = [...boqSource.matchAll(/<input\b[^>]+>/g)]
-      .filter(([input]) => input.includes(`data-field="${field}"`));
+      .filter(([input]) =>
+        input.includes("data-item-input") &&
+        input.includes(`data-field="${field}"`)
+      );
     if (inputs.length !== 2) throw new Error(`${field} must cover desktop and mobile inputs`);
     for (const [input] of inputs) {
       assertIncludes(input, 'type="number"', "native numeric input behavior must remain");

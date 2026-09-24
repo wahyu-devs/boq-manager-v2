@@ -142,6 +142,42 @@ Deno.test("deduplicates repeated item names within the same BOQ", () => {
   equal(entries[0].unitCogs, 100, "the first matching item must be used");
 });
 
+Deno.test("includes revision-specific Supporting Material usage", () => {
+  const entries = window.BOQProductUsage.build("Cable Tie", [{
+    id: "boq-supporting",
+    number: "BOQ-260905",
+    projectName: "Internal Materials",
+    customerName: "Example Customer",
+    status: "Issued",
+    activeRevisionNumber: 1,
+    updatedAt: "2026-09-05T08:00:00.000Z",
+    revisions: [{ number: 1, state: "Issued", calculation: { rounding: "2" } }],
+    items: [{ item: "Network Rack", qty: 1, unitCogs: 100, margin: 20 }],
+    purchasing: {
+      draft: null,
+      revisions: [{
+        revisionNumber: 1,
+        updatedAt: "2026-09-06T09:00:00.000Z",
+        items: [{ item: "cable tie", qty: 25, unit: "Pack" }],
+      }],
+    },
+  }], {
+    registerBoqView,
+    latestIssuedRevision,
+    calculateItem: window.BOQCalculations.calculateItem,
+  });
+
+  equal(entries.length, 1, "supporting-only usage must be returned");
+  equal(entries[0].usageType, "Supporting Material", "usage source must be clear");
+  equal(entries[0].quantity, 25, "supporting quantities must be reported");
+  equal(entries[0].unitCogs, null, "internal supporting usage has no BOQ price");
+  equal(
+    entries[0].updatedAt,
+    "2026-09-06T09:00:00.000Z",
+    "internal material changes must control usage recency",
+  );
+});
+
 Deno.test("wires Product Usage History into the catalog UI", async () => {
   const productsHtml = await Deno.readTextFile(
     new URL("../products.html", import.meta.url),
@@ -177,9 +213,13 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   const statusHeader = productsHtml.indexOf(
     'data-product-usage-sort="status"',
   );
+  const usageHeader = productsHtml.indexOf(
+    'data-product-usage-sort="usageType"',
+    statusHeader,
+  );
   const poHeader = productsHtml.indexOf(
     'data-product-usage-sort="customerPoNumber"',
-    statusHeader,
+    usageHeader,
   );
   const valueHeader = productsHtml.indexOf(
     'data-product-usage-sort="boqValue"',
@@ -190,13 +230,13 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     valueHeader,
   );
   assert(
-    statusHeader >= 0 && poHeader > statusHeader && valueHeader > poHeader &&
-      quantityHeader > valueHeader,
-    "Customer PO, BOQ Value, and Qty must follow Status in order",
+    statusHeader >= 0 && usageHeader > statusHeader && poHeader > usageHeader &&
+      valueHeader > poHeader && quantityHeader > valueHeader,
+    "Usage, Customer PO, BOQ Value, and Qty must follow Status in order",
   );
   equal(
     productsHtml.split("data-product-usage-sort=").length - 1,
-    11,
+    12,
     "every Product Usage data header must support sorting",
   );
   [
@@ -204,6 +244,7 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
     "projectName",
     "customerName",
     "status",
+    "usageType",
     "customerPoNumber",
     "boqValue",
     "quantity",
@@ -224,8 +265,9 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   );
   assert(
     usageViewSource.includes("<dt>Qty</dt>") &&
-      usageViewSource.includes("formatNumberInput(entry.quantity)"),
-    "Qty must be rendered in desktop rows and mobile usage cards",
+      usageViewSource.includes("formatNumberInput(entry.quantity)") &&
+      usageViewSource.includes("<dt>Usage</dt>"),
+    "Qty and usage source must be rendered in desktop rows and mobile cards",
   );
   assert(
     recordsSource.includes('data-record-action="usage"') &&

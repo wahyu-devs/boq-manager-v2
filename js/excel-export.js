@@ -75,15 +75,33 @@
   }
 
   function purchasingExportData(data) {
-    const items = (data.items || []).filter((item) =>
+    const supportingCategory = "Supporting Materials";
+    const supportingKey = normalizeCategory(supportingCategory);
+    const regularItems = (data.items || []).filter((item) =>
       normalizeCategory(itemCategory(item)) !== "services"
     );
+    const supportingItems = [
+      ...regularItems.filter((item) =>
+        normalizeCategory(itemCategory(item)) === supportingKey
+      ),
+      ...(data.supportingMaterials || []).map((item) => ({
+        ...item,
+        category: supportingCategory,
+      })),
+    ];
+    const items = [
+      ...regularItems.filter((item) =>
+        normalizeCategory(itemCategory(item)) !== supportingKey
+      ),
+      ...supportingItems,
+    ];
     const categories = (data.categories || []).filter((category) =>
-      normalizeCategory(category) !== "services" &&
+      !["services", supportingKey].includes(normalizeCategory(category)) &&
       items.some((item) =>
         normalizeCategory(itemCategory(item)) === normalizeCategory(category)
       )
     );
+    if (supportingItems.length) categories.push(supportingCategory);
     return { items, categories };
   }
 
@@ -1247,7 +1265,7 @@
           "",
           Number(item.qty || 0),
           item.unit || "",
-          "",
+          item.notes || "",
         ];
         values.forEach((value, index) => {
           setCell(sheet.getCell(rowNumber, index + 1), value, {
@@ -1265,6 +1283,7 @@
           { value: item.sku, width: 20 },
           { value: item.item, width: 52 },
           { value: item.unit, width: 12 },
+          { value: item.notes, width: 34 },
         ]);
       });
     });

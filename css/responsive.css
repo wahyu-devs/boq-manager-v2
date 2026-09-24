@@ -464,6 +464,40 @@
     grid-column: 1 / -1;
   }
 
+  .supporting-materials-panel .panel-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .supporting-materials-panel [data-supporting-save-state] {
+    max-width: 100%;
+  }
+
+  .supporting-materials-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .supporting-materials-toolbar .toolbar-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+  }
+
+  .supporting-materials-toolbar .button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .supporting-optional-label {
+    display: none;
+  }
+
+  .supporting-materials-toolbar [data-save-supporting] {
+    grid-column: 1 / -1;
+  }
+
   .summary-card {
     display: block;
   }
@@ -758,6 +792,10 @@
   .col-8,
   .col-12 {
     grid-column: 1;
+  }
+
+  .supporting-materials-mobile-list .col-12 {
+    grid-column: 1 / -1;
   }
 
   .record-card-grid {

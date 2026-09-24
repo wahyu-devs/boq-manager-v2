@@ -21,6 +21,18 @@
     }</span>`;
   }
 
+  function optionalCurrencyMarkup(value, currency) {
+    return value === null || value === undefined
+      ? '<span class="muted">—</span>'
+      : formatCurrencyMarkup(value, currency);
+  }
+
+  function optionalPercent(value) {
+    return value === null || value === undefined
+      ? '<span class="muted">—</span>'
+      : formatPercent(value);
+  }
+
   function ensureModal() {
     const existing = document.getElementById("product-usage-modal");
     if (existing) return existing;
@@ -48,6 +60,7 @@
                   <th><button class="sort-button" type="button" data-product-usage-sort="projectName">Project</button></th>
                   <th><button class="sort-button" type="button" data-product-usage-sort="customerName">Customer</button></th>
                   <th><button class="sort-button" type="button" data-product-usage-sort="status">Status</button></th>
+                  <th><button class="sort-button" type="button" data-product-usage-sort="usageType">Usage</button></th>
                   <th><button class="sort-button" type="button" data-product-usage-sort="customerPoNumber">Customer PO</button></th>
                   <th class="align-right"><button class="sort-button" type="button" data-product-usage-sort="boqValue">BOQ Value</button></th>
                   <th class="align-right"><button class="sort-button" type="button" data-product-usage-sort="quantity">Qty</button></th>
@@ -107,6 +120,7 @@
           entry.projectName,
           entry.customerName,
           entry.status,
+          entry.usageType,
           entry.customerPoNumber,
           entry.boqValue,
           entry.quantity,
@@ -179,17 +193,19 @@
         }</td><td>${escapeHtml(entry.projectName || "—")}</td><td>${
           escapeHtml(entry.customerName || "—")
         }</td><td>${statusHtml(entry.status)}</td><td>${
+          escapeHtml(entry.usageType || "BOQ Item")
+        }</td><td>${
           escapeHtml(entry.customerPoNumber || "")
         }</td><td class="align-right currency">${
           formatCurrencyMarkup(entry.boqValue, entry.currency)
         }</td><td class="align-right number">${
           formatNumberInput(entry.quantity)
         }</td><td class="align-right currency">${
-          formatCurrencyMarkup(entry.unitCogs, entry.currency)
+          optionalCurrencyMarkup(entry.unitCogs, entry.currency)
         }</td><td class="align-right number">${
-          formatPercent(entry.margin)
+          optionalPercent(entry.margin)
         }</td><td class="align-right currency">${
-          formatCurrencyMarkup(entry.unitSelling, entry.currency)
+          optionalCurrencyMarkup(entry.unitSelling, entry.currency)
         }${
           entry.manualSelling
             ? '<span class="cell-secondary">Manual</span>'
@@ -216,18 +232,20 @@
           escapeHtml(entry.projectName || "No project")
         }</strong><span>${
           escapeHtml(entry.customerName || "No customer")
-        }</span></div><dl class="record-card-grid"><div><dt>Customer PO</dt><dd>${
+        }</span></div><dl class="record-card-grid"><div><dt>Usage</dt><dd>${
+          escapeHtml(entry.usageType || "BOQ Item")
+        }</dd></div><div><dt>Customer PO</dt><dd>${
           escapeHtml(entry.customerPoNumber || "—")
         }</dd></div><div><dt>BOQ Value</dt><dd>${
           formatCurrencyMarkup(entry.boqValue, entry.currency)
         }</dd></div><div><dt>Qty</dt><dd class="number">${
           formatNumberInput(entry.quantity)
         }</dd></div><div><dt>Unit COGS</dt><dd>${
-          formatCurrencyMarkup(entry.unitCogs, entry.currency)
+          optionalCurrencyMarkup(entry.unitCogs, entry.currency)
         }</dd></div><div><dt>Margin</dt><dd>${
-          formatPercent(entry.margin)
+          optionalPercent(entry.margin)
         }</dd></div><div><dt>Unit Selling</dt><dd>${
-          formatCurrencyMarkup(entry.unitSelling, entry.currency)
+          optionalCurrencyMarkup(entry.unitSelling, entry.currency)
         }${
           entry.manualSelling
             ? '<span class="cell-secondary">Manual</span>'

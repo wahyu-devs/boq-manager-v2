@@ -201,6 +201,143 @@
     ) + 1;
   }
 
+  function normalizeSupportingMaterial(item = {}) {
+    const quantity = Number(item.qty);
+    return {
+      id: String(item.id || createId()),
+      sku: String(item.sku || "").trim(),
+      item: String(item.item || "").trim(),
+      qty: Number.isFinite(quantity) ? Math.max(0, quantity) : 0,
+      unit: String(item.unit || "").trim(),
+      notes: String(item.notes || "").trim(),
+    };
+  }
+
+  function normalizePurchasingEntry(entry, fallbackNumber = 0) {
+    const revisionNumber = Math.max(
+      0,
+      Number(entry?.revisionNumber ?? fallbackNumber) || 0,
+    );
+    return {
+      revisionNumber,
+      items: Array.isArray(entry?.items)
+        ? entry.items.map(normalizeSupportingMaterial)
+        : [],
+      updatedAt: isoTimestamp(entry?.updatedAt),
+    };
+  }
+
+  function normalizePurchasing(value = {}) {
+    const revisionMap = new Map();
+    (Array.isArray(value?.revisions) ? value.revisions : [])
+      .forEach((entry, index) => {
+        const normalized = normalizePurchasingEntry(entry, index);
+        revisionMap.set(normalized.revisionNumber, normalized);
+      });
+    return {
+      draft: value?.draft
+        ? normalizePurchasingEntry(value.draft)
+        : null,
+      revisions: [...revisionMap.values()].sort((left, right) =>
+        left.revisionNumber - right.revisionNumber
+      ),
+    };
+  }
+
+  function purchasingItemsFor(recordOrId, revisionNumber) {
+    const record = typeof recordOrId === "string"
+      ? get("boqs", recordOrId)
+      : normalizeBoq(recordOrId || {});
+    if (!record) return [];
+    const purchasing = normalizePurchasing(record.purchasing);
+    const requestedNumber = revisionNumber === undefined ||
+        revisionNumber === null || revisionNumber === ""
+      ? record.workingRevision ?? record.activeRevisionNumber ??
+        purchasing.draft?.revisionNumber
+      : Math.max(0, Number(revisionNumber) || 0);
+    if (purchasing.draft?.revisionNumber === requestedNumber) {
+      return cloneValue(purchasing.draft.items);
+    }
+    return cloneValue(
+      purchasing.revisions.find((entry) =>
+        entry.revisionNumber === requestedNumber
+      )?.items || [],
+    );
+  }
+
+  function purchasingWithDraft(record, items, revisionNumber) {
+    const purchasing = normalizePurchasing(record?.purchasing);
+    const targetNumber = revisionNumber === undefined ||
+        revisionNumber === null || revisionNumber === ""
+      ? record?.workingRevision ?? nextRevisionNumber(record)
+      : Math.max(0, Number(revisionNumber) || 0);
+    return {
+      ...purchasing,
+      draft: normalizePurchasingEntry({
+        revisionNumber: targetNumber,
+        items,
+        updatedAt: new Date().toISOString(),
+      }),
+    };
+  }
+
+  function purchasingWithoutDraft(record) {
+    const purchasing = normalizePurchasing(record?.purchasing);
+    return { ...purchasing, draft: null };
+  }
+
+  function upsertPurchasingRevision(purchasingValue, revisionNumber, items) {
+    const purchasing = normalizePurchasing(purchasingValue);
+    const entry = normalizePurchasingEntry({
+      revisionNumber,
+      items,
+      updatedAt: new Date().toISOString(),
+    });
+    return {
+      draft: null,
+      revisions: [
+        ...purchasing.revisions.filter((candidate) =>
+          candidate.revisionNumber !== entry.revisionNumber
+        ),
+        entry,
+      ].sort((left, right) => left.revisionNumber - right.revisionNumber),
+    };
+  }
+
+  function validateSupportingMaterials(items) {
+    const errors = [];
+    (Array.isArray(items) ? items : []).forEach((item, index) => {
+      const itemNumber = index + 1;
+      const itemId = String(item?.id || "");
+      if (!String(item?.item || "").trim()) {
+        errors.push({
+          field: "item",
+          itemId,
+          message: `Enter a name for supporting material ${itemNumber}.`,
+        });
+      }
+      if (!(Number(item?.qty) > 0)) {
+        errors.push({
+          field: "qty",
+          itemId,
+          message: `Quantity for supporting material ${itemNumber} must be greater than zero.`,
+        });
+      }
+      if (!String(item?.unit || "").trim()) {
+        errors.push({
+          field: "unit",
+          itemId,
+          message: `Select a unit for supporting material ${itemNumber}.`,
+        });
+      }
+    });
+    return {
+      valid: errors.length === 0,
+      errors,
+      message: errors[0]?.message || "",
+    };
+  }
+
   function normalizeBoq(record, legacyProjects = [], timestampFallbacks = {}) {
     const {
       title: legacyTitle,
@@ -251,6 +388,7 @@
       categoryOrder: Array.isArray(value.categoryOrder)
         ? value.categoryOrder
         : [],
+      purchasing: normalizePurchasing(value.purchasing),
       revisions,
       activeRevisionNumber: activeRevision?.number ?? null,
       workingRevision,
@@ -488,6 +626,16 @@
         numberFormat: metadata.numberFormat || "comma",
       },
     });
+    const purchasing = normalizePurchasing(
+      record?.purchasing || existing?.purchasing,
+    );
+    const purchasingItems = purchasing.draft?.revisionNumber === number
+      ? purchasing.draft.items
+      : purchasingItemsFor(existing || record, number);
+    const purchasingValidation = validateSupportingMaterials(purchasingItems);
+    if (!purchasingValidation.valid) {
+      throw new Error(purchasingValidation.message);
+    }
     return save("boqs", {
       ...existing,
       ...documentValue,
@@ -498,6 +646,11 @@
       workingRevision: null,
       draftBaseRevisionNumber: null,
       hasDraftChanges: false,
+      purchasing: upsertPurchasingRevision(
+        purchasing,
+        number,
+        purchasingItems,
+      ),
       issuedAt,
       wonAt: undefined,
       customerPoNumber: undefined,
@@ -597,6 +750,7 @@
       return null;
     }
     if (!sourceRevision || !isIssuedRevision(sourceRevision)) return null;
+    const workingRevision = nextRevisionNumber(record);
     return normalizeBoq({
       ...record,
       ...cloneValue(sourceRevision.document),
@@ -604,9 +758,14 @@
       status: "Issued",
       revisions: record.revisions,
       activeRevisionNumber: activeRevision.number,
-      workingRevision: nextRevisionNumber(record),
+      workingRevision,
       draftBaseRevisionNumber: sourceRevision.number,
       hasDraftChanges: true,
+      purchasing: purchasingWithDraft(
+        record,
+        purchasingItemsFor(record, sourceRevision.number),
+        workingRevision,
+      ),
       ...documentDatesFrom(currentDate),
       createdAt: record.createdAt,
     });
@@ -638,6 +797,7 @@
         workingRevision: null,
         draftBaseRevisionNumber: null,
         hasDraftChanges: false,
+        purchasing: purchasingWithoutDraft(record),
         createdAt: record.createdAt,
       });
     }
@@ -651,6 +811,7 @@
       workingRevision: null,
       draftBaseRevisionNumber: null,
       hasDraftChanges: false,
+      purchasing: purchasingWithoutDraft(record),
       wonAt: undefined,
       customerPoNumber: undefined,
       createdAt: record.createdAt,
@@ -677,6 +838,16 @@
     const restoredDocument = cloneValue(
       previous?.document || latest.document,
     );
+    const nextWorkingRevision = previous
+      ? null
+      : nextRevisionNumber({ revisions });
+    const purchasing = previous
+      ? purchasingWithoutDraft(record)
+      : purchasingWithDraft(
+        record,
+        purchasingItemsFor(record, latest.number),
+        nextWorkingRevision,
+      );
     return save("boqs", {
       ...record,
       ...restoredDocument,
@@ -684,9 +855,10 @@
       status: previous ? "Issued" : "Draft",
       revisions,
       activeRevisionNumber: previous?.number ?? null,
-      workingRevision: previous ? null : nextRevisionNumber({ revisions }),
+      workingRevision: nextWorkingRevision,
       draftBaseRevisionNumber: previous ? null : latest.number,
       hasDraftChanges: !previous,
+      purchasing,
       wonAt: undefined,
       customerPoNumber: undefined,
       createdAt: record.createdAt,
@@ -728,6 +900,35 @@
       },
     });
     return entries;
+  }
+
+  function savePurchasingMaterials(id, items) {
+    const record = get("boqs", id);
+    const validation = validateSupportingMaterials(items);
+    if (!record || !validation.valid) return null;
+    const normalizedItems = items.map(normalizeSupportingMaterial);
+    let purchasing;
+    if (record.workingRevision !== null || record.status === "Draft") {
+      const revisionNumber = record.workingRevision ?? nextRevisionNumber(record);
+      purchasing = purchasingWithDraft(
+        record,
+        normalizedItems,
+        revisionNumber,
+      );
+    } else if (record.activeRevisionNumber !== null) {
+      purchasing = upsertPurchasingRevision(
+        record.purchasing,
+        record.activeRevisionNumber,
+        normalizedItems,
+      );
+    } else {
+      return null;
+    }
+    return save("boqs", {
+      ...record,
+      purchasing,
+      updatedAt: record.updatedAt,
+    }, { preserveUpdatedAt: true });
   }
 
   function escapePattern(value) {
@@ -1769,6 +1970,10 @@
     voidLatestRevision,
     getRevision,
     revisionHistory,
+    purchasingItemsFor,
+    purchasingWithDraft,
+    savePurchasingMaterials,
+    validateSupportingMaterials,
     latestIssuedRevision,
     issuedBoqView,
     registerBoqView,

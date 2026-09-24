@@ -21,6 +21,23 @@
     ) || latestIssuedRevision?.(record) || null;
   }
 
+  function purchasingUsage(record, revisionNumber) {
+    const purchasing = record?.purchasing || {};
+    const draft = purchasing.draft;
+    const archived = Array.isArray(purchasing.revisions)
+      ? purchasing.revisions
+      : [];
+    const entry = Number(draft?.revisionNumber) === Number(revisionNumber)
+      ? draft
+      : archived.find((candidate) =>
+        Number(candidate?.revisionNumber) === Number(revisionNumber)
+      );
+    return {
+      items: Array.isArray(entry?.items) ? entry.items : [],
+      updatedAt: String(entry?.updatedAt || ""),
+    };
+  }
+
   function build(productName, boqs, options = {}) {
     const targetName = normalizeItemName(productName);
     if (!targetName) return [];
@@ -54,13 +71,28 @@
       const matchingItems = recordItems.filter((entry) =>
         normalizeItemName(entry?.item) === targetName
       );
-      if (!matchingItems.length) return;
+      const purchasing = purchasingUsage(record, revisionNumber);
+      const matchingSupportingMaterials = purchasing.items.filter((entry) =>
+        normalizeItemName(entry?.item) === targetName
+      );
+      if (!matchingItems.length && !matchingSupportingMaterials.length) return;
       const calculations = matchingItems.map((item) =>
         calculateItem(item, { rounding })
       );
-      const calculation = calculations[0];
+      const calculation = calculations[0] || null;
       const quantity = calculations.reduce((total, itemCalculation) =>
-        total + itemCalculation.quantity, 0);
+        total + itemCalculation.quantity, 0) +
+        matchingSupportingMaterials.reduce((total, item) =>
+          total + (Number(item?.qty) || 0), 0);
+      const usageType = matchingItems.length && matchingSupportingMaterials.length
+        ? "BOQ Item + Supporting Material"
+        : matchingItems.length
+        ? "BOQ Item"
+        : "Supporting Material";
+      const updatedAt = timestampValue(purchasing.updatedAt) >
+          timestampValue(record.updatedAt)
+        ? purchasing.updatedAt
+        : String(record.updatedAt || "");
       entries.push({
         boqId: String(record.id || ""),
         boqNumber: String(record.number || ""),
@@ -71,13 +103,14 @@
         customerPoNumber: String(record.customerPoNumber || ""),
         boqValue,
         quantity,
+        usageType,
         currency: String(record.currency || "IDR"),
-        unitCogs: calculation.unitCogs,
-        margin: calculation.margin,
-        unitSelling: calculation.unitSelling,
-        totalSelling: calculation.totalSelling,
-        manualSelling: calculation.isManualSelling,
-        updatedAt: String(record.updatedAt || ""),
+        unitCogs: calculation?.unitCogs ?? null,
+        margin: calculation?.margin ?? null,
+        unitSelling: calculation?.unitSelling ?? null,
+        totalSelling: calculation?.totalSelling ?? null,
+        manualSelling: calculation?.isManualSelling || false,
+        updatedAt,
       });
     });
 

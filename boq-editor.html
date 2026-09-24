@@ -384,6 +384,115 @@
                   </div>
                 </div>
               </section>
+
+              <section
+                class="panel supporting-materials-panel"
+                aria-labelledby="supporting-materials-heading"
+              >
+                <div class="panel-header">
+                  <div>
+                    <h2 id="supporting-materials-heading">Supporting Materials</h2>
+                    <p>
+                      <span data-supporting-count>0 items</span> · Internal
+                      purchasing only; excluded from BOQ calculations.
+                    </p>
+                  </div><span
+                    class="badge"
+                    data-supporting-save-state
+                  >All changes saved</span>
+                </div>
+                <div class="toolbar supporting-materials-toolbar">
+                  <div class="toolbar-group">
+                    <button
+                      class="button button-secondary button-sm"
+                      type="button"
+                      data-supporting-catalog
+                    >
+                      <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-4-4" />
+                      </svg>Add from catalog
+                    </button>
+                    <button
+                      class="button button-secondary button-sm"
+                      type="button"
+                      data-add-supporting
+                    >
+                      <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>Add custom <span
+                        class="supporting-optional-label"
+                      >material</span>
+                    </button>
+                  </div>
+                  <div class="toolbar-group">
+                    <button
+                      class="button button-ghost button-sm"
+                      type="button"
+                      data-toggle-supporting-edit
+                      aria-pressed="true"
+                    >Edit on</button>
+                    <button
+                      class="button button-ghost button-sm"
+                      type="button"
+                      data-toggle-supporting-reorder
+                      aria-pressed="false"
+                    >Reorder off</button>
+                    <button
+                      class="button button-primary button-sm"
+                      type="button"
+                      data-save-supporting
+                      hidden
+                    >Save materials</button>
+                  </div>
+                </div>
+                <div
+                  class="table-wrap supporting-materials-table-wrap editor-desktop-table"
+                  data-supporting-table
+                  hidden
+                >
+                  <table class="data-table supporting-materials-table">
+                    <colgroup>
+                      <col class="supporting-col-index"><col
+                        class="supporting-col-part-number"
+                      ><col class="supporting-col-item"><col
+                        class="supporting-col-qty"
+                      ><col class="supporting-col-unit"><col
+                        class="supporting-col-notes"
+                      ><col class="supporting-col-actions">
+                    </colgroup>
+                    <thead><tr>
+                      <th>#</th>
+                      <th>Part Number</th>
+                      <th>Item</th>
+                      <th class="align-right">Qty</th>
+                      <th>Unit</th>
+                      <th>Notes</th>
+                      <th><span class="sr-only">Actions</span></th>
+                    </tr></thead>
+                    <tbody data-supporting-body></tbody>
+                  </table>
+                </div>
+                <div
+                  class="mobile-item-list supporting-materials-mobile-list"
+                  data-supporting-mobile
+                ></div>
+                <div
+                  class="empty-state compact-editor-empty"
+                  data-supporting-empty
+                >
+                  <div class="empty-state-content">
+                    <div class="empty-state-icon" aria-hidden="true">＋</div>
+                    <h3>No Supporting Materials Yet</h3>
+                    <p>Add internal materials for the Purchasing sheet.</p>
+                    <button
+                      class="button button-secondary"
+                      type="button"
+                      data-add-supporting
+                    >Add custom material</button>
+                  </div>
+                </div>
+              </section>
             </div>
 
             <aside class="editor-summary" aria-label="BOQ financial summary">
@@ -675,8 +784,8 @@
       >
         <header class="modal-header">
           <div>
-            <h2 id="catalog-title">Add Product from Catalog</h2>
-            <p class="muted text-sm">
+            <h2 id="catalog-title" data-catalog-title>Add Product from Catalog</h2>
+            <p class="muted text-sm" data-catalog-description>
               Select a saved product to apply its standard cost and margin.
             </p>
           </div>

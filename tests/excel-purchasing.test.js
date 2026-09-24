@@ -121,8 +121,18 @@ Deno.test("excludes Services while preserving purchasing item order", () => {
   );
   assertIncludes(
     filterSource,
-    'normalizeCategory(category) !== "services"',
+    '!["services", supportingKey].includes(normalizeCategory(category))',
     "the Services category must be excluded",
+  );
+  assertIncludes(
+    filterSource,
+    '...(data.supportingMaterials || []).map((item) => ({',
+    "revision Supporting Materials must be included",
+  );
+  assertIncludes(
+    filterSource,
+    "if (supportingItems.length) categories.push(supportingCategory);",
+    "Supporting Materials must be the final Purchasing category",
   );
   const sheetStart = excelScript.indexOf("function addPurchasingSheet(");
   const sheetEnd = excelScript.indexOf(
@@ -139,6 +149,11 @@ Deno.test("excludes Services while preserving purchasing item order", () => {
     sheetSource,
     "purchasing.items.filter((item) =>",
     "items must retain their order within each category",
+  );
+  assertIncludes(
+    sheetSource,
+    'item.notes || ""',
+    "Supporting Material notes must populate Purchasing Remarks",
   );
 });
 

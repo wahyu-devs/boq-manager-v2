@@ -38,6 +38,12 @@
   let currentView = "all";
   let reorderMode = false;
   let activeDrag = null;
+  let supportingMaterials = [];
+  let supportingEditMode = true;
+  let supportingReorderMode = false;
+  let supportingDirty = false;
+  let supportingDrag = null;
+  let catalogTarget = "boq";
   let pendingIssueNote = "";
   let pendingSaveContinuation = null;
 
@@ -45,6 +51,10 @@
   const mobileList = editor.querySelector("[data-mobile-items]");
   const desktopTableWrap = editor.querySelector("[data-editor-table]");
   const desktopTableViewport = editor.querySelector("[data-editor-viewport]");
+  const supportingPanel = editor.querySelector(".supporting-materials-panel");
+  const supportingBody = editor.querySelector("[data-supporting-body]");
+  const supportingMobile = editor.querySelector("[data-supporting-mobile]");
+  const supportingTable = editor.querySelector("[data-supporting-table]");
   const currencySelect = document.querySelector("#boq-currency");
   const commissionInput = document.querySelector("[data-commission]");
   const commissionCurrency = document.querySelector(
@@ -76,6 +86,16 @@
         ? productPricing.unitSellingRaw
         : null,
       category: product.category || "Uncategorized",
+    };
+  }
+
+  function supportingCatalogItem(product) {
+    return {
+      sku: product.sku || "",
+      item: product.name || "",
+      qty: 1,
+      unit: product.unit || "Each",
+      notes: "",
     };
   }
 
@@ -134,6 +154,17 @@
         ? null
         : Number(item.sellingOverride),
       category: item.category || "Uncategorized",
+    };
+  }
+
+  function normalizeSupportingMaterial(item = {}) {
+    return {
+      id: item.id || itemId(),
+      sku: String(item.sku || ""),
+      item: String(item.item || item.name || ""),
+      qty: Math.max(0, Number(item.qty || 0)),
+      unit: String(item.unit || "Each"),
+      notes: String(item.notes || ""),
     };
   }
 
@@ -201,6 +232,8 @@
       categoryOrder = Array.isArray(record.categoryOrder)
         ? record.categoryOrder.slice()
         : [];
+      supportingMaterials = store.purchasingItemsFor(record)
+        .map(normalizeSupportingMaterial);
       document.querySelector("[data-save-state]").textContent =
         record.workingRevision !== null
           ? `Draft changes for ${store.revisionLabel(record.workingRevision)}`
@@ -214,6 +247,7 @@
       items = [];
       commission = 0;
       categoryOrder = [];
+      supportingMaterials = [];
       currentRecord = null;
       const today = new Date();
       const validUntil = new Date(today);
@@ -225,8 +259,12 @@
       setFormValue("#boq-valid-until", localDate(validUntil));
       setFormValue("#boq-currency", settings.defaultCurrency || "IDR");
     }
+    supportingDirty = false;
+    supportingEditMode = !isIssuedLocked();
+    supportingReorderMode = false;
     updateCommissionInput();
     updateEditorHeader();
+    renderSupportingMaterials();
     applyEditorMode();
   }
 
@@ -322,6 +360,20 @@
     return editItems && !isIssuedLocked();
   }
 
+  function canEditSupportingMaterials() {
+    return supportingEditMode;
+  }
+
+  function blockWhileSupportingMaterialsUnsaved(action) {
+    if (!supportingDirty) return false;
+    supportingPanel?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.BOQApp.showToast(
+      `Save Supporting Materials before ${action}.`,
+      "error",
+    );
+    return true;
+  }
+
   function hasUnpersistedRevisionDraft() {
     if (!currentRecordId || currentRecord?.workingRevision === null ||
         currentRecord?.workingRevision === undefined) return false;
@@ -389,6 +441,39 @@
       reorderMode = false;
     }
     applyReorderState();
+    const supportingEditable = canEditSupportingMaterials();
+    supportingPanel?.classList.toggle(
+      "supporting-readonly",
+      !supportingEditable,
+    );
+    supportingPanel?.querySelectorAll(
+      "[data-supporting-input], [data-supporting-action], " +
+        "[data-supporting-drag-handle], [data-add-supporting], " +
+        "[data-supporting-catalog], [data-toggle-supporting-reorder]",
+    ).forEach((control) => control.disabled = !supportingEditable);
+    const supportingEditButton = document.querySelector(
+      "[data-toggle-supporting-edit]",
+    );
+    if (supportingEditButton) {
+      supportingEditButton.textContent = supportingEditable
+        ? "Edit on"
+        : "Edit off";
+      supportingEditButton.setAttribute(
+        "aria-pressed",
+        String(supportingEditable),
+      );
+    }
+    const supportingSaveButton = document.querySelector(
+      "[data-save-supporting]",
+    );
+    if (supportingSaveButton) {
+      supportingSaveButton.hidden = !locked;
+      supportingSaveButton.disabled = !supportingDirty;
+    }
+    if (!supportingEditable && supportingReorderMode) {
+      supportingReorderMode = false;
+    }
+    applySupportingReorderState();
   }
 
   function clearIssueValidation() {
@@ -478,6 +563,10 @@
     return {
       document: documentValue,
       items: revisionItems,
+      supportingMaterials: store.purchasingItemsFor(
+        currentRecordId || currentRecord,
+        revision.number,
+      ),
       categories: [
         ...savedOrder.filter((category) => presentCategories.includes(category)),
         ...presentCategories.filter((category) => !savedOrder.includes(category)),
@@ -494,6 +583,9 @@
     return {
       document: documentValue,
       items: items.map((item) => ({ ...item })),
+      supportingMaterials: supportingMaterials.map((material) => ({
+        ...material,
+      })),
       categories: categories().slice(),
       settings: { ...settings },
     };
@@ -768,6 +860,195 @@
     updateSummary();
     applyEditorMode();
     updateStickyColumnsState();
+  }
+
+  function supportingDragHandle(material) {
+    const name = escapeHtml(material.item || "supporting material");
+    return `<button class="icon-button supporting-drag-handle" type="button" data-supporting-drag-handle data-supporting-id="${material.id}" aria-label="Drag ${name} to reorder. Use arrow keys for keyboard reordering." title="Drag to reorder"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7h.01M15 7h.01M9 12h.01M15 12h.01M9 17h.01M15 17h.01" /></svg></button>`;
+  }
+
+  function supportingDesktopRow(material, index) {
+    return `<tr data-supporting-row data-supporting-id="${material.id}">
+      <td class="align-right item-order-cell">${supportingDragHandle(material)}<span class="subtle number supporting-index">${index}</span></td>
+      <td><input class="editor-input" data-supporting-input data-field="sku" data-supporting-id="${material.id}" value="${escapeHtml(material.sku)}" aria-label="Supporting material part number, row ${index}"></td>
+      <td><input class="editor-input" list="product-suggestions" data-supporting-input data-field="item" data-supporting-id="${material.id}" value="${escapeHtml(material.item)}" aria-label="Supporting material name, row ${index}"></td>
+      <td><input class="editor-input numeric" data-supporting-input data-field="qty" data-supporting-id="${material.id}" type="number" min="0" step="0.01" value="${material.qty}" aria-label="Supporting material quantity, row ${index}"></td>
+      <td><select class="editor-input" data-supporting-input data-field="unit" data-supporting-id="${material.id}" aria-label="Supporting material unit, row ${index}">${unitOptions(material.unit)}</select></td>
+      <td><input class="editor-input" data-supporting-input data-field="notes" data-supporting-id="${material.id}" value="${escapeHtml(material.notes)}" aria-label="Supporting material notes, row ${index}"></td>
+      <td><div class="row-actions"><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(material.item || "supporting material")}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-supporting-action="duplicate" data-supporting-id="${material.id}">Duplicate material</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-supporting-material" data-target-id="${material.id}" data-confirm-title="Delete ${escapeHtml(material.item || "supporting material")}?" data-confirm-message="This material will be removed from the internal purchasing list.">Delete material</button></div></div></div></td>
+    </tr>`;
+  }
+
+  function supportingMobileCard(material, index) {
+    return `<article class="mobile-item-card" data-supporting-row data-supporting-id="${material.id}">
+      <div class="mobile-item-head">${supportingDragHandle(material)}<div class="mobile-item-main"><span class="subtle text-sm">Supporting material ${index}</span><strong>${escapeHtml(material.item || "Unnamed material")}</strong></div><div class="row-actions"><button class="icon-button" type="button" data-supporting-action="duplicate" data-supporting-id="${material.id}" aria-label="Duplicate ${escapeHtml(material.item || "supporting material")}">⧉</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="boq:delete-supporting-material" data-target-id="${material.id}" data-confirm-title="Delete ${escapeHtml(material.item || "supporting material")}?" data-confirm-message="This material will be removed from the internal purchasing list." aria-label="Delete ${escapeHtml(material.item || "supporting material")}">×</button></div></div>
+      <div class="mobile-item-body">
+        <label class="field"><span class="field-label">Part Number</span><input class="input input-sm" data-supporting-input data-field="sku" data-supporting-id="${material.id}" value="${escapeHtml(material.sku)}"></label>
+        <label class="field"><span class="field-label">Item</span><input class="input input-sm" list="product-suggestions" data-supporting-input data-field="item" data-supporting-id="${material.id}" value="${escapeHtml(material.item)}"></label>
+        <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-supporting-input data-field="qty" data-supporting-id="${material.id}" type="number" min="0" step="0.01" value="${material.qty}"></label>
+        <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-supporting-input data-field="unit" data-supporting-id="${material.id}">${unitOptions(material.unit)}</select></label>
+        <label class="field col-12"><span class="field-label">Notes</span><input class="input input-sm" data-supporting-input data-field="notes" data-supporting-id="${material.id}" value="${escapeHtml(material.notes)}"></label>
+      </div>
+    </article>`;
+  }
+
+  function updateSupportingSaveState(message) {
+    const state = document.querySelector("[data-supporting-save-state]");
+    if (state) {
+      state.textContent = message || (supportingDirty
+        ? "Unsaved internal changes"
+        : "All changes saved");
+    }
+    const button = document.querySelector("[data-save-supporting]");
+    if (button) button.disabled = !supportingDirty;
+  }
+
+  function renderSupportingMaterials() {
+    supportingBody.innerHTML = supportingMaterials.map((material, index) =>
+      supportingDesktopRow(material, index + 1)
+    ).join("");
+    supportingMobile.innerHTML = supportingMaterials.map((material, index) =>
+      supportingMobileCard(material, index + 1)
+    ).join("");
+    supportingTable.hidden = supportingMaterials.length === 0;
+    editor.querySelector("[data-supporting-empty]").hidden =
+      supportingMaterials.length > 0;
+    editor.querySelector("[data-supporting-count]").textContent =
+      `${supportingMaterials.length} item${
+        supportingMaterials.length === 1 ? "" : "s"
+      }`;
+    updateSupportingSaveState();
+    applyEditorMode();
+  }
+
+  function markSupportingDirty() {
+    supportingDirty = true;
+    updateSupportingSaveState();
+    if (!isIssuedLocked()) markDirty();
+    applyEditorMode();
+  }
+
+  function addSupportingMaterial(source = {}) {
+    if (!canEditSupportingMaterials()) return null;
+    const material = normalizeSupportingMaterial({
+      qty: 1,
+      unit: "Each",
+      ...source,
+      id: itemId(),
+    });
+    supportingMaterials.push(material);
+    renderSupportingMaterials();
+    markSupportingDirty();
+    window.BOQApp.showToast(
+      source.item
+        ? `${source.item} added to Supporting Materials.`
+        : "Custom supporting material added.",
+    );
+    return material;
+  }
+
+  function duplicateSupportingMaterial(id) {
+    if (!canEditSupportingMaterials()) return;
+    const index = supportingMaterials.findIndex((material) =>
+      material.id === id
+    );
+    if (index < 0) return;
+    const duplicate = {
+      ...supportingMaterials[index],
+      id: itemId(),
+      item: `${supportingMaterials[index].item} (Copy)`,
+    };
+    supportingMaterials.splice(index + 1, 0, duplicate);
+    renderSupportingMaterials();
+    markSupportingDirty();
+  }
+
+  function applySupportingCatalogMatch(material) {
+    const product = catalogRecords().find((entry) =>
+      entry.name.trim().toLowerCase() === material.item.trim().toLowerCase()
+    );
+    if (!product) return false;
+    const source = supportingCatalogItem(product);
+    Object.assign(material, source, {
+      qty: material.qty || 1,
+      notes: material.notes,
+      id: material.id,
+    });
+    return true;
+  }
+
+  function reorderSupportingMaterial(id, targetId, position) {
+    if (!canEditSupportingMaterials()) return false;
+    const order = reorderValues(
+      supportingMaterials.map((material) => material.id),
+      id,
+      targetId,
+      position,
+    );
+    if (!order.changed) return false;
+    const byId = new Map(supportingMaterials.map((material) => [
+      material.id,
+      material,
+    ]));
+    supportingMaterials = order.values.map((materialId) => byId.get(materialId));
+    renderSupportingMaterials();
+    markSupportingDirty();
+    return true;
+  }
+
+  function moveSupportingMaterial(id, direction) {
+    const index = supportingMaterials.findIndex((material) =>
+      material.id === id
+    );
+    const target = supportingMaterials[index + direction];
+    if (index < 0 || !target) return;
+    reorderSupportingMaterial(
+      id,
+      target.id,
+      direction < 0 ? "before" : "after",
+    );
+    requestAnimationFrame(() => {
+      const handles = [...editor.querySelectorAll(
+        `[data-supporting-drag-handle][data-supporting-id="${CSS.escape(id)}"]`,
+      )];
+      handles.find((handle) => handle.offsetParent !== null)?.focus();
+    });
+  }
+
+  function clearSupportingDrag() {
+    supportingPanel?.querySelectorAll(".is-dragging, .drop-before, .drop-after")
+      .forEach((element) =>
+        element.classList.remove("is-dragging", "drop-before", "drop-after")
+      );
+    supportingDrag = null;
+  }
+
+  function applySupportingReorderState() {
+    const enabled = supportingReorderMode && canEditSupportingMaterials();
+    supportingPanel?.classList.toggle("supporting-reorder-mode", enabled);
+    const button = document.querySelector("[data-toggle-supporting-reorder]");
+    if (button) {
+      button.textContent = enabled ? "Reorder on" : "Reorder off";
+      button.setAttribute("aria-pressed", String(enabled));
+    }
+    supportingPanel?.querySelectorAll("[data-supporting-drag-handle]")
+      .forEach((handle) => handle.tabIndex = enabled ? 0 : -1);
+    if (!enabled) clearSupportingDrag();
+  }
+
+  function showSupportingValidation(validation) {
+    supportingPanel?.querySelectorAll('[aria-invalid="true"]')
+      .forEach((control) => control.removeAttribute("aria-invalid"));
+    const error = validation.errors[0];
+    if (!error) return;
+    const controls = [...supportingPanel.querySelectorAll(
+      `[data-supporting-id="${CSS.escape(error.itemId)}"]` +
+        `[data-field="${CSS.escape(error.field)}"]`,
+    )];
+    controls.forEach((control) => control.setAttribute("aria-invalid", "true"));
+    (controls.find((control) => control.offsetParent !== null) || controls[0])
+      ?.focus();
+    window.BOQApp.showToast(validation.message, "error");
   }
 
   function updateStickyColumnsState() {
@@ -1185,6 +1466,19 @@
       .trim();
     const catalog = catalogRecords();
     const host = document.querySelector("[data-catalog-list]");
+    const supportingTarget = catalogTarget === "supporting";
+    const title = document.querySelector("[data-catalog-title]");
+    const description = document.querySelector("[data-catalog-description]");
+    if (title) {
+      title.textContent = supportingTarget
+        ? "Add Supporting Material from Catalog"
+        : "Add Product from Catalog";
+    }
+    if (description) {
+      description.textContent = supportingTarget
+        ? "Select a saved product for the internal purchasing list. Pricing is not included."
+        : "Select a saved product to apply its standard cost and margin.";
+    }
     const filtered = catalog.filter((product) => matchesSearchQuery([
       product.sku,
       product.name,
@@ -1195,11 +1489,17 @@
       ? filtered.map((product) => {
         const selling = calculations.calculateProductPricing(product)
           .unitSelling;
-        return `<div class="catalog-row"><div><button class="link catalog-product-name" type="button" data-show-product-usage="${escapeHtml(product.id)}">${escapeHtml(product.name)}</button><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right"><strong>${formatCurrencyMarkup(selling, currentCurrency())}</strong><span>Selling price · ${formatPercent(product.defaultMargin || 0)} default margin</span></div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
+        const catalogValue = supportingTarget
+          ? `<strong>${escapeHtml(product.unit || "No unit")}</strong><span>Catalog unit · no pricing</span>`
+          : `<strong>${formatCurrencyMarkup(selling, currentCurrency())}</strong><span>Selling price · ${formatPercent(product.defaultMargin || 0)} default margin</span>`;
+        return `<div class="catalog-row"><div><button class="link catalog-product-name" type="button" data-show-product-usage="${escapeHtml(product.id)}">${escapeHtml(product.name)}</button><span>${product.sku ? `${escapeHtml(product.sku)} · ` : ""}${escapeHtml(product.category || product.unit || "Catalog item")}</span></div><div class="align-right">${catalogValue}</div><button class="button button-secondary button-sm" type="button" data-add-product="${escapeHtml(product.id)}">Add</button></div>`;
       }).join("")
       : '<div class="empty-state catalog-empty"><div class="empty-state-content"><h3>No Products Found</h3><p>Try searching by product name, part number, or category.</p></div></div>';
+    const catalogEditable = catalogTarget === "supporting"
+      ? canEditSupportingMaterials()
+      : canEditItems();
     host.querySelectorAll("[data-add-product]")
-      .forEach((button) => button.disabled = !canEditItems());
+      .forEach((button) => button.disabled = !catalogEditable);
     document.querySelector("#product-suggestions").innerHTML = catalog.map(
       (product) => `<option value="${escapeHtml(product.name)}"></option>`,
     ).join("");
@@ -1428,13 +1728,54 @@
     });
   }
 
+  function updateSupportingCatalogHistory() {
+    supportingMaterials.filter((material) => material.item.trim())
+      .forEach((material) => {
+        const existing = catalogRecords().find((product) =>
+          product.name.trim().toLowerCase() ===
+            material.item.trim().toLowerCase()
+        );
+        if (!existing) {
+          store.save("products", {
+            sku: material.sku,
+            name: material.item,
+            category: "Supporting Materials",
+            unit: material.unit,
+            defaultCogs: 0,
+            defaultMargin: 0,
+            defaultSellingPrice: 0,
+            status: "Active",
+          });
+          return;
+        }
+        const sku = existing.sku || material.sku;
+        const unit = existing.unit || material.unit;
+        if (sku === existing.sku && unit === existing.unit) return;
+        store.save("products", {
+          ...existing,
+          sku,
+          unit,
+        });
+      });
+  }
+
   async function saveDocument() {
     const informationForm = document.querySelector("#boq-info");
     if (!informationForm.checkValidity()) {
       informationForm.reportValidity();
       return null;
     }
+    const supportingValidation = store.validateSupportingMaterials(
+      supportingMaterials,
+    );
+    if (!supportingValidation.valid) {
+      showSupportingValidation(supportingValidation);
+      return null;
+    }
     const existing = currentRecordId ? store.get("boqs", currentRecordId) : null;
+    const purchasingRecord = currentRecord || existing;
+    const purchasingRevision = currentRecord?.workingRevision ??
+      store.nextRevisionNumber(purchasingRecord);
     const payload = {
       ...documentPayload(),
       id: currentRecordId || undefined,
@@ -1442,6 +1783,11 @@
       workingRevision: currentRecord?.workingRevision ?? null,
       draftBaseRevisionNumber:
         currentRecord?.draftBaseRevisionNumber ?? null,
+      purchasing: store.purchasingWithDraft(
+        purchasingRecord,
+        supportingMaterials,
+        purchasingRevision,
+      ),
     };
     const issuing = payload.status === "Issued";
     const selectedCustomer = payload.customerId
@@ -1462,6 +1808,9 @@
     currentRecord = record;
     store.setCurrentBoqId(record.id);
     updateCatalogHistory();
+    updateSupportingCatalogHistory();
+    supportingDirty = false;
+    updateSupportingSaveState();
     history.replaceState(null, "", `boq-editor.html?id=${encodeURIComponent(record.id)}`);
     updateEditorHeader();
     applyEditorMode();
@@ -1478,6 +1827,35 @@
     return record;
   }
 
+  function saveLockedSupportingMaterials() {
+    if (!currentRecordId || !isIssuedLocked()) return null;
+    const validation = store.validateSupportingMaterials(supportingMaterials);
+    if (!validation.valid) {
+      showSupportingValidation(validation);
+      return null;
+    }
+    const record = store.savePurchasingMaterials(
+      currentRecordId,
+      supportingMaterials,
+    );
+    if (!record) {
+      window.BOQApp.showToast(
+        "Unable to save Supporting Materials. Check the required fields.",
+        "error",
+      );
+      return null;
+    }
+    currentRecord = record;
+    supportingMaterials = store.purchasingItemsFor(record)
+      .map(normalizeSupportingMaterial);
+    updateSupportingCatalogHistory();
+    supportingDirty = false;
+    renderSupportingMaterials();
+    updateSupportingSaveState("Supporting Materials saved");
+    window.BOQApp.showToast("Supporting Materials saved.");
+    return record;
+  }
+
   editor.addEventListener("focusout", (event) => {
     const input = event.target.closest("[data-number-input]");
     if (!input) return;
@@ -1490,6 +1868,108 @@
         : calc.unitSelling
       : item.unitCogs;
     input.value = formatNumberInput(value);
+  });
+
+  editor.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-supporting-input]");
+    if (!input || !canEditSupportingMaterials()) return;
+    const material = supportingMaterials.find((entry) =>
+      entry.id === input.dataset.supportingId
+    );
+    if (!material) return;
+    material[input.dataset.field] = input.dataset.field === "qty"
+      ? Math.max(0, Number(input.value) || 0)
+      : input.value;
+    supportingPanel.querySelectorAll(
+      `[data-supporting-id="${CSS.escape(material.id)}"]` +
+        `[data-field="${CSS.escape(input.dataset.field)}"]`,
+    ).forEach((control) => control.removeAttribute("aria-invalid"));
+    markSupportingDirty();
+  });
+
+  editor.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-supporting-input]");
+    if (!input || !canEditSupportingMaterials() ||
+        input.dataset.field !== "item") return;
+    const material = supportingMaterials.find((entry) =>
+      entry.id === input.dataset.supportingId
+    );
+    if (material && applySupportingCatalogMatch(material)) {
+      renderSupportingMaterials();
+      markSupportingDirty();
+    }
+  });
+
+  editor.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-supporting-action]");
+    if (action?.dataset.supportingAction === "duplicate") {
+      duplicateSupportingMaterial(action.dataset.supportingId);
+    }
+  });
+
+  editor.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest("[data-supporting-drag-handle]");
+    if (!supportingReorderMode || !canEditSupportingMaterials() || !handle ||
+        event.button > 0) return;
+    const row = handle.closest("[data-supporting-row]");
+    if (!row) return;
+    event.preventDefault();
+    handle.setPointerCapture?.(event.pointerId);
+    clearSupportingDrag();
+    supportingDrag = {
+      id: handle.dataset.supportingId,
+      pointerId: event.pointerId,
+      sourceRow: row,
+      targetId: null,
+      position: "before",
+    };
+    row.classList.add("is-dragging");
+  });
+
+  editor.addEventListener("pointermove", (event) => {
+    if (supportingDrag?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    supportingPanel.querySelectorAll(".drop-before, .drop-after")
+      .forEach((element) =>
+        element.classList.remove("drop-before", "drop-after")
+      );
+    supportingDrag.targetId = null;
+    const target = document.elementFromPoint(event.clientX, event.clientY)
+      ?.closest("[data-supporting-row]");
+    if (!target || target === supportingDrag.sourceRow) return;
+    const targetId = target.dataset.supportingId;
+    if (!targetId || targetId === supportingDrag.id) return;
+    const bounds = target.getBoundingClientRect();
+    const position = event.clientY < bounds.top + bounds.height / 2
+      ? "before"
+      : "after";
+    target.classList.add(position === "before" ? "drop-before" : "drop-after");
+    supportingDrag.targetId = targetId;
+    supportingDrag.position = position;
+    autoScrollDuringDrag(event.clientY);
+  });
+
+  editor.addEventListener("pointerup", (event) => {
+    if (supportingDrag?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const { id, targetId, position } = supportingDrag;
+    clearSupportingDrag();
+    if (targetId) reorderSupportingMaterial(id, targetId, position);
+  });
+
+  editor.addEventListener("pointercancel", (event) => {
+    if (supportingDrag?.pointerId === event.pointerId) clearSupportingDrag();
+  });
+
+  editor.addEventListener("keydown", (event) => {
+    const handle = event.target.closest("[data-supporting-drag-handle]");
+    if (!handle || !supportingReorderMode ||
+        !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    moveSupportingMaterial(
+      handle.dataset.supportingId,
+      event.key === "ArrowUp" ? -1 : 1,
+    );
   });
 
   editor.addEventListener("wheel", redirectItemInputHorizontalScroll, {
@@ -1643,17 +2123,37 @@
   });
 
   document.addEventListener("click", (event) => {
+    if (event.target.closest('[data-open-modal="catalog-modal"]')) {
+      catalogTarget = "boq";
+      updateCatalogResults();
+    }
     if (event.target.closest("[data-add-custom]") && canEditItems()) addItem();
+    if (event.target.closest("[data-supporting-catalog]") &&
+        canEditSupportingMaterials()) {
+      catalogTarget = "supporting";
+      updateCatalogResults();
+      window.BOQModal.open("catalog-modal");
+    }
+    if (event.target.closest("[data-add-supporting]") &&
+        canEditSupportingMaterials()) {
+      addSupportingMaterial();
+    }
     const usageButton = event.target.closest("[data-show-product-usage]");
     if (usageButton) {
       const product = store.get("products", usageButton.dataset.showProductUsage);
       productUsageView.show(product);
     }
     const productButton = event.target.closest("[data-add-product]");
-    if (productButton && canEditItems()) {
+    if (productButton) {
       const product = store.get("products", productButton.dataset.addProduct);
-      if (product) addItem(catalogItem(product));
-      window.BOQModal.close(document.getElementById("catalog-modal"));
+      if (product && catalogTarget === "supporting" &&
+          canEditSupportingMaterials()) {
+        addSupportingMaterial(supportingCatalogItem(product));
+        window.BOQModal.close(document.getElementById("catalog-modal"));
+      } else if (product && canEditItems()) {
+        addItem(catalogItem(product));
+        window.BOQModal.close(document.getElementById("catalog-modal"));
+      }
     }
     if (event.target.closest("[data-preview-pdf]")) {
       buildPdfPreview();
@@ -1663,6 +2163,7 @@
     }
     if (event.target.closest("[data-create-revision]")) {
       event.preventDefault();
+      if (blockWhileSupportingMaterialsUnsaved("creating a revision")) return;
       const record = store.prepareRevisionDraft(currentRecordId);
       if (!record) {
         window.BOQApp.showToast(
@@ -1682,6 +2183,9 @@
     }
     const revisionSource = event.target.closest("[data-create-revision-from]");
     if (revisionSource) {
+      if (blockWhileSupportingMaterialsUnsaved("using a revision as draft")) {
+        return;
+      }
       const record = store.prepareRevisionDraft(
         currentRecordId,
         revisionSource.dataset.createRevisionFrom,
@@ -1705,10 +2209,16 @@
     }
     const markWon = event.target.closest("[data-mark-won]");
     if (markWon && isRevisableIssued()) {
+      if (blockWhileSupportingMaterialsUnsaved("marking this BOQ as Won")) {
+        return;
+      }
       openCustomerPoModal("mark");
     }
     const editCustomerPo = event.target.closest("[data-edit-customer-po]");
     if (editCustomerPo && isWonLocked()) {
+      if (blockWhileSupportingMaterialsUnsaved("editing the Customer PO")) {
+        return;
+      }
       const menu = editCustomerPo.closest(".dropdown-menu");
       if (menu) {
         menu.hidden = true;
@@ -1760,6 +2270,7 @@
     }
     const voidRevision = event.target.closest("[data-void-revision]");
     if (voidRevision) {
+      if (blockWhileSupportingMaterialsUnsaved("voiding a revision")) return;
       const revision = store.getRevision(currentRecord, voidRevision.dataset.voidRevision);
       if (!revision) return;
       const form = document.querySelector("[data-void-revision-form]");
@@ -1783,6 +2294,19 @@
       reorderMode = !reorderMode;
       applyReorderState();
     }
+    if (event.target.closest("[data-toggle-supporting-edit]")) {
+      supportingEditMode = !supportingEditMode;
+      if (!supportingEditMode) supportingReorderMode = false;
+      applyEditorMode();
+    }
+    if (event.target.closest("[data-toggle-supporting-reorder]") &&
+        canEditSupportingMaterials()) {
+      supportingReorderMode = !supportingReorderMode;
+      applySupportingReorderState();
+    }
+    if (event.target.closest("[data-save-supporting]") && supportingDirty) {
+      void saveLockedSupportingMaterials();
+    }
   });
 
   document.addEventListener("boq:delete-item", (event) => {
@@ -1801,6 +2325,28 @@
         markDirty();
       },
     });
+  });
+
+  document.addEventListener("boq:delete-supporting-material", (event) => {
+    if (!canEditSupportingMaterials()) return;
+    const id = event.detail.targetId;
+    const index = supportingMaterials.findIndex((item) => item.id === id);
+    if (index < 0) return;
+    const [removed] = supportingMaterials.splice(index, 1);
+    renderSupportingMaterials();
+    markSupportingDirty();
+    window.BOQApp.showToast(
+      `${removed.item || "Supporting material"} removed.`,
+      "success",
+      {
+        label: "Undo",
+        callback: () => {
+          supportingMaterials.splice(index, 0, removed);
+          renderSupportingMaterials();
+          markSupportingDirty();
+        },
+      },
+    );
   });
 
   document.addEventListener("boq:discard-revision", () => {
@@ -1914,6 +2460,9 @@
   );
 
   document.addEventListener("boq:revert-issued", () => {
+    if (blockWhileSupportingMaterialsUnsaved("changing the BOQ status")) {
+      return;
+    }
     applyStatusTransition(
       store.revertBoqToIssued(currentRecordId),
       "BOQ reverted to Issued.",
@@ -1952,6 +2501,13 @@
     const requestedStatus = event.detail.button?.dataset.saveStatus || status;
     if (requestedStatus !== "Issued" || isIssuedLocked()) return;
     event.preventDefault();
+    const supportingValidation = store.validateSupportingMaterials(
+      supportingMaterials,
+    );
+    if (!supportingValidation.valid) {
+      showSupportingValidation(supportingValidation);
+      return;
+    }
     const validation = store.validateBoqForIssue(documentPayload());
     if (!validation.valid) {
       showIssueValidation(validation);
@@ -2034,6 +2590,8 @@
         const record = await saveDocument();
         if (!record) throw new Error("Unable to save this BOQ.");
         dirty = false;
+        supportingDirty = false;
+        updateSupportingSaveState();
         document.querySelectorAll("[data-save-state]").forEach((element) =>
           element.textContent = record.cloudSyncPending
             ? `${store.revisionLabel(record.activeRevisionNumber)} issued locally · cloud sync pending`
@@ -2061,7 +2619,7 @@
     })();
   });
   window.addEventListener("beforeunload", (event) => {
-    if (!dirty) return;
+    if (!dirty && !supportingDirty) return;
     event.preventDefault();
     event.returnValue = "";
   });
@@ -2069,7 +2627,7 @@
     settings = store.getSettings();
     populateRecordOptions();
     updateCatalogResults();
-    if (dirty) return;
+    if (dirty || supportingDirty) return;
     currentRecordId = new URLSearchParams(location.search).get("id");
     initializeDocument();
     renderItems();
@@ -2096,6 +2654,8 @@
   window.BOQEditor = {
     getDocument: documentPayload,
     getItems: () => items.map((item) => ({ ...item })),
+    getSupportingMaterials: () =>
+      supportingMaterials.map((material) => ({ ...material })),
     getCategories: categories,
     getView: () => currentView,
     getSettings: () => ({ ...settings }),
