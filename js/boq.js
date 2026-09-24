@@ -1985,7 +1985,7 @@
       return;
     }
     const input = event.target.closest(
-      ".supporting-materials-table input[data-supporting-input]",
+      ".supporting-materials-table [data-supporting-input]",
     );
     if (!input || event.key !== "Enter" || !canEditSupportingMaterials() ||
         event.repeat || event.isComposing || event.ctrlKey || event.metaKey ||

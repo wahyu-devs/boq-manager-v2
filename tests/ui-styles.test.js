@@ -833,8 +833,8 @@ Deno.test("adds a custom BOQ item with Enter while editing", () => {
 Deno.test("adds a custom Supporting Material with Enter while editing", () => {
   assertIncludes(
     boqSource,
-    '".supporting-materials-table input[data-supporting-input]",',
-    "Supporting Materials must limit the Enter shortcut to desktop text inputs",
+    '".supporting-materials-table [data-supporting-input]",',
+    "Supporting Materials must support Enter from desktop inputs and the Unit dropdown",
   );
   assertIncludes(
     boqSource,
