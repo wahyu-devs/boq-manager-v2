@@ -777,12 +777,21 @@ Deno.test("only allows BOQ item changes while Edit is on", () => {
   );
   assertIncludes(
     boqSource,
-    "[data-item-action], .row-actions [data-menu-trigger],",
+    '"[data-item-input], [data-item-action], " +\n' +
+      '        "[data-item-row] [data-menu-trigger], " +',
     "Edit off must disable only BOQ row action menus",
   );
-  if (boqSource.includes("[data-item-action], [data-menu-trigger],")) {
+  if (boqSource.includes(
+    "[data-item-action], .row-actions [data-menu-trigger],",
+  )) {
     throw new Error("Edit off must keep the BOQ header menu enabled");
   }
+  assertIncludes(
+    boqSource,
+    '"[data-supporting-input], [data-supporting-action], " +\n' +
+      '        ".row-actions [data-menu-trigger], " +',
+    "Supporting Materials menus must follow their own Edit mode",
+  );
   assertIncludes(
     componentsCss,
     ".items-readonly .editor-table input,",
