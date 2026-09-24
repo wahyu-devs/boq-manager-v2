@@ -1282,6 +1282,14 @@
   display: inline-grid;
 }
 
+.supporting-reorder-mode .item-order-cell {
+  text-align: center;
+}
+
+.supporting-reorder-mode .supporting-index {
+  display: none;
+}
+
 .supporting-drag-handle:active {
   cursor: grabbing;
 }

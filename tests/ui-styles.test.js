@@ -857,6 +857,19 @@ Deno.test("adds a custom Supporting Material with Enter while editing", () => {
   );
 });
 
+Deno.test("replaces Supporting Material row numbers with drag handles", () => {
+  assertIncludes(
+    componentsCss,
+    ".supporting-reorder-mode .supporting-drag-handle {\n  display: inline-grid;\n}",
+    "Supporting Materials must show drag handles while reordering",
+  );
+  assertIncludes(
+    componentsCss,
+    ".supporting-reorder-mode .supporting-index {\n  display: none;\n}",
+    "Supporting Materials must hide row numbers while reordering",
+  );
+});
+
 Deno.test("collapses hidden BOQ pricing columns without an empty scroll area", () => {
   assertIncludes(
     editorHtml,
