@@ -2259,6 +2259,16 @@
   font-size: 11px;
 }
 
+.supporting-materials-table-wrap {
+  max-height: var(--editor-table-max-height, none);
+}
+
+.supporting-materials-table thead {
+  position: sticky;
+  z-index: 4;
+  top: 0;
+}
+
 .supporting-materials-table td {
   height: 36px;
   padding: 2px 5px;
