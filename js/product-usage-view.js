@@ -60,9 +60,9 @@
                   <th><button class="sort-button" type="button" data-product-usage-sort="projectName">Project</button></th>
                   <th><button class="sort-button" type="button" data-product-usage-sort="customerName">Customer</button></th>
                   <th><button class="sort-button" type="button" data-product-usage-sort="status">Status</button></th>
-                  <th><button class="sort-button" type="button" data-product-usage-sort="usageType">Usage</button></th>
                   <th><button class="sort-button" type="button" data-product-usage-sort="customerPoNumber">Customer PO</button></th>
                   <th class="align-right"><button class="sort-button" type="button" data-product-usage-sort="boqValue">BOQ Value</button></th>
+                  <th><button class="sort-button" type="button" data-product-usage-sort="usageType">Usage</button></th>
                   <th class="align-right"><button class="sort-button" type="button" data-product-usage-sort="quantity">Qty</button></th>
                   <th class="align-right"><button class="sort-button" type="button" data-product-usage-sort="unitCogs">Unit COGS</button></th>
                   <th class="align-right"><button class="sort-button" type="button" data-product-usage-sort="margin">Margin</button></th>
@@ -193,11 +193,11 @@
         }</td><td>${escapeHtml(entry.projectName || "—")}</td><td>${
           escapeHtml(entry.customerName || "—")
         }</td><td>${statusHtml(entry.status)}</td><td>${
-          escapeHtml(entry.usageType || "BOQ Item")
-        }</td><td>${
           escapeHtml(entry.customerPoNumber || "")
         }</td><td class="align-right currency">${
           formatCurrencyMarkup(entry.boqValue, entry.currency)
+        }</td><td>${
+          escapeHtml(entry.usageType || "BOQ Item")
         }</td><td class="align-right number">${
           formatNumberInput(entry.quantity)
         }</td><td class="align-right currency">${
@@ -232,12 +232,12 @@
           escapeHtml(entry.projectName || "No project")
         }</strong><span>${
           escapeHtml(entry.customerName || "No customer")
-        }</span></div><dl class="record-card-grid"><div><dt>Usage</dt><dd>${
-          escapeHtml(entry.usageType || "BOQ Item")
-        }</dd></div><div><dt>Customer PO</dt><dd>${
+        }</span></div><dl class="record-card-grid"><div><dt>Customer PO</dt><dd>${
           escapeHtml(entry.customerPoNumber || "—")
         }</dd></div><div><dt>BOQ Value</dt><dd>${
           formatCurrencyMarkup(entry.boqValue, entry.currency)
+        }</dd></div><div><dt>Usage</dt><dd>${
+          escapeHtml(entry.usageType || "BOQ Item")
         }</dd></div><div><dt>Qty</dt><dd class="number">${
           formatNumberInput(entry.quantity)
         }</dd></div><div><dt>Unit COGS</dt><dd>${

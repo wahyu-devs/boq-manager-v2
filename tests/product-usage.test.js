@@ -213,26 +213,47 @@ Deno.test("wires Product Usage History into the catalog UI", async () => {
   const statusHeader = productsHtml.indexOf(
     'data-product-usage-sort="status"',
   );
-  const usageHeader = productsHtml.indexOf(
-    'data-product-usage-sort="usageType"',
-    statusHeader,
-  );
   const poHeader = productsHtml.indexOf(
     'data-product-usage-sort="customerPoNumber"',
-    usageHeader,
+    statusHeader,
   );
   const valueHeader = productsHtml.indexOf(
     'data-product-usage-sort="boqValue"',
     poHeader,
   );
-  const quantityHeader = productsHtml.indexOf(
-    'data-product-usage-sort="quantity"',
+  const usageHeader = productsHtml.indexOf(
+    'data-product-usage-sort="usageType"',
     valueHeader,
   );
+  const quantityHeader = productsHtml.indexOf(
+    'data-product-usage-sort="quantity"',
+    usageHeader,
+  );
   assert(
-    statusHeader >= 0 && usageHeader > statusHeader && poHeader > usageHeader &&
-      valueHeader > poHeader && quantityHeader > valueHeader,
-    "Usage, Customer PO, BOQ Value, and Qty must follow Status in order",
+    statusHeader >= 0 && poHeader > statusHeader && valueHeader > poHeader &&
+      usageHeader > valueHeader && quantityHeader > usageHeader,
+    "Customer PO, BOQ Value, Usage, and Qty must follow Status in order",
+  );
+  const dynamicStatusHeader = usageViewSource.indexOf(
+    'data-product-usage-sort="status"',
+  );
+  const dynamicPoHeader = usageViewSource.indexOf(
+    'data-product-usage-sort="customerPoNumber"',
+    dynamicStatusHeader,
+  );
+  const dynamicValueHeader = usageViewSource.indexOf(
+    'data-product-usage-sort="boqValue"',
+    dynamicPoHeader,
+  );
+  const dynamicUsageHeader = usageViewSource.indexOf(
+    'data-product-usage-sort="usageType"',
+    dynamicValueHeader,
+  );
+  assert(
+    dynamicStatusHeader >= 0 && dynamicPoHeader > dynamicStatusHeader &&
+      dynamicValueHeader > dynamicPoHeader &&
+      dynamicUsageHeader > dynamicValueHeader,
+    "dynamic Product Usage History must use the same column order",
   );
   equal(
     productsHtml.split("data-product-usage-sort=").length - 1,
