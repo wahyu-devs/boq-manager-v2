@@ -223,8 +223,9 @@ Deno.test("editor layout is page-scoped and preserves existing sticky/mobile lay
   equal(headerRule.includes("padding-block: var(--space-2) var(--space-3);"), true, "header spacing is preserved");
   equal(componentsCss.includes("max-height: calc(100vh - 238px)"), false, "removes fixed table budget");
   equal(componentsCss.includes("max-height: var(--editor-table-max-height, none);"), true, "uses measured maximum height");
+  equal(componentsCss.includes(".editor-table-wrap {\n  max-height: var(--editor-table-max-height, none);\n  overscroll-behavior: contain;"), true, "contains BOQ Items scrolling within its table");
   equal(componentsCss.includes(".editor-table thead {\n  position: sticky;"), true, "keeps internal table header");
-  equal(componentsCss.includes(".supporting-materials-table-wrap {\n  max-height: var(--editor-table-max-height, none);"), true, "applies the measured table height to Supporting Materials");
+  equal(componentsCss.includes(".supporting-materials-table-wrap {\n  max-height: var(--editor-table-max-height, none);\n  overscroll-behavior: contain;"), true, "contains Supporting Materials scrolling within its measured table height");
   equal(editorHtml.includes('class="table-wrap supporting-materials-table-wrap editor-desktop-table"'), true, "keeps Supporting Materials inside the shared scroll container");
   equal(componentsCss.includes(".supporting-materials-table thead {\n  position: sticky;"), true, "keeps the Supporting Materials header visible during internal scrolling");
   equal(responsiveCss.includes(".editor-summary {\n    position: static;\n    grid-row: 1;"), true, "tablet summary remains in flow");
