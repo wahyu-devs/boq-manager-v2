@@ -42,11 +42,11 @@ function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
 }
 
-Deno.test("hides only BOQ quantity and margin number spinners on desktop and mobile", () => {
+Deno.test("hides BOQ and Supporting Materials number spinners", () => {
   assertIncludes(
     componentsCss,
-    '[data-item-input][data-field="qty"],\n[data-item-input][data-field="margin"] {\n  appearance: textfield;',
-    "numeric appearance must be scoped to BOQ quantity and gross margin",
+    '[data-item-input][data-field="qty"],\n[data-item-input][data-field="margin"],\n[data-supporting-input][data-field="qty"] {\n  appearance: textfield;',
+    "numeric appearance must cover BOQ and Supporting Materials fields",
   );
   const spinnerRule = componentsCss.match(
     /\[data-item-input\]\[data-field="qty"\]::-webkit-inner-spin-button,[\s\S]*?\{([^}]+)\}/,
@@ -71,6 +71,38 @@ Deno.test("hides only BOQ quantity and margin number spinners on desktop and mob
       assertIncludes(input, field === "qty" ? 'step="0.01"' : 'step="0.1"', "numeric precision must remain");
       if (field === "margin") assertIncludes(input, 'max="99.99"', "gross margin maximum must remain");
     }
+  }
+  for (const spinner of ["inner", "outer"]) {
+    assertIncludes(
+      spinnerRule,
+      `[data-supporting-input][data-field="qty"]::-webkit-${spinner}-spin-button`,
+      `WebKit Supporting Materials quantity ${spinner} spinner must be hidden`,
+    );
+  }
+  const supportingInputs = [...boqSource.matchAll(/<input\b[^>]+>/g)]
+    .filter(([input]) =>
+      input.includes("data-supporting-input") &&
+      input.includes('data-field="qty"')
+    );
+  if (supportingInputs.length !== 2) {
+    throw new Error("Supporting Materials quantity must cover desktop and mobile inputs");
+  }
+  for (const [input] of supportingInputs) {
+    assertIncludes(
+      input,
+      'type="number"',
+      "Supporting Materials quantity must remain numeric",
+    );
+    assertIncludes(
+      input,
+      'min="0"',
+      "Supporting Materials quantity minimum must remain",
+    );
+    assertIncludes(
+      input,
+      'step="0.01"',
+      "Supporting Materials quantity precision must remain",
+    );
   }
   assertIncludes(spinnerRule, "-webkit-appearance: none;", "Chromium and Safari spinners must be hidden");
   assertIncludes(spinnerRule, "margin: 0;", "hidden spinners must not leave spacing");

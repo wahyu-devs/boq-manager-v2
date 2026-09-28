@@ -1072,14 +1072,17 @@
 }
 
 [data-item-input][data-field="qty"],
-[data-item-input][data-field="margin"] {
+[data-item-input][data-field="margin"],
+[data-supporting-input][data-field="qty"] {
   appearance: textfield;
 }
 
 [data-item-input][data-field="qty"]::-webkit-inner-spin-button,
 [data-item-input][data-field="qty"]::-webkit-outer-spin-button,
 [data-item-input][data-field="margin"]::-webkit-inner-spin-button,
-[data-item-input][data-field="margin"]::-webkit-outer-spin-button {
+[data-item-input][data-field="margin"]::-webkit-outer-spin-button,
+[data-supporting-input][data-field="qty"]::-webkit-inner-spin-button,
+[data-supporting-input][data-field="qty"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
