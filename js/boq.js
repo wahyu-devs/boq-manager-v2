@@ -185,12 +185,19 @@
     const projectNames = [...new Set(store.list("boqs").map((record) =>
       record.projectName?.trim()
     ).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const customers = store.list("customers").slice().sort((left, right) =>
+      String(left.companyName || "").localeCompare(
+        String(right.companyName || ""),
+        undefined,
+        { numeric: true, sensitivity: "base" },
+      )
+    );
     projectSuggestions.innerHTML = projectNames.map((name) =>
       `<option value="${escapeHtml(name)}"></option>`
     ).join("");
     customerSelect.innerHTML =
       '<option value="">No customer selected</option>' +
-      store.list("customers").map((customer) =>
+      customers.map((customer) =>
         `<option value="${escapeHtml(customer.id)}">${escapeHtml(customer.companyName)}</option>`
       ).join("");
   }

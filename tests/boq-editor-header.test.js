@@ -11,6 +11,10 @@ const customerFunction = boqSource.match(
   /function updateEditorCustomer\(\) \{[\s\S]*?\n  \}/,
 )?.[0];
 if (!customerFunction) throw new Error("Editor customer header updater missing");
+const optionsFunction = boqSource.match(
+  /function populateRecordOptions\(\) \{[\s\S]*?\n  \}/,
+)?.[0];
+if (!optionsFunction) throw new Error("Editor record option updater missing");
 
 function equal(actual, expected, message) {
   if (actual !== expected) {
@@ -38,6 +42,47 @@ function renderCustomerHeader(customerSelect, record = null, locked = false) {
   update();
   return { customerNode, separatorNode, saveState, update };
 }
+
+Deno.test("sorts BOQ Information customers alphabetically", () => {
+  const projectSuggestions = { innerHTML: "" };
+  const customerSelect = { innerHTML: "" };
+  const customers = [
+    { id: "z", companyName: "Zeta Systems" },
+    { id: "a10", companyName: "Acme 10" },
+    { id: "b", companyName: "beta Works" },
+    { id: "a2", companyName: "Acme 2" },
+  ];
+  const originalOrder = customers.map((customer) => customer.id).join(",");
+  const document = {
+    querySelector: (selector) => selector === "#project-suggestions"
+      ? projectSuggestions
+      : customerSelect,
+  };
+  const store = {
+    list: (collection) => collection === "customers" ? customers : [],
+  };
+  const populate = new Function(
+    "document",
+    "store",
+    "escapeHtml",
+    `return (${optionsFunction});`,
+  )(document, store, (value) => String(value));
+  populate();
+
+  let previousIndex = -1;
+  for (const name of ["Acme 2", "Acme 10", "beta Works", "Zeta Systems"]) {
+    const index = customerSelect.innerHTML.indexOf(name);
+    if (index <= previousIndex) {
+      throw new Error(`Customer ${name} is not in alphabetical order`);
+    }
+    previousIndex = index;
+  }
+  equal(
+    customers.map((customer) => customer.id).join(","),
+    originalOrder,
+    "sorting options does not mutate stored customer order",
+  );
+});
 
 Deno.test("shows the selected customer beside the editor save state", () => {
   const select = { value: "customer-1", selectedOptions: [{ text: " Customer One " }] };
