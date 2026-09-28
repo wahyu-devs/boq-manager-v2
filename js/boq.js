@@ -3,8 +3,13 @@
   if (!editor) return;
 
   const calculations = window.BOQCalculations;
-  const { calculateItem, calculateSummary, calculateCategorySummary } =
-    calculations;
+  const {
+    calculateItem,
+    calculateSummary,
+    calculateCategorySummary,
+    deriveGrossMargin,
+    roundSelling,
+  } = calculations;
   const {
     formatCurrencyMarkup,
     formatCurrencyParts,
@@ -157,6 +162,41 @@
     };
   }
 
+  function formatMarginInputValue(value) {
+    const margin = Number(value);
+    if (!Number.isFinite(margin)) return "0";
+    return String(Math.round((margin + Number.EPSILON) * 10) / 10);
+  }
+
+  function applySellingAsMargin(item, sellingValue) {
+    const selling = Number(sellingValue);
+    if (!Number.isFinite(selling) || selling < 0) return false;
+    const unitCogs = Number(item.unitCogs || 0);
+    if (!(unitCogs > 0)) {
+      item.sellingOverride = selling;
+      return true;
+    }
+    const effectiveSelling = roundSelling(
+      selling,
+      settings.rounding || "2",
+    );
+    const margin = deriveGrossMargin(unitCogs, effectiveSelling);
+    if (margin === null || margin > 99.99) return false;
+    item.margin = margin;
+    item.sellingOverride = null;
+    return true;
+  }
+
+  function normalizeEditableItemPricing(item) {
+    if (!(Number(item.unitCogs || 0) > 0) ||
+        item.sellingOverride === null) return item;
+    if (!applySellingAsMargin(item, item.sellingOverride)) {
+      item.margin = 0;
+      item.sellingOverride = null;
+    }
+    return item;
+  }
+
   function normalizeSupportingMaterial(item = {}) {
     return {
       id: item.id || itemId(),
@@ -235,6 +275,7 @@
       setFormValue("#boq-valid-until", record.validUntil);
       setFormValue("#boq-notes", record.notes);
       items = (record.items || []).map(normalizeItem);
+      if (!isIssuedLocked()) items.forEach(normalizeEditableItemPricing);
       commission = Number(record.commission || 0);
       categoryOrder = Array.isArray(record.categoryOrder)
         ? record.categoryOrder.slice()
@@ -806,7 +847,7 @@
       <td class="editor-sticky-column editor-sticky-unit"><select class="editor-input" data-item-input data-field="unit" data-item-id="${item.id}" aria-label="Unit, row ${displayIndex}">${unitOptions(item.unit)}</select></td>
       <td class="column-cogs column-price"><input class="editor-input numeric" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}" aria-label="Unit COGS, row ${displayIndex}"></td>
       <td class="calculated-cell column-cogs column-price" data-item-output="totalCogs">${formatCurrencyMarkup(calc.totalCogs, currentCurrency())}</td>
-      <td class="column-margin column-price"><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}" aria-label="Gross margin percentage, row ${displayIndex}"></td>
+      <td class="column-margin column-price"><input class="editor-input numeric" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${formatMarginInputValue(item.margin)}" aria-label="Gross margin percentage, row ${displayIndex}"></td>
       <td class="column-selling column-price"><input class="editor-input numeric${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}" aria-label="Unit selling price, row ${displayIndex}"></td>
       <td class="calculated-cell column-selling column-price" data-item-output="totalSelling">${formatCurrencyMarkup(calc.totalSelling, currentCurrency())}</td>
       <td><div class="row-actions"><div class="menu-wrap"><button class="icon-button" type="button" data-menu-trigger aria-expanded="false" aria-label="More actions for ${escapeHtml(item.item)}">•••</button><div class="dropdown-menu" hidden><button class="menu-item" type="button" data-item-action="duplicate" data-item-id="${item.id}">Duplicate item</button><button class="menu-item danger-text" type="button" data-confirm data-confirm-event="boq:delete-item" data-target-id="${item.id}" data-confirm-title="Delete ${escapeHtml(item.item || "item")}?" data-confirm-message="This item will be removed and all totals recalculated.">Delete item</button></div></div></div></td>
@@ -836,8 +877,8 @@
         <label class="field"><span class="field-label">Unit</span><select class="select select-sm" data-item-input data-field="unit" data-item-id="${item.id}">${unitOptions(item.unit)}</select></label>
         <label class="field"><span class="field-label">Quantity</span><input class="input input-sm align-right" data-item-input data-field="qty" data-item-id="${item.id}" type="number" min="0" step="0.01" value="${item.qty}"></label>
         <label class="field column-cogs column-price"><span class="field-label">Unit COGS</span><input class="input input-sm align-right" data-item-input data-number-input data-field="unitCogs" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(item.unitCogs))}"></label>
-        <label class="field column-margin column-price"><span class="field-label">Gross margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${item.margin}"></label>
-        <label class="field column-selling column-price"><span class="field-label">Unit selling <small>(edit to override)</small></span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}"></label>
+        <label class="field column-margin column-price"><span class="field-label">Gross margin %</span><input class="input input-sm align-right" data-item-input data-field="margin" data-item-id="${item.id}" type="number" min="0" max="99.99" step="0.1" value="${formatMarginInputValue(item.margin)}"></label>
+        <label class="field column-selling column-price"><span class="field-label">Unit selling</span><input class="input input-sm align-right${calc.isManualSelling ? " is-manual" : ""}" data-item-input data-number-input data-field="sellingOverride" data-item-id="${item.id}" type="text" inputmode="decimal" value="${escapeHtml(formatNumberInput(sellingValue))}"></label>
         <div class="mobile-item-total column-selling column-price"><span class="muted">Total selling</span><strong data-item-output="totalSelling">${formatCurrencyMarkup(calc.totalSelling, currentCurrency())}</strong></div>
       </div>
     </article>`;
@@ -1158,6 +1199,11 @@
             input.value = formatNumberInput(item.unitCogs);
           }
         });
+        row.querySelectorAll('[data-field="margin"]').forEach((input) => {
+          if (document.activeElement !== input) {
+            input.value = formatMarginInputValue(item.margin);
+          }
+        });
         row.querySelectorAll('[data-field="sellingOverride"]').forEach((input) => {
           input.classList.toggle("is-manual", calc.isManualSelling);
           if (document.activeElement !== input) {
@@ -1253,7 +1299,12 @@
       notes: document.querySelector("#boq-notes").value.trim(),
       customerPoNumber: currentRecord?.customerPoNumber || "",
       wonAt: currentRecord?.wonAt || "",
-      items: items.map(({ id, ...item }) => ({ ...item })),
+      items: items.map(({ id, ...item }) => ({
+        ...item,
+        sellingOverride: !isIssuedLocked() && Number(item.unitCogs || 0) > 0
+          ? null
+          : item.sellingOverride,
+      })),
       commission,
       categoryOrder: categoryOrder.slice(),
       revisionNumber,
@@ -1886,6 +1937,14 @@
     if (!input) return;
     const item = items.find((entry) => entry.id === input.dataset.itemId);
     if (!item) return;
+    if (input.dataset.field === "sellingOverride" &&
+        input.getAttribute("aria-invalid") === "true") {
+      input.removeAttribute("aria-invalid");
+      window.BOQApp.showToast(
+        "Unit selling must be at least equal to Unit COGS.",
+        "error",
+      );
+    }
     const calc = calculateItem(item);
     const value = input.dataset.field === "sellingOverride"
       ? calc.isManualSelling
@@ -2027,16 +2086,39 @@
     const numericFields = ["qty", "unitCogs", "margin", "sellingOverride"];
     if (input.matches("[data-number-input]")) {
       formatNumberInputElementLive(input);
-      if (input.dataset.field === "sellingOverride" && input.value === "") {
-        item.sellingOverride = null;
+      const field = input.dataset.field;
+      const value = Math.max(0, parseNumberInput(input.value));
+      if (field === "sellingOverride") {
+        if (input.value === "") {
+          item.sellingOverride = null;
+        } else if (!applySellingAsMargin(item, value)) {
+          input.setAttribute("aria-invalid", "true");
+          return;
+        }
       } else {
-        item[input.dataset.field] = Math.max(0, parseNumberInput(input.value));
+        const previousSelling = field === "unitCogs"
+          ? calculateItem(item).unitSelling
+          : 0;
+        item[field] = value;
+        if (field === "unitCogs" && item.unitCogs > 0 &&
+            item.sellingOverride !== null) {
+          if (!applySellingAsMargin(item, item.sellingOverride)) {
+            item.margin = 0;
+            item.sellingOverride = null;
+          }
+        } else if (field === "unitCogs" && !(item.unitCogs > 0) &&
+            previousSelling > 0) {
+          item.sellingOverride = previousSelling;
+        }
       }
     } else if (numericFields.includes(input.dataset.field)) {
       const value = Math.max(0, Number(input.value) || 0);
       item[input.dataset.field] = input.dataset.field === "margin"
         ? Math.min(value, 99.99)
         : value;
+      if (input.dataset.field === "margin" && item.unitCogs > 0) {
+        item.sellingOverride = null;
+      }
     } else item[input.dataset.field] = input.value;
     editor.querySelectorAll(
       `[data-item-id="${CSS.escape(item.id)}"]` +

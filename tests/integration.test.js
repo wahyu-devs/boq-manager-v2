@@ -378,6 +378,28 @@ Deno.test("migrates previous data and preserves pricing behavior", () => {
   });
   equal(exact.unitSelling, 125, "gross-margin selling price");
 
+  const preciseMargin = calculations.deriveGrossMargin(430000, 595000);
+  if (preciseMargin === null ||
+      Math.abs(preciseMargin - 27.73109243697479) > 1e-10) {
+    throw new Error("manual selling must derive a precise gross margin");
+  }
+  const derivedSelling = calculations.calculateItem({
+    qty: 1,
+    unitCogs: 430000,
+    margin: preciseMargin,
+    sellingOverride: null,
+  });
+  equal(
+    derivedSelling.unitSelling,
+    595000,
+    "precise derived margin must reproduce selling without an override",
+  );
+  equal(
+    calculations.deriveGrossMargin(430000, 420000),
+    null,
+    "selling below COGS cannot derive the supported gross margin",
+  );
+
   store.saveSettings({ ...store.getSettings(), rounding: "up1000" });
   const rounded = calculations.calculateItem({
     qty: 1,

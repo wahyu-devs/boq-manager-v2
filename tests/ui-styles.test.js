@@ -907,6 +907,32 @@ Deno.test("focuses Qty after selecting a catalog item", () => {
   );
 });
 
+Deno.test("derives priced BOQ Items from a precise gross margin", () => {
+  assertIncludes(
+    boqSource,
+    "const margin = deriveGrossMargin(unitCogs, effectiveSelling);",
+    "Unit Selling input must derive gross margin for items with COGS",
+  );
+  assertIncludes(
+    boqSource,
+    "item.margin = margin;\n    item.sellingOverride = null;",
+    "items with COGS must clear the selling override",
+  );
+  assertIncludes(
+    boqSource,
+    "sellingOverride: !isIssuedLocked() && Number(item.unitCogs || 0) > 0",
+    "editable BOQs must not persist selling overrides for items with COGS",
+  );
+  assertIncludes(
+    boqSource,
+    "input.value = formatMarginInputValue(item.margin);",
+    "precise margins must use a compact displayed value",
+  );
+  if (boqSource.includes("edit to override")) {
+    throw new Error("BOQ Items must not describe priced selling as an override");
+  }
+});
+
 Deno.test("replaces Supporting Material row numbers with drag handles", () => {
   assertIncludes(
     componentsCss,

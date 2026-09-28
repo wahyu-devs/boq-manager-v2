@@ -37,6 +37,14 @@
     return Math.round(number * 100) / 100;
   }
 
+  function deriveGrossMargin(unitCogs, unitSelling) {
+    const cost = Number(unitCogs);
+    const selling = Number(unitSelling);
+    if (!Number.isFinite(cost) || !Number.isFinite(selling) || cost <= 0 ||
+        selling < cost || selling <= 0) return null;
+    return (selling - cost) / selling * 100;
+  }
+
   function calculateItem(item, options = {}) {
     const quantity = safeNumber(item.qty);
     const unitCogs = safeNumber(item.unitCogs);
@@ -114,6 +122,7 @@
     calculateProductPricing,
     calculateSummary,
     calculateCategorySummary,
+    deriveGrossMargin,
     roundSelling,
     safeMargin,
     safeTaxRate,
