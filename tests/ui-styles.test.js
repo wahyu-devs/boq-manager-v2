@@ -861,7 +861,7 @@ Deno.test("adds a custom BOQ item with Enter while editing", () => {
   );
   assertIncludes(
     boqSource,
-    "if (addedItem) focusDesktopItemField(addedItem.id);",
+    "if (addedItem) focusItemField(addedItem.id);",
     "focus must move to the new custom item's Item field",
   );
   assertIncludes(
@@ -884,8 +884,26 @@ Deno.test("adds a custom Supporting Material with Enter while editing", () => {
   );
   assertIncludes(
     boqSource,
-    "if (addedMaterial) focusDesktopSupportingField(addedMaterial.id);",
+    "if (addedMaterial) focusSupportingField(addedMaterial.id);",
     "focus must move to the new Supporting Material's Item field",
+  );
+});
+
+Deno.test("focuses Qty after selecting a catalog item", () => {
+  assertIncludes(
+    boqSource,
+    'focusItemField(item.id, "qty");',
+    "BOQ Items must focus Qty after applying a catalog match",
+  );
+  assertIncludes(
+    boqSource,
+    'focusSupportingField(material.id, "qty");',
+    "Supporting Materials must focus Qty after applying a catalog match",
+  );
+  assertIncludes(
+    boqSource,
+    "inputs.find((control) => control.offsetParent !== null)",
+    "field focus must target the visible desktop or mobile control",
   );
 });
 

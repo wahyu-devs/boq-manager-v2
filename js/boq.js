@@ -956,13 +956,15 @@
     return material;
   }
 
-  function focusDesktopSupportingField(id, field = "item") {
+  function focusSupportingField(id, field = "item") {
     requestAnimationFrame(() => {
-      const input = supportingPanel.querySelector(
-        `.supporting-materials-table [data-supporting-input]` +
+      const inputs = [...supportingPanel.querySelectorAll(
+        `[data-supporting-input]` +
           `[data-supporting-id="${CSS.escape(id)}"]` +
           `[data-field="${CSS.escape(field)}"]`,
-      );
+      )];
+      const input = inputs.find((control) => control.offsetParent !== null) ||
+        inputs[0];
       input?.focus();
       input?.select?.();
     });
@@ -1293,13 +1295,15 @@
     return item;
   }
 
-  function focusDesktopItemField(id, field = "item") {
+  function focusItemField(id, field = "item") {
     requestAnimationFrame(() => {
-      const input = editor.querySelector(
-        `.editor-table [data-item-input][data-item-id="${
+      const inputs = [...editor.querySelectorAll(
+        `[data-item-input][data-item-id="${
           CSS.escape(id)
         }"][data-field="${CSS.escape(field)}"]`,
-      );
+      )];
+      const input = inputs.find((control) => control.offsetParent !== null) ||
+        inputs[0];
       input?.focus();
       input?.select?.();
     });
@@ -1918,6 +1922,7 @@
     if (material && applySupportingCatalogMatch(material)) {
       renderSupportingMaterials();
       markSupportingDirty();
+      focusSupportingField(material.id, "qty");
     }
   });
 
@@ -2007,7 +2012,7 @@
       applySupportingCatalogMatch(currentMaterial);
     }
     const addedMaterial = addSupportingMaterial();
-    if (addedMaterial) focusDesktopSupportingField(addedMaterial.id);
+    if (addedMaterial) focusSupportingField(addedMaterial.id);
   });
 
   editor.addEventListener("wheel", redirectItemInputHorizontalScroll, {
@@ -2049,6 +2054,7 @@
     if (input.dataset.field === "item" && applyCatalogMatch(item)) {
       renderItems();
       markDirty();
+      focusItemField(item.id, "qty");
       return;
     }
     if (input.dataset.field === "category") {
@@ -2142,7 +2148,7 @@
         currentItem.category = input.value.trim() || "Uncategorized";
       }
       const addedItem = addItem();
-      if (addedItem) focusDesktopItemField(addedItem.id);
+      if (addedItem) focusItemField(addedItem.id);
       return;
     }
     if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
