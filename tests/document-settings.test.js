@@ -203,9 +203,11 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
   const pdfTotalStart = pdfScript.indexOf("function drawSummary(");
   const pdfTotalEnd = pdfScript.indexOf("const notes =", pdfTotalStart);
   const pdfTotalSource = pdfScript.slice(pdfTotalStart, pdfTotalEnd);
-  if ((pdfTotalSource.match(/setFontSize\(10\.25\)/g) || []).length !== 1) {
-    throw new Error("PDF Grand Total label and amount must share one font size");
-  }
+  assertIncludes(
+    pdfTotalSource,
+    "fitAccountingFontSize(\n        doc,\n        total.symbol,\n        total.value,",
+    "PDF Grand Total must fit its symbol and value into the amount column",
+  );
   assertIncludes(
     wordScript,
     'textCell("Grand Total", {',

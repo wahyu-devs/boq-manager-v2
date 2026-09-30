@@ -19,6 +19,24 @@
   const PAGE_MARGIN = customerDocument.layout.pageMarginMm;
   const TABLE_CELL_PADDING = customerDocument.layout.tableCellPaddingMm;
   const TOTAL_COLUMN_WIDTH = customerDocument.layout.totalColumnWidthMm;
+  const GRAND_TOTAL_FONT_SIZE = 10.25;
+  const GRAND_TOTAL_MIN_FONT_SIZE = 8.25;
+  const ACCOUNTING_TEXT_GAP = 2;
+
+  function fitAccountingFontSize(doc, symbol, value, availableWidth) {
+    doc.setFontSize(GRAND_TOTAL_FONT_SIZE);
+    const textWidth = doc.getTextWidth(symbol) + doc.getTextWidth(value);
+    const availableTextWidth = Math.max(
+      0,
+      availableWidth - ACCOUNTING_TEXT_GAP,
+    );
+    if (textWidth <= availableTextWidth) return GRAND_TOTAL_FONT_SIZE;
+    const scaledSize = GRAND_TOTAL_FONT_SIZE * availableTextWidth / textWidth;
+    const fittedSize = Math.floor(scaledSize * 4) / 4;
+    const fontSize = Math.max(GRAND_TOTAL_MIN_FONT_SIZE, fittedSize);
+    doc.setFontSize(fontSize);
+    return fontSize;
+  }
 
   function imageType(source) {
     return String(source).startsWith("data:image/png") ? "PNG" : "JPEG";
@@ -409,7 +427,12 @@
         y + totalHeight,
       );
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.25);
+      fitAccountingFontSize(
+        doc,
+        total.symbol,
+        total.value,
+        amountRightX - amountX,
+      );
       doc.setTextColor(...COLORS.heading);
       doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {
         align: "center",
@@ -561,5 +584,5 @@
     doc.save(customerDocument.filename(data, safeFilename, "pdf"));
   }
 
-  window.BOQPdfExport = { create, download };
+  window.BOQPdfExport = { create, download, fitAccountingFontSize };
 })();
