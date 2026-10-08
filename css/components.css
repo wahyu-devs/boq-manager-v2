@@ -2970,6 +2970,12 @@
   font-weight: 700;
 }
 
+.pdf-preview-total > strong,
+.pdf-preview-total-row.is-grand-total > strong {
+  font-family: inherit;
+  font-weight: inherit;
+}
+
 .pdf-preview-table:not(.has-part-number) + .pdf-preview-total,
 .pdf-preview-table:not(.has-part-number) + .pdf-preview-totals {
   --pdf-summary-amount-width: 46.44%;

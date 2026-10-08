@@ -186,6 +186,15 @@ Deno.test("styles Grand Total consistently across customer outputs", () => {
     throw new Error("Customer Preview Grand Total must not set a fixed height");
   }
   assertIncludes(
+    componentsCss,
+    ".pdf-preview-total > strong,\n" +
+      ".pdf-preview-total-row.is-grand-total > strong {\n" +
+      "  font-family: inherit;\n" +
+      "  font-weight: inherit;\n" +
+      "}",
+    "Customer Preview Grand Total amount must match its label font",
+  );
+  assertIncludes(
     pdfScript,
     'doc.text("Grand Total", totalX + labelWidth / 2, y + 5.8, {',
     "PDF must center the title-case Grand Total label",
