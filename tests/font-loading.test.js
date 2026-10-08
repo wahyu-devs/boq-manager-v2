@@ -9,6 +9,9 @@ const pageNames = [
 const variablesCss = await Deno.readTextFile(
   new URL("../css/variables.css", import.meta.url),
 );
+const baseCss = await Deno.readTextFile(
+  new URL("../css/base.css", import.meta.url),
+);
 
 function assertIncludes(source, value, message) {
   if (!source.includes(value)) throw new Error(message);
@@ -69,5 +72,36 @@ Deno.test("includes a valid Inter WOFF2 asset and its license", async () => {
     license,
     "SIL OPEN FONT LICENSE",
     "bundled Inter must retain its OFL license",
+  );
+});
+
+Deno.test("uses Inter with tabular numbers instead of a monospace UI font", async () => {
+  const editorHtml = await Deno.readTextFile(
+    new URL("../boq-editor.html", import.meta.url),
+  );
+  const settingsHtml = await Deno.readTextFile(
+    new URL("../settings.html", import.meta.url),
+  );
+  const combinedSource = [variablesCss, baseCss, editorHtml, settingsHtml]
+    .join("\n");
+  if (combinedSource.includes("--font-mono") ||
+    /class=["'][^"']*\bmono\b/.test(combinedSource) ||
+    baseCss.includes(".mono")) {
+    throw new Error("the application must not retain a monospace UI font");
+  }
+  assertIncludes(
+    baseCss,
+    ".number,\n.currency {\n  font-variant-numeric: tabular-nums;",
+    "numeric UI values must retain tabular Inter figures",
+  );
+  assertIncludes(
+    editorHtml,
+    'class="number text-sm" data-editor-number',
+    "the editor header number must use tabular Inter figures",
+  );
+  assertIncludes(
+    editorHtml,
+    'class="input number"\n                        id="boq-number"',
+    "the editable BOQ number must use tabular Inter figures",
   );
 });

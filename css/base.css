@@ -90,14 +90,9 @@ textarea {
   color: var(--color-text-subtle);
 }
 
-.mono,
 .number,
 .currency {
   font-variant-numeric: tabular-nums;
-}
-
-.mono {
-  font-family: var(--font-mono);
 }
 
 .currency,
