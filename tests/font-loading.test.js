@@ -75,7 +75,7 @@ Deno.test("includes a valid Inter WOFF2 asset and its license", async () => {
   );
 });
 
-Deno.test("uses proportional Inter numbers without a monospace UI font", async () => {
+Deno.test("uses Inter with tabular numbers instead of a monospace UI font", async () => {
   const editorHtml = await Deno.readTextFile(
     new URL("../boq-editor.html", import.meta.url),
   );
@@ -89,19 +89,19 @@ Deno.test("uses proportional Inter numbers without a monospace UI font", async (
     baseCss.includes(".mono")) {
     throw new Error("the application must not retain a monospace UI font");
   }
-  const componentCss = await Deno.readTextFile(
-    new URL("../css/components.css", import.meta.url),
+  assertIncludes(
+    baseCss,
+    ".number,\n.currency {\n  font-variant-numeric: tabular-nums;",
+    "numeric UI values must retain tabular Inter figures",
   );
-  const responsiveCss = await Deno.readTextFile(
-    new URL("../css/responsive.css", import.meta.url),
+  assertIncludes(
+    editorHtml,
+    'class="number text-sm" data-editor-number',
+    "the editor header number must use tabular Inter figures",
   );
-  if ([baseCss, componentCss, responsiveCss].some((source) =>
-    source.includes("tabular-nums")
-  )) {
-    throw new Error("the application must use proportional Inter numbers");
-  }
-  if (editorHtml.includes('class="number text-sm"') ||
-    editorHtml.includes('class="input number"')) {
-    throw new Error("BOQ identifiers must not retain the numeric utility");
-  }
+  assertIncludes(
+    editorHtml,
+    'class="input number"\n                        id="boq-number"',
+    "the editable BOQ number must use tabular Inter figures",
+  );
 });

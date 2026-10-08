@@ -124,7 +124,7 @@
         escapeHtml(record.customerPoNumber || "")
       }</td><td class="align-right currency">${
         formatCurrencyMarkup(record.totalSelling || 0, record.currency || "USD")
-      }</td><td class="align-right">${margin}</td><td>${
+      }</td><td class="align-right number">${margin}</td><td>${
         dateText(record.createdAt)
       }</td><td>${
         dateText(record.updatedAt)
@@ -199,7 +199,7 @@
         escapeHtml(record.unit || "Each")
       }</td><td class="align-right currency">${
         formatCurrencyMarkup(record.defaultCogs || 0, defaultCurrency)
-      }</td><td class="align-right">${
+      }</td><td class="align-right number">${
         formatPercent(record.defaultMargin || 0)
       }</td><td class="align-right currency cell-primary">${
         formatCurrencyMarkup(selling, defaultCurrency)
@@ -259,7 +259,7 @@
         escapeHtml(record.email || "—")
       }<span class="cell-secondary">${
         escapeHtml(record.phone || "")
-      }</span></td><td class="align-right">${projectCount}</td><td class="align-right">${boqCount}</td><td>${
+      }</span></td><td class="align-right number">${projectCount}</td><td class="align-right number">${boqCount}</td><td>${
         statusHtml(record.status || "Prospect")
       }</td><td><div class="row-actions"><button class="icon-button" type="button" data-record-action="edit" data-record-id="${record.id}" data-open-modal="record-form-modal" aria-label="Edit customer">✎</button><button class="icon-button danger-text" type="button" data-confirm data-confirm-event="records:delete" data-target-id="${record.id}" data-confirm-title="Delete This Customer?">×</button></div></td></tr>`,
       card:

@@ -198,11 +198,11 @@
           formatCurrencyMarkup(entry.boqValue, entry.currency)
         }</td><td>${
           escapeHtml(entry.usageType || "BOQ Item")
-        }</td><td class="align-right">${
+        }</td><td class="align-right number">${
           formatNumberInput(entry.quantity)
         }</td><td class="align-right currency">${
           optionalCurrencyMarkup(entry.unitCogs, entry.currency)
-        }</td><td class="align-right">${
+        }</td><td class="align-right number">${
           optionalPercent(entry.margin)
         }</td><td class="align-right currency">${
           optionalCurrencyMarkup(entry.unitSelling, entry.currency)
@@ -238,7 +238,7 @@
           formatCurrencyMarkup(entry.boqValue, entry.currency)
         }</dd></div><div><dt>Usage</dt><dd>${
           escapeHtml(entry.usageType || "BOQ Item")
-        }</dd></div><div><dt>Qty</dt><dd>${
+        }</dd></div><div><dt>Qty</dt><dd class="number">${
           formatNumberInput(entry.quantity)
         }</dd></div><div><dt>Unit COGS</dt><dd>${
           optionalCurrencyMarkup(entry.unitCogs, entry.currency)
