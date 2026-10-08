@@ -90,11 +90,6 @@ textarea {
   color: var(--color-text-subtle);
 }
 
-.number,
-.currency {
-  font-variant-numeric: tabular-nums;
-}
-
 .currency,
 .align-right {
   text-align: right;
@@ -107,7 +102,6 @@ textarea {
   grid-template-columns: max-content minmax(max-content, 1fr);
   align-items: baseline;
   column-gap: 8px;
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

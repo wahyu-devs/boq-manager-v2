@@ -114,7 +114,7 @@
         escapeHtml(boq.status || "Draft")
       }</span></td><td class="align-right currency dashboard-financial-column">${
         formatCurrencyMarkup(boq.totalSelling || 0, boq.currency || currency)
-      }</td><td class="align-right number dashboard-financial-column">${
+      }</td><td class="align-right dashboard-financial-column">${
         formatPercent(boq.marginPercent || 0)
       }</td><td class="dashboard-updated-column">${
         formatDate(boq.updatedAt)
