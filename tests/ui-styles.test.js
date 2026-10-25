@@ -175,6 +175,16 @@ Deno.test("floats BOQ editor header actions inside the mobile viewport", () => {
     'if (menu.closest(".table-wrap") || mobileEditorHeaderMenu) {',
     "mobile editor header menus must share the tested floating placement",
   );
+  assertIncludes(
+    appSource,
+    "window.getComputedStyle(mainContent).paddingInlineStart",
+    "mobile editor header menus must follow the current page gutter",
+  );
+  assertIncludes(
+    appSource,
+    "Number.isFinite(contentInset) ? { inset: contentInset } : {}",
+    "the measured page gutter must constrain floating menu placement",
+  );
 });
 
 Deno.test("keeps register search placeholders readable", () => {

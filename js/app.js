@@ -111,10 +111,19 @@
     if (menu.closest(".table-wrap") || mobileEditorHeaderMenu) {
       menu.classList.add("dropdown-menu-floating");
       const menuRect = menu.getBoundingClientRect();
+      const mainContent = mobileEditorHeaderMenu
+        ? menu.closest(".main-content")
+        : null;
+      const contentInset = mainContent
+        ? Number.parseFloat(
+          window.getComputedStyle(mainContent).paddingInlineStart,
+        )
+        : NaN;
       const placement = window.BOQUtils.calculateFloatingMenuPlacement(
         triggerRect,
         { width: menuRect.width, height: menuRect.height },
         { width: window.innerWidth, height: window.innerHeight },
+        Number.isFinite(contentInset) ? { inset: contentInset } : {},
       );
       menu.classList.toggle("dropdown-menu-up", placement.opensUp);
       menu.style.top = `${placement.top}px`;

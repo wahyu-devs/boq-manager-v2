@@ -112,14 +112,15 @@ Deno.test("keeps mobile editor header menus inside the viewport", () => {
       { top: 174, right: 158, bottom: 208 },
       { width: 184, height: 238 },
       { width: viewportWidth, height: 667 },
+      { inset: 14 },
     );
     equal(
       placement.left,
-      8,
+      14,
       `${viewportWidth}px menu respects the left viewport inset`,
     );
     equal(
-      placement.left + 184 <= viewportWidth - 8,
+      placement.left + 184 <= viewportWidth - 14,
       true,
       `${viewportWidth}px menu remains inside the right viewport inset`,
     );
@@ -129,12 +130,13 @@ Deno.test("keeps mobile editor header menus inside the viewport", () => {
     { top: 150, right: 158, bottom: 184 },
     { width: 184, height: 286 },
     { width: 390, height: 320 },
+    { inset: 14 },
   );
   equal(shortViewport.opensUp, true, "long mobile action menu opens upward");
-  equal(shortViewport.top, 8, "long mobile action menu stays below the top inset");
+  equal(shortViewport.top, 14, "long mobile action menu stays below the top inset");
   equal(
     shortViewport.maxHeight,
-    136,
+    130,
     "long mobile action menu receives an internal scroll limit",
   );
 });
