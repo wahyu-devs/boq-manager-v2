@@ -893,8 +893,17 @@
             ×
           </button>
         </header>
-        <div class="modal-body">
-          <div class="pdf-preview" data-pdf-preview></div>
+        <div class="modal-body document-preview-body">
+          <div
+            class="document-preview-viewport"
+            data-document-preview-viewport
+            role="region"
+            aria-label="Document preview. Pinch with two fingers to zoom."
+          >
+            <div class="document-preview-stage" data-document-preview-stage>
+              <div class="pdf-preview" data-pdf-preview></div>
+            </div>
+          </div>
         </div>
         <footer class="modal-footer">
           <button
@@ -929,6 +938,7 @@
     <script src="js/navigation.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
+    <script src="js/document-preview.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/indexed-cache.js"></script>
     <script src="js/store.js"></script>
