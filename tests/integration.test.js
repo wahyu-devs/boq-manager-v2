@@ -105,6 +105,40 @@ Deno.test("positions row dropdowns outside short table containers", () => {
   equal(shortViewport.maxHeight, 66, "short viewport menu receives a scroll limit");
 });
 
+Deno.test("keeps mobile editor header menus inside the viewport", () => {
+  const calculate = window.BOQUtils.calculateFloatingMenuPlacement;
+  [320, 390].forEach((viewportWidth) => {
+    const placement = calculate(
+      { top: 174, right: 158, bottom: 208 },
+      { width: 184, height: 238 },
+      { width: viewportWidth, height: 667 },
+    );
+    equal(
+      placement.left,
+      8,
+      `${viewportWidth}px menu respects the left viewport inset`,
+    );
+    equal(
+      placement.left + 184 <= viewportWidth - 8,
+      true,
+      `${viewportWidth}px menu remains inside the right viewport inset`,
+    );
+  });
+
+  const shortViewport = calculate(
+    { top: 150, right: 158, bottom: 184 },
+    { width: 184, height: 286 },
+    { width: 390, height: 320 },
+  );
+  equal(shortViewport.opensUp, true, "long mobile action menu opens upward");
+  equal(shortViewport.top, 8, "long mobile action menu stays below the top inset");
+  equal(
+    shortViewport.maxHeight,
+    136,
+    "long mobile action menu receives an internal scroll limit",
+  );
+});
+
 Deno.test("migrates previous data and preserves pricing behavior", () => {
   const store = window.BOQStore;
   const calculations = window.BOQCalculations;

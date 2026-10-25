@@ -106,7 +106,9 @@
   function positionDropdownMenu(trigger, menu) {
     resetDropdownMenuPlacement(menu);
     const triggerRect = trigger.getBoundingClientRect();
-    if (menu.closest(".table-wrap")) {
+    const mobileEditorHeaderMenu = menu.closest(".editor-page-header") &&
+      window.matchMedia("(max-width: 767px)").matches;
+    if (menu.closest(".table-wrap") || mobileEditorHeaderMenu) {
       menu.classList.add("dropdown-menu-floating");
       const menuRect = menu.getBoundingClientRect();
       const placement = window.BOQUtils.calculateFloatingMenuPlacement(

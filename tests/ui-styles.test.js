@@ -124,7 +124,7 @@ Deno.test("floats table row menus outside constrained table wrappers", () => {
   );
   assertIncludes(
     appSource,
-    'if (menu.closest(".table-wrap")) {',
+    'if (menu.closest(".table-wrap") || mobileEditorHeaderMenu) {',
     "table row menus must receive floating placement",
   );
   assertIncludes(
@@ -161,6 +161,19 @@ Deno.test("floats table row menus outside constrained table wrappers", () => {
     appSource,
     "window.addEventListener(\"resize\", () => {\n    closeMenus();",
     "open menus must close when viewport geometry changes",
+  );
+});
+
+Deno.test("floats BOQ editor header actions inside the mobile viewport", () => {
+  assertIncludes(
+    appSource,
+    'menu.closest(".editor-page-header") &&\n      window.matchMedia("(max-width: 767px)").matches;',
+    "mobile editor header menus must opt into viewport placement",
+  );
+  assertIncludes(
+    appSource,
+    'if (menu.closest(".table-wrap") || mobileEditorHeaderMenu) {',
+    "mobile editor header menus must share the tested floating placement",
   );
 });
 
