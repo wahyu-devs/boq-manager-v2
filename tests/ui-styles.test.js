@@ -1039,3 +1039,21 @@ Deno.test("uses deliberate tablet and mobile layouts", () => {
     "dashboard rows must match the responsive column classes",
   );
 });
+
+Deno.test("prevents automatic zoom when focusing search inputs on iOS", () => {
+  assertIncludes(
+    responsiveCss,
+    "@supports (-webkit-touch-callout: none)",
+    "iOS search sizing must remain scoped to WebKit touch devices",
+  );
+  assertIncludes(
+    responsiveCss,
+    "@media (hover: none) and (pointer: coarse)",
+    "desktop browsers must keep the existing compact search typography",
+  );
+  assertIncludes(
+    responsiveCss,
+    'input[type="search"] {\n      font-size: 16px;',
+    "iOS search inputs must meet Safari's no-zoom font-size threshold",
+  );
+});
