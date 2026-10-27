@@ -1779,7 +1779,6 @@
         ? `<footer class="pdf-footer">${escapeHtml(footerText)}</footer>`
         : ""
     }</div>`;
-    window.BOQDocumentPreview?.refresh();
   }
 
   function updateCatalogHistory() {
