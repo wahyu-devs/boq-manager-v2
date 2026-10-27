@@ -894,7 +894,17 @@
           </button>
         </header>
         <div class="modal-body">
-          <div class="pdf-preview" data-pdf-preview></div>
+          <div
+            class="document-preview-fit-viewport"
+            data-document-preview-fit-viewport
+          >
+            <div
+              class="document-preview-fit-stage"
+              data-document-preview-fit-stage
+            >
+              <div class="pdf-preview" data-pdf-preview></div>
+            </div>
+          </div>
         </div>
         <footer class="modal-footer">
           <button
@@ -929,6 +939,7 @@
     <script src="js/navigation.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/modal.js"></script>
+    <script src="js/document-preview.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/indexed-cache.js"></script>
     <script src="js/store.js"></script>

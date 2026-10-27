@@ -577,15 +577,6 @@
     }
   }
 
-  .pdf-preview {
-    padding: 18px;
-    overflow: auto;
-  }
-
-  .pdf-preview-content {
-    min-width: 620px;
-  }
-
   .modal-header {
     position: sticky;
     z-index: 2;
@@ -764,6 +755,36 @@
 
   body[data-page="boq-editor"] .toast-region {
     bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 767px),
+  (max-width: 991px) and (max-height: 500px) {
+  #pdf-modal .document-preview-fit-viewport {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  #pdf-modal .document-preview-fit-stage {
+    position: relative;
+    width: 100%;
+    min-height: 1px;
+  }
+
+  #pdf-modal .pdf-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 656px;
+    min-width: 656px;
+    padding: 18px;
+    overflow: visible;
+    transform-origin: top left;
+  }
+
+  #pdf-modal .pdf-preview-content {
+    width: 620px;
+    min-width: 620px;
   }
 }
 
